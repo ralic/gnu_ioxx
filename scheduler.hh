@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.15 $
- * $Date: 2001/01/22 14:26:52 $
+ * $Revision: 1.16 $
+ * $Date: 2001/01/22 14:37:54 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -182,6 +182,13 @@ class scheduler
   private:
     int get_poll_timeout()
 	{
+	// This routine should use a sophisticated mechanism for
+	// determinig that timeout without having to walk through the
+	// whole container, but implementing this is a _lot_ of work
+	// and in most cases the performance benefit would be
+	// neglictable. Hence I leave that as a "to do" item for the
+	// future.
+
 	time_t next_timeout = 0;
 	map<int,fd_context>::const_iterator i;
 	for (i = registered_handlers.begin(); i != registered_handlers.end(); ++i)
