@@ -1,7 +1,7 @@
 /*
- * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.3 $
- * $Date: 2000/08/22 17:45:14 $
+ * $Source: /home/cvs/lib/libscheduler/pollvec.hpp,v $
+ * $Revision: 1.1 $
+ * $Date: 2000/08/22 18:59:31 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
@@ -62,8 +62,6 @@ class pollvec_t
 	size_t new_size = (pollvec_size) ? pollvec_size * 2 : 32;
 	while(new_size < count)
 	    new_size *= 2;
-	cout << "Reallocating pollvec: current size = " << pollvec_size
-	     << ", new size = " << new_size << endl;
 	pollfd* new_vec  = (pollfd*)realloc(pollvec, new_size*sizeof(pollfd));
 	if (!new_vec)
 	    throw bad_alloc();
