@@ -25,7 +25,7 @@ class scheduler
 	{
       public:
 	explicit event_handler() { }
-	virtual ~event_handler() = 0;
+	virtual ~event_handler() { }
 	virtual void fd_is_readable(int) = 0;
 	virtual void fd_is_writable(int) = 0;
 	virtual void read_timeout(int) = 0;
