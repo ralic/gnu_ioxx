@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.9 $
- * $Date: 2001/01/22 10:18:50 $
+ * $Revision: 1.10 $
+ * $Date: 2001/01/22 11:46:26 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -48,37 +48,34 @@ class scheduler
 	    throw invalid_argument("scheduler::register_handle(): File descriptors must be 0 or greater!");
 
 	if (properties.poll_events == 0)
+	    {
 	    remove_handler(fd);
+	    return;
+	    }
 
-	// If we are adding a _new_ entry, the operation on both
-	// registered_handlers and pollvec may fail. In case the
-	// operation on pollvec fails, we have to restore the original
-	// state of registered_handlers. If the entry exists already,
-	// the only way pollvec will throw an exception is if the
-	// array is totally fucked up already, and then we're lost
-	// anyway, so I ignore this case.
-
-	map<int,fd_context>::iterator i = registered_handlers.find(fd);
-	if (i == registered_handlers.end())
+	try
 	    {
 	    fd_context& fdc = registered_handlers[fd];
+	    pollvec[fd].events = properties.poll_events;
 	    fdc = properties;
 	    fdc.handler = &handler;
-	    try
+	    time_t now = time(0);
+	    if (properties.poll_events & POLLIN)
 		{
-		pollvec[fd].events = properties.poll_events;
+		fdc.next_read_timeout = now + fdc.read_timeout;
 		}
-	    catch(...)
+	    else
+		fdc.next_read_timeout = 0;
+	    if (properties.poll_events & POLLOUT)
 		{
-		registered_handlers.erase(fd);
-		throw;
+		fdc.next_write_timeout = now + fdc.write_timeout;
 		}
+	    else
+		fdc.next_write_timeout = 0;
 	    }
-	else
+	catch(...)
 	    {
-	    i->second = properties;
-	    i->second.handler = &handler;
-	    pollvec[fd].events = properties.poll_events;
+	    remove_handler(fd);
 	    }
 	}
 
@@ -132,12 +129,16 @@ class scheduler
 		fdc.handler->fd_is_readable(pfd.fd);
 		if (i >= pollvec.length() || pollvec.get_pollfd_array()[i].fd != pfd.fd)
 		    continue;	// The handler was removed.
+		if (fdc.next_read_timeout > 0)
+		    fdc.next_read_timeout = time_poll_returned + fdc.read_timeout;
 		}
 	    if (pfd.events & pfd.revents & POLLOUT)
 		{
 		fdc.handler->fd_is_writable(pfd.fd);
 		if (i >= pollvec.length() || pollvec.get_pollfd_array()[i].fd != pfd.fd)
 		    continue;	// The handler was removed.
+		if (fdc.next_write_timeout > 0)
+		    fdc.next_write_timeout = time_poll_returned + fdc.write_timeout;
 		}
 	    ++i;
 	    }
@@ -153,14 +154,22 @@ class scheduler
 	cout << "registered_handlers contains " << registered_handlers.size() << " entries." << endl;
 	map<int,fd_context>::const_iterator i;
 	for (i = registered_handlers.begin(); i != registered_handlers.end(); ++i)
-	    cout << "fd = " << i->first << endl;
-	pollvec.dump();
+	    {
+	    cout << "fd = " << i->first;
+	    if (i->second.poll_events & POLLIN)
+		cout << "; readable (timeout: " << i->second.next_read_timeout << ")";
+	    if (i->second.poll_events & POLLOUT)
+		cout << "; writeable (timeout: " << i->second.next_write_timeout << ")";
+	    cout << endl;
+	    }
 	}
 
   private:
     struct fd_context : public handler_properties
 	{
 	event_handler* handler;
+	time_t next_read_timeout;
+	time_t next_write_timeout;
 
 	fd_context& operator= (const handler_properties& rhs)
 	    {
