@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/pollvector.hh,v $
- * $Revision: 1.7 $
- * $Date: 2001/09/15 16:39:05 $
+ * $Revision: 1.8 $
+ * $Date: 2001/09/15 16:41:11 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -97,18 +97,21 @@ class pollvector
 	size_t  new_size;
 	pollfd* new_array;
 
-	if (size < array_len)
+	if (size <= array_len)
 	    return;		// Bullshit.
-
-	else if (size < array_size/2 && array_size > MIN_SIZE)
+#if 0
+	else if (size < array_size/2 && array_size/2 > MIN_SIZE)
 	    {			// Shrink array.
-	    for (new_size = array_size/2; new_size > size && new_size > MIN_SIZE; new_size /= 2)
-		;
+	    for (size_t n = array_size/2; n > size && n > MIN_SIZE; n /= 2)
+		new_size = n;
+	    debug("Shrinking pollvec array from %d to %d slots; we have %d entries.", array_size, new_size, array_len);
 	    new_array = static_cast<pollfd*>(realloc(array, new_size*sizeof(pollfd)));
 	    if (new_array == 0)
 		return;		// How is this supposed to happen?
+	    array      = new_array;
+	    array_size = new_size;
 	    }
-
+#endif
 	else if (size > array_size)
 	    {			// Enlarge array.
 	    for (new_size = (array_size > 0) ? array_size*2 : MIN_SIZE; new_size < size; new_size *= 2)
