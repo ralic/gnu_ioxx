@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hh,v $
- * $Revision: 1.24 $
- * $Date: 2001/09/17 16:28:46 $
+ * $Revision: 1.25 $
+ * $Date: 2001/09/17 16:32:48 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -96,7 +96,7 @@ class scheduler
 	{
 	if (fd < 0)
 	    throw std::invalid_argument("scheduler::remove_handle(): File descriptors must be 0 or greater!");
-	std::map<int,fd_context>::const_iterator i = registered_handlers.find(fd);
+	handlermap_t::const_iterator i = registered_handlers.find(fd);
 	if (i != registered_handlers.end())
 	    return &(i->second);
 	else
@@ -208,7 +208,7 @@ class scheduler
 	// future.
 
 	time_t next_timeout = 0;
-	std::map<int,fd_context>::const_iterator i;
+	handlermap_t::const_iterator i;
 	for (i = registered_handlers.begin(); i != registered_handlers.end(); ++i)
 	    {
 	    if (i->second.next_read_timeout != 0)
@@ -243,7 +243,8 @@ class scheduler
 
 	fd_context() : next_read_timeout(0), next_write_timeout(0) { }
 	};
-    std::map<int,fd_context> registered_handlers;
+    typedef std::map<int,fd_context> handlermap_t;
+    handlermap_t registered_handlers;
     pollvector pollvec;
     };
 
