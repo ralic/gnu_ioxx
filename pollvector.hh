@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/pollvector.hh,v $
- * $Revision: 1.5 $
- * $Date: 2001/09/12 17:39:41 $
+ * $Revision: 1.6 $
+ * $Date: 2001/09/15 15:18:33 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -36,12 +36,12 @@ class pollvector
 
     pollfd& operator[](int fd)
 	{
+	reserve(array_len+1);
 	std::pair<pollfd*,pollfd*> i = std::equal_range(array, array+array_len, fd, pollfd_less());
 	if (i.first - i.second > 1)
 	    throw std::logic_error("scheduler::pollvector: The interal poll array is broken!");
 	else if (i.first == i.second)
 	    {			// We have to insert it.
-	    reserve(array_len+1);
 	    memmove(i.first+1, i.first, (array+array_len-i.first)*sizeof(pollfd));
 	    ++array_len;
 	    i.first->fd      = fd;
