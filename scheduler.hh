@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.10 $
- * $Date: 2001/01/22 11:46:26 $
+ * $Revision: 1.11 $
+ * $Date: 2001/01/22 13:34:52 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -107,7 +107,7 @@ class scheduler
 
 	// Call poll(2).
       poll_it:
-	int rc = poll(pollvec.get_pollfd_array(), pollvec.length(), -1);
+	int rc = poll(pollvec.get_pollfd_array(), pollvec.length(), get_poll_timeout());
 	if (rc == -1)
 	    {
 	    if (errno == EINTR)
@@ -115,7 +115,7 @@ class scheduler
 	    else
 		throw runtime_error("poll failed");
 	    }
-	time(&time_poll_returned);
+	time_t time_poll_returned = time(0);
 
 	// Now deliver the callbacks.
 
@@ -139,6 +139,16 @@ class scheduler
 		    continue;	// The handler was removed.
 		if (fdc.next_write_timeout > 0)
 		    fdc.next_write_timeout = time_poll_returned + fdc.write_timeout;
+		}
+	    if (fdc.next_read_timeout > 0 && fdc.next_read_timeout <= time_poll_returned)
+		{
+		fdc.handler->read_timeout(pfd.fd);
+		fdc.next_read_timeout = time_poll_returned + fdc.read_timeout;
+		}
+	    if (fdc.next_write_timeout > 0 && fdc.next_write_timeout <= time_poll_returned)
+		{
+		fdc.handler->write_timeout(pfd.fd);
+		fdc.next_write_timeout = time_poll_returned + fdc.write_timeout;
 		}
 	    ++i;
 	    }
@@ -165,6 +175,36 @@ class scheduler
 	}
 
   private:
+    int get_poll_timeout()
+	{
+	time_t next_timeout = 0;
+	map<int,fd_context>::const_iterator i;
+	for (i = registered_handlers.begin(); i != registered_handlers.end(); ++i)
+	    {
+	    if (i->second.next_read_timeout != 0)
+		if (next_timeout == 0)
+		    next_timeout = i->second.next_read_timeout;
+		else
+		    next_timeout = min(next_timeout, i->second.next_read_timeout);
+	    if (i->second.next_write_timeout != 0)
+		if (next_timeout == 0)
+		    next_timeout = i->second.next_write_timeout;
+		else
+		    next_timeout = min(next_timeout, i->second.next_write_timeout);
+	    }
+	if (next_timeout == 0)
+	    return -1;
+	else
+	    {
+	    time_t now = time(0);
+	    if (next_timeout <= now)
+		return 0;
+	    else
+		return (next_timeout - now) * 1000;
+	    }
+	}
+
+  private:
     struct fd_context : public handler_properties
 	{
 	event_handler* handler;
@@ -179,7 +219,6 @@ class scheduler
 	};
     map<int,fd_context> registered_handlers;
     pollvector pollvec;
-    time_t time_poll_returned;
     };
 
 // Destructors must exist, even if they're pure virtual.
