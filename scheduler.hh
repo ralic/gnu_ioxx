@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.8 $
- * $Date: 2001/01/20 21:31:40 $
+ * $Revision: 1.9 $
+ * $Date: 2001/01/22 10:18:50 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -168,14 +168,7 @@ class scheduler
 	    return *this;
 	    }
 	};
-    enum timeout_type { READ, WRITE };
-    struct timeout_context
-	{
-	int fd;
-	timeout_type type;
-	};
     map<int,fd_context> registered_handlers;
-    map<time_t,timeout_context> registered_timeouts;
     pollvector pollvec;
     time_t time_poll_returned;
     };
