@@ -1,0 +1,11 @@
+# Build the scheduler library.
+
+libscheduler.a == %libscheduler.a.sm :a
+
+%libscheduler.a.sm == <<
+    scheduler.cc
+
+test == test.cc +lib=(libscheduler.a) :exe
+
+%clean ! == !<<
+    rm -f test libscheduler.a

@@ -1,7 +1,7 @@
 /*
- * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.19 $
- * $Date: 2001/03/19 14:34:44 $
+ * $Source: /home/cvs/lib/libscheduler/scheduler.hh,v $
+ * $Revision: 1.20 $
+ * $Date: 2001/06/19 12:19:34 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -20,7 +20,7 @@
 #include <errno.h>
 
 // My own headers
-#include "pollvector.hpp"
+#include "pollvector.hh"
 
 class scheduler
     {

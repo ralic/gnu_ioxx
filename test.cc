@@ -1,7 +1,7 @@
 /*
- * $Source: /home/cvs/lib/libscheduler/test.cpp,v $
- * $Revision: 1.10 $
- * $Date: 2001/01/22 14:23:32 $
+ * $Source: /home/cvs/lib/libscheduler/test.cc,v $
+ * $Revision: 1.11 $
+ * $Date: 2001/06/19 12:19:35 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -10,7 +10,7 @@
 #include <iostream>
 #include <string>
 #include <unistd.h>
-#include "scheduler.hpp"
+#include "scheduler.hh"
 
 class my_handler : public scheduler::event_handler
     {
