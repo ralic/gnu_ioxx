@@ -1,43 +1,69 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/test.cpp,v $
- * $Revision: 1.2 $
- * $Date: 2000/08/22 16:06:38 $
+ * $Revision: 1.3 $
+ * $Date: 2000/08/22 17:45:14 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
  */
 
-#include <iostream>
-#include <stdexcept>
+#include <unistd.h>
 #include "scheduler.hpp"
 
-struct read_callback : public Scheduler::io_callback_t
+class read_callback : public Scheduler::io_callback_t
     {
+    string& buffer;
+  public:
+    read_callback(string& buf) : buffer(buf) { }
     virtual ~read_callback() { }
-    virtual bool operator() (int) { return true; }
+    virtual void operator() (int fd)
+	{
+	char buf[10];
+	ssize_t rc = read(fd, buf, sizeof(buf));
+	cout << "read_callback called, read() returned " << rc << "." << endl;
+	if (rc < 0)
+	    throw runtime_error("read() failed.");
+	else if (rc == 0)
+	    {
+	    // eof
+	    }
+	else
+	    buffer.append(buf, rc);
+	}
+    };
+
+class write_callback : public Scheduler::io_callback_t
+    {
+    string& buffer;
+  public:
+    write_callback(string& buf) : buffer(buf) { }
+    virtual ~write_callback() { }
+    virtual void operator() (int fd)
+	{
+	ssize_t rc = write(fd, buffer.data(), buffer.size());
+	cout << "write_callback called, write() returned " << rc << "." << endl;
+	if (rc < 0)
+	    throw runtime_error("write() failed.");
+	else
+	    buffer.erase(0, rc);
+	}
     };
 
 int main()
 try
     {
-    read_callback rc;
-    Scheduler     sched;
+    string buf;
+    read_callback  rc(buf);
+    write_callback wc(buf);
+    Scheduler      sched;
 
-    sched.set_read_handler(7, &rc);
+    sched.set_read_handler(0, &rc);
+    sched.set_write_handler(2, &wc);
     sched.dump();
-    sched.set_write_handler(7, &rc);
-    sched.dump();
-    sched.set_read_handler(7, 0);
-    sched.dump();
-    sched.set_write_handler(7, 0);
-    sched.dump();
-    sched.set_read_handler(4, &rc);
-    sched.set_write_handler(2, &rc);
-    sched.set_read_handler(14, &rc);
-    sched.set_write_handler(25, &rc);
-    sched.set_read_handler(1, &rc);
-    sched.set_write_handler(99, &rc);
-    sched.dump();
+    for(;;)
+	{
+	sched.schedule();
+	}
 
     // done
     return 0;

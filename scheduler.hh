@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.2 $
- * $Date: 2000/08/22 16:06:38 $
+ * $Revision: 1.3 $
+ * $Date: 2000/08/22 17:45:14 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
@@ -10,68 +10,10 @@
 #ifndef __SCHEDULER_HPP__
 #define __SCHEDULER_HPP__
 
-#include <stdexcept>
 #include <vector>
-#include <string>
 #include <algorithm>
-#include <sys/poll.h>
-
-class pollvec_t
-    {
-  public:
-    pollvec_t() : pollvec(0), pollvec_size(0), pollvec_len(0)
-	{
-	}
-    ~pollvec_t()
-	{
-	if (pollvec)
-	    free(pollvec);
-	}
-    void insert(size_t pos)
-	{
-	reserve(pollvec_len + 1);
-	memmove(pollvec + pos + 1, pollvec + pos, (pollvec_len - pos) * sizeof(pollfd));
-	pollvec_len += 1;
-	}
-    void erase(size_t pos)
-	{
-	reserve(pollvec_len - 1);
-	memmove(pollvec + pos, pollvec + pos + 1, (pollvec_len - pos - 1) * sizeof(pollfd));
-	pollvec_len -= 1;
-	}
-    pollfd& operator[] (const size_t pos)
-	{
-	if (pos >= pollvec_len)
-	    throw out_of_range("Attempt to access pollvec beyond its contents.");
-	return pollvec[pos];
-	}
-    size_t size() const
-	{
-	return pollvec_len;
-	}
-
-  private:
-    void reserve(size_t count)
-	{
-	if (count <= pollvec_size)
-	    return;
-
-	size_t new_size = (pollvec_size) ? pollvec_size * 2 : 32;
-	while(new_size < count)
-	    new_size *= 2;
-	cout << "Reallocating pollvec: current size = " << pollvec_size
-	     << ", new size = " << new_size << endl;
-	pollfd* new_vec  = (pollfd*)realloc(pollvec, new_size*sizeof(pollfd));
-	if (!new_vec)
-	    throw bad_alloc();
-
-	pollvec      = new_vec;
-	pollvec_size = new_size;
-	}
-    pollfd* pollvec;
-    size_t  pollvec_size;
-    size_t  pollvec_len;
-    };
+#include <time.h>
+#include "pollvec.hpp"
 
 class Scheduler
     {
@@ -79,12 +21,12 @@ class Scheduler
     struct io_callback_t
 	{
 	virtual ~io_callback_t() = 0;
-	virtual bool operator() (int) = 0;
+	virtual void operator() (int) = 0;
 	};
     struct to_callback_t
 	{
 	virtual ~to_callback_t() = 0;
-	virtual bool operator() (int) = 0;
+	virtual void operator() (int, time_t) = 0;
 	};
 
     Scheduler()  { }
@@ -108,6 +50,22 @@ class Scheduler
 	    cout << "fd : " << event_handlers[i].fd << " / " << pollvec[i].fd << ", "
 		 << "readable : " << event_handlers[i].readable << " / " << ((pollvec[i].events & POLLIN) ? "POLLIN" : "no")  << ", "
 		 << "writable : " << event_handlers[i].writable << " / " << ((pollvec[i].events & POLLOUT) ? "POLLOUT" : "no")  << endl;
+	    }
+	}
+
+    void schedule()
+	{
+	poll(pollvec, pollvec.size(), -1);
+	for (size_t i = 0; i < pollvec.size(); ++i)
+	    {
+	    if (pollvec[i].revents & POLLIN && event_handlers[i].readable)
+		{
+		(*event_handlers[i].readable)(pollvec[i].fd);
+		}
+	    if (pollvec[i].revents & POLLOUT && event_handlers[i].writable)
+		{
+		(*event_handlers[i].writable)(pollvec[i].fd);
+		}
 	    }
 	}
 
