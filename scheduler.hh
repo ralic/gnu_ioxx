@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.7 $
- * $Date: 2000/08/31 13:54:41 $
+ * $Revision: 1.8 $
+ * $Date: 2001/01/20 21:31:40 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -16,6 +16,7 @@
 
 // POSIX system headers
 #include <time.h>
+#include <errno.h>
 
 // My own headers
 #include "pollvector.hpp"
@@ -45,6 +46,9 @@ class scheduler
 	{
 	if (fd < 0)
 	    throw invalid_argument("scheduler::register_handle(): File descriptors must be 0 or greater!");
+
+	if (properties.poll_events == 0)
+	    remove_handler(fd);
 
 	// If we are adding a _new_ entry, the operation on both
 	// registered_handlers and pollvec may fail. In case the
@@ -105,12 +109,16 @@ class scheduler
 	    return;
 
 	// Call poll(2).
-
+      poll_it:
 	int rc = poll(pollvec.get_pollfd_array(), pollvec.length(), -1);
 	if (rc == -1)
-	    throw runtime_error("poll failed");
-	else if (rc == 0)
-	    return;
+	    {
+	    if (errno == EINTR)
+		goto poll_it;
+	    else
+		throw runtime_error("poll failed");
+	    }
+	time(&time_poll_returned);
 
 	// Now deliver the callbacks.
 
@@ -142,13 +150,11 @@ class scheduler
 
     void dump() const throw()
 	{
-#if 1
 	cout << "registered_handlers contains " << registered_handlers.size() << " entries." << endl;
 	map<int,fd_context>::const_iterator i;
 	for (i = registered_handlers.begin(); i != registered_handlers.end(); ++i)
 	    cout << "fd = " << i->first << endl;
 	pollvec.dump();
-#endif
 	}
 
   private:
@@ -162,8 +168,16 @@ class scheduler
 	    return *this;
 	    }
 	};
+    enum timeout_type { READ, WRITE };
+    struct timeout_context
+	{
+	int fd;
+	timeout_type type;
+	};
     map<int,fd_context> registered_handlers;
+    map<time_t,timeout_context> registered_timeouts;
     pollvector pollvec;
+    time_t time_poll_returned;
     };
 
 // Destructors must exist, even if they're pure virtual.
