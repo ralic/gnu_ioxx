@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/pollvector.hh,v $
- * $Revision: 1.4 $
- * $Date: 2001/06/19 12:19:34 $
+ * $Revision: 1.5 $
+ * $Date: 2001/09/12 17:39:41 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -111,7 +111,7 @@ class pollvector
 
 	else if (size > array_size)
 	    {			// Enlarge array.
-	    for (new_size = (array_size > 0) ? array_size*2 : 32; new_size < size; new_size *= 2)
+	    for (new_size = (array_size > 0) ? array_size*2 : MIN_SIZE; new_size < size; new_size *= 2)
 		;
 	    new_array = static_cast<pollfd*>(realloc(array, new_size*sizeof(pollfd)));
 	    if (new_array == 0)
