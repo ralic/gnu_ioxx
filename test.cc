@@ -1,9 +1,5 @@
 /*
- * $Source: /home/cvs/lib/libscheduler/test.cc,v $
- * $Revision: 1.13 $
- * $Date: 2001/09/19 18:44:47 $
- *
- * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
+ * Copyright (c) 2001 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
  */
 

@@ -1,9 +1,5 @@
 /*
- * $Source: /home/cvs/lib/libscheduler/pollvector.hh,v $
- * $Revision: 1.10 $
- * $Date: 2001/09/17 16:32:48 $
- *
- * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
+ * Copyright (c) 2001 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
  */
 

@@ -1,9 +1,5 @@
 /*
- * $Source: /home/cvs/lib/libscheduler/scheduler.hh,v $
- * $Revision: 1.28 $
- * $Date: 2001/09/19 20:34:31 $
- *
- * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
+ * Copyright (c) 2001 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
  */
 
@@ -47,7 +43,7 @@ class scheduler
 
     explicit scheduler()
 	{
-	use_accurate_timeouts();
+	accurate_timeouts();
 	}
 
     ~scheduler()
