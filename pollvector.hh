@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/pollvector.hh,v $
- * $Revision: 1.8 $
- * $Date: 2001/09/15 16:41:11 $
+ * $Revision: 1.9 $
+ * $Date: 2001/09/15 17:26:41 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -11,7 +11,6 @@
 #define __POLLVECTOR_HH__
 
 // ISO C++ headers
-#include <iostream>
 #include <stdexcept>
 #include <algorithm>
 
@@ -77,6 +76,7 @@ class pollvector
 	return array;
 	}
 
+#if 0
     void dump(std::ostream& os) const
 	{
 	os << "The poll vector has " << array_len << " entries; size is " << array_size << "." << std::endl;
@@ -85,8 +85,8 @@ class pollvector
 	       << "events = 0x"  << std::hex << array[i].events << "; "
 	       << "revents = 0x" << std::hex << array[i].revents
 	       << std::dec << std::endl;
-
 	}
+#endif
 
   private:
     pollvector(const pollvector&); // Don't copy me.

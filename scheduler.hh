@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hh,v $
- * $Revision: 1.23 $
- * $Date: 2001/09/17 15:40:47 $
+ * $Revision: 1.24 $
+ * $Date: 2001/09/17 16:28:46 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -180,6 +180,7 @@ class scheduler
 	return registered_handlers.empty();
 	}
 
+#if 0
     void dump(std::ostream& os) const
 	{
 	os << "registered_handlers contains " << registered_handlers.size() << " entries." << std::endl;
@@ -194,6 +195,7 @@ class scheduler
 	    os << std::endl;
 	    }
 	}
+#endif
 
   private:
     int get_poll_timeout()
