@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.4 $
- * $Date: 2000/08/22 18:59:31 $
+ * $Revision: 1.5 $
+ * $Date: 2000/08/31 09:54:57 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
@@ -42,7 +42,7 @@ class Scheduler
 	{
 	while(!event_handlers.empty())
 	    {
-	    poll(pollvec, pollvec.size(), -1);
+	    poll(pollvec.get_pollvec(), pollvec.size(), -1);
 	    for (size_t i = 0; i < pollvec.size(); ++i)
 		{
 		if (pollvec[i].revents & POLLIN)
@@ -76,6 +76,7 @@ class Scheduler
 	    event_handlers[pos].flags   = flags;
 	    pollvec[pos].fd             = fd;
 	    pollvec[pos].events         = flags;
+	    pollvec[pos].revents        = 0;
 	    }
 	else
 	    {
@@ -102,11 +103,8 @@ class Scheduler
 	int            fd;
 	EventHandler*  handler;
 	short          flags;
-
-	HandlerContext() : fd(-1), handler(0) { }
 	};
     vector<HandlerContext> event_handlers;
-    typedef vector<HandlerContext>::iterator eh_iterator;
     pollvec_t pollvec;
 
   private:
@@ -120,6 +118,7 @@ class Scheduler
 
     bool find_event_handler(int fd, int& pos)
 	{
+	typedef vector<HandlerContext>::iterator eh_iterator;
 	pair<eh_iterator,eh_iterator> i =
 	    equal_range(event_handlers.begin(), event_handlers.end(), fd, less_cmp());
 	if (i.first == i.second)
