@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hh,v $
- * $Revision: 1.25 $
- * $Date: 2001/09/17 16:32:48 $
+ * $Revision: 1.26 $
+ * $Date: 2001/09/18 16:21:45 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -124,10 +124,18 @@ class scheduler
 
 	// Now deliver the callbacks.
 
+	handlermap_t::iterator rh_iter = registered_handlers.begin();
 	for (size_t i = 0; i < pollvec.length(); )
 	    {
 	    pollfd pfd = pollvec.get_pollfd_array()[i];
-	    fd_context& fdc = registered_handlers[pfd.fd];
+	    if (pfd.fd != rh_iter->first)
+		{
+		rh_iter = registered_handlers.find(pfd.fd);
+		if (rh_iter == registered_handlers.end())
+		    throw std::logic_error("Scheduler's data structures are corrupt: pollvector and " \
+					   "fd_context map have inconsistent data!");
+		}
+	    fd_context& fdc = rh_iter->second;
 
 	    if (pfd.events & pfd.revents & POLLIN)
 		{
@@ -172,6 +180,7 @@ class scheduler
 		fdc.next_write_timeout = time_poll_returned + fdc.write_timeout;
 		}
 	    ++i;
+	    ++rh_iter;
 	    }
 	}
 
