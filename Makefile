@@ -29,4 +29,4 @@ clean::
 
 # Dependencies
 
-test.o:	scheduler.hpp
+test.o: scheduler.hpp pollvec.hpp
