@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/test.cc,v $
- * $Revision: 1.12 $
- * $Date: 2001/09/12 17:38:11 $
+ * $Revision: 1.13 $
+ * $Date: 2001/09/19 18:44:47 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -72,11 +72,12 @@ try
     my_handler my_handler(sched);
     my_handler.prop.poll_events   = POLLIN;
     my_handler.prop.read_timeout  = 5;
-    my_handler.prop.write_timeout = 0;
+    my_handler.prop.write_timeout = 3;
     sched.register_handler(0, my_handler, my_handler.prop);
     while (!sched.empty())
 	{
 	sched.schedule();
+	//sched.dump(cerr);
 	}
 
     // done
