@@ -43,7 +43,7 @@ class scheduler
 
     explicit scheduler()
 	{
-	accurate_timeouts();
+	use_accurate_poll_interval();
 	}
 
     ~scheduler()
@@ -194,16 +194,16 @@ class scheduler
 	return registered_handlers.empty();
 	}
 
-    void set_hard_timeout(int to)
+    void set_poll_interval(int to)
 	{
 	if (to < -1)
-	    throw std::invalid_argument("scheduler: Hard timeouts must be -1 or greater.");
-	hard_timeout = to;
+	    throw std::invalid_argument("scheduler: Hard poll intervals must be -1 or greater.");
+	hard_poll_interval = to;
 	}
 
-    void accurate_timeouts()
+    void use_accurate_poll_interval()
 	{
-	hard_timeout = -2;
+	hard_poll_interval = -2;
 	}
 
 #if 0
@@ -229,8 +229,8 @@ class scheduler
 
     int get_poll_timeout()
 	{
-	if (hard_timeout >= -1)
-	    return hard_timeout;
+	if (hard_poll_interval >= -1)
+	    return hard_poll_interval;
 
 	time_t next_timeout = 0;
 	handlermap_t::const_iterator i;
@@ -271,7 +271,7 @@ class scheduler
     typedef std::map<int,fd_context> handlermap_t;
     handlermap_t registered_handlers;
     pollvector pollvec;
-    int hard_timeout;
+    int hard_poll_interval;
     };
 
 #endif // !defined(__SCHEDULER_HH__)
