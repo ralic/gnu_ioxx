@@ -1,14 +1,14 @@
 /*
- * $Source: /home/cvs/lib/libscheduler/pollvector.hpp,v $
- * $Revision: 1.3 $
- * $Date: 2001/01/22 14:22:54 $
+ * $Source: /home/cvs/lib/libscheduler/pollvector.hh,v $
+ * $Revision: 1.4 $
+ * $Date: 2001/06/19 12:19:34 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
  */
 
-#ifndef __POLLVECTOR_HPP__
-#define __POLLVECTOR_HPP__
+#ifndef __POLLVECTOR_HH__
+#define __POLLVECTOR_HH__
 
 // ISO C++ headers
 #include <iostream>
@@ -134,4 +134,4 @@ class pollvector
 	};
     };
 
-#endif // !defined(__POLLVECTOR_HPP__)
+#endif // !defined(__POLLVECTOR_HH__)

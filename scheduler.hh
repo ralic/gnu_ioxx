@@ -1,14 +1,14 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hh,v $
- * $Revision: 1.20 $
- * $Date: 2001/06/19 12:19:34 $
+ * $Revision: 1.21 $
+ * $Date: 2001/09/12 17:38:11 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
  */
 
-#ifndef __SCHEDULER_HPP__
-#define __SCHEDULER_HPP__
+#ifndef __SCHEDULER_HH__
+#define __SCHEDULER_HH__
 
 // ISO C++ headers
 #include <stdexcept>
@@ -231,4 +231,4 @@ class scheduler
     pollvector pollvec;
     };
 
-#endif // !defined(__SCHEDULER_HPP__)
+#endif // !defined(__SCHEDULER_HH__)
