@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/test.cc,v $
- * $Revision: 1.11 $
- * $Date: 2001/06/19 12:19:35 $
+ * $Revision: 1.12 $
+ * $Date: 2001/09/12 17:38:11 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -11,6 +11,7 @@
 #include <string>
 #include <unistd.h>
 #include "scheduler.hh"
+using namespace std;
 
 class my_handler : public scheduler::event_handler
     {
@@ -45,14 +46,22 @@ class my_handler : public scheduler::event_handler
 	}
     virtual void read_timeout(int fd)
 	{
-	std::cerr << "fd " << fd << " had a read timeout." << std::endl;
+	cerr << "fd " << fd << " had a read timeout." << endl;
 	}
     virtual void write_timeout(int fd)
 	{
-	std::cerr << "fd " << fd << " had a write timeout." << std::endl;
+	cerr << "fd " << fd << " had a write timeout." << endl;
+	}
+    virtual void error_condition(int fd)
+	{
+	cerr << "fd " << fd << " had an error condition." << endl;
+	}
+    virtual void pollhup(int fd)
+	{
+	cerr << "fd " << fd << " has hung up." << endl;
 	}
     char tmp[1024];
-    std::string buffer;
+    string buffer;
     scheduler& mysched;
     };
 
@@ -68,19 +77,18 @@ try
     while (!sched.empty())
 	{
 	sched.schedule();
-	sched.dump(std::cerr);
 	}
 
     // done
     return 0;
     }
-catch(const std::exception &e)
+catch(const exception &e)
     {
-    std::cerr << "Caught exception: " << e.what() << std::endl;
+    cerr << "Caught exception: " << e.what() << endl;
     return 1;
     }
 catch(...)
     {
-    std::cerr << "Caught unknown exception." << std::endl;
+    cerr << "Caught unknown exception." << endl;
     return 1;
     }
