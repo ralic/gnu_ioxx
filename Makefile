@@ -8,7 +8,7 @@ CPPFLAGS	=
 CXXFLAGS	= -Wall
 LDFLAGS		=
 
-OBJS		= scheduler.o
+OBJS		=
 
 .cpp.o:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $<
