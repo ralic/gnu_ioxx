@@ -32,7 +32,9 @@ class pollvector
     pollfd& operator[](int fd)
 	{
 	reserve(array_len+1);
-	std::pair<pollfd*,pollfd*> i = std::equal_range(array, array+array_len, fd, pollfd_less());
+        pollfd tmp;
+        tmp.fd = fd;
+	std::pair<pollfd*,pollfd*> i = std::equal_range(array, array+array_len, tmp, pollfd_less());
 	if (i.first - i.second > 1)
 	    throw std::logic_error("scheduler::pollvector: The internal poll array is broken!");
 	else if (i.first == i.second)
@@ -50,7 +52,9 @@ class pollvector
 
     void erase(int fd)
 	{
-	std::pair<pollfd*,pollfd*> i = std::equal_range(array, array+array_len, fd, pollfd_less());
+        pollfd tmp;
+        tmp.fd = fd;
+	std::pair<pollfd*,pollfd*> i = std::equal_range(array, array+array_len, tmp, pollfd_less());
 	if (i.first - i.second > 1)
 	    throw std::logic_error("scheduler::pollvector: The interal poll array is broken!");
 	else if (i.first == i.second)
@@ -128,8 +132,7 @@ class pollvector
 
     struct pollfd_less
 	{
-        bool operator()(const pollfd& lhs, const int rhs) { return lhs.fd < rhs; }
-        bool operator()(const int lhs, const pollfd& rhs) { return lhs < rhs.fd; }
+        bool operator()(const pollfd& lhs, const pollfd& rhs) { return lhs.fd < rhs.fd; }
 	};
     };
 
