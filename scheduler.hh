@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.10 $
- * $Date: 2000/08/17 13:58:28 $
+ * $Revision: 1.1 $
+ * $Date: 2000/08/21 15:48:30 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
@@ -10,10 +10,68 @@
 #ifndef __SCHEDULER_HPP__
 #define __SCHEDULER_HPP__
 
-#include <hash_map>
-#include <time.h>
-#include <sys/poll.h>
+#include <stdexcept>
+#include <vector>
+#include <string>
 #include <algorithm>
+#include <sys/poll.h>
+
+class pollvec_t
+    {
+  public:
+    pollvec_t() : pollvec(0), pollvec_size(0), pollvec_len(0)
+	{
+	}
+    ~pollvec_t()
+	{
+	if (pollvec)
+	    free(pollvec);
+	}
+    void insert(size_t pos)
+	{
+	reserve(pollvec_len + 1);
+	memmove(pollvec + pos + 1, pollvec + pos, (pollvec_len - pos) * sizeof(pollfd));
+	pollvec_len += 1;
+	}
+    void erase(size_t pos)
+	{
+	reserve(pollvec_len - 1);
+	memmove(pollvec + pos, pollvec + pos + 1, (pollvec_len - pos - 1) * sizeof(pollfd));
+	pollvec_len -= 1;
+	}
+    pollfd& operator[] (const size_t pos)
+	{
+	if (pos >= pollvec_len)
+	    throw out_of_range("Attempt to access pollvec beyond its contents.");
+	return pollvec[pos];
+	}
+    size_t size() const
+	{
+	return pollvec_len;
+	}
+
+  private:
+    void reserve(size_t count)
+	{
+	if (count <= pollvec_size)
+	    return;
+
+	size_t new_size = (pollvec_size) ? pollvec_size * 2 : 32;
+	while(new_size < count)
+	    new_size *= 2;
+	cout << "Reallocating pollvec: current size = " << pollvec_size
+	     << ", new size = " << new_size << endl;
+	pollfd* new_vec  = (pollfd*)realloc(pollvec, new_size*sizeof(pollfd));
+	if (!new_vec)
+	    throw bad_alloc();
+
+	pollvec      = new_vec;
+	pollvec_size = new_size;
+	}
+    pollfd* pollvec;
+    size_t  pollvec_size;
+    size_t  pollvec_len;
+    };
 
 class Scheduler
     {
@@ -26,99 +84,95 @@ class Scheduler
     struct to_callback_t
 	{
 	virtual ~to_callback_t() = 0;
-	virtual bool operator() (time_t) = 0;
+	virtual bool operator() (int) = 0;
 	};
 
-  public:
-    Scheduler() : pollvec(0), pollvec_size(0), pollvec_valid(false)
-	{
-	}
-    ~Scheduler()
-	{
-	}
+    Scheduler()  { }
+    ~Scheduler() { }
 
-    void register_event_handler(int fd,
-				io_callback_t* readable = 0, to_callback_t* readable_timeout = 0, int read_timeout = -1,
-				io_callback_t* writable = 0, to_callback_t* writable_timeout = 0, int write_timeout = -1,
-				to_callback_t* alarm = 0)
+    void set_read_handler(int fd, io_callback_t* handler)
 	{
-	EventHandler& eh(event_handler_map[fd]);
-	eh.fd               = fd;
-	eh.readable         = readable;
-	eh.readable_timeout = readable_timeout;
-	eh.read_timeout     = read_timeout;
-	eh.writable         = writable;
-	eh.writable_timeout = writable_timeout;
-	eh.write_timeout    = write_timeout;
-	eh.alarm            = alarm;
+	int pos;
+	if (find_event_handler(fd, pos) == false)
+	    {
+	    if (handler == 0)
+		return;
 
-	reserve(event_handler_map.size());
-	pollvec_valid = false;
-	}
-
-    void schedule()
-	{
-	if (event_handler_map.empty())
-	    return;
+	    pollvec.insert(pos);
+	    try {
+		event_handlers.insert(event_handlers.begin()+pos, EventHandler());
+		}
+	    catch(...)
+		{
+		pollvec.erase(pos);
+		throw;
+		}
+	    event_handlers[pos].fd = fd;
+	    event_handlers[pos].readable = handler;
+	    pollvec[pos].fd = fd;
+	    pollvec[pos].events = POLLIN;
+	    }
 	else
-	    build_pollvec();
+	    {
+	    if (handler)
+		{
+		event_handlers[pos].readable = handler;
+		pollvec[pos].events |= POLLIN;
+		}
+	    else
+		{
+		// TODO
+		}
+	    }
+	}
 
+    void dump()
+	{
+	for (size_t i = 0; i < event_handlers.size(); ++i)
+	    {
+	    cerr << "fd : " << event_handlers[i].fd << " / " << pollvec[i].fd << endl;
+	    }
 	}
 
   private:			// don't copy me
     Scheduler(const Scheduler&);
     Scheduler& operator= (const Scheduler&);
 
+  private:
     struct EventHandler
 	{
-	int             fd;
-	io_callback_t*  writable;
-	to_callback_t*  writable_timeout;
-	int             write_timeout;
-	io_callback_t*  readable;
-	to_callback_t*  readable_timeout;
-	int             read_timeout;
-	to_callback_t*  alarm;
+	int fd;
+	io_callback_t* readable;
+	io_callback_t* writable;
 	};
-    typedef hash_map<int,EventHandler> event_handler_map_t;
-    event_handler_map_t event_handler_map;
+    vector<EventHandler> event_handlers;
+    typedef vector<EventHandler>::iterator eh_iterator;
+    pollvec_t pollvec;
 
-    pollfd* pollvec;
-    size_t  pollvec_size;
-    bool    pollvec_valid;
-    static const size_t INITIAL_POLLVEC_SIZE = 32;
-
-    void reserve(size_t n)
+  private:
+    struct less_cmp
 	{
-	if (pollvec_size >= n)
-	    return;
+	bool operator() (const int lhs, const EventHandler& rhs) const
+	    { return (lhs < rhs.fd); }
+	bool operator() (const EventHandler& lhs, const int rhs) const
+	    { return (lhs.fd < rhs); }
+	};
 
-	size_t new_size = (pollvec_size == 0) ? INITIAL_POLLVEC_SIZE : pollvec_size * 2;
-	while (pollvec_size >= n)
-	    new_size *= 2;
-	pollfd* new_vec = (pollfd*)realloc(pollvec, new_size*sizeof(pollfd));
-	if (new_vec == 0)
-	    throw bad_alloc();
-
-	pollvec      = new_vec;
-	pollvec_size = new_size;
-	}
-
-    void build_pollvec()
+    bool find_event_handler(int fd, int& pos)
 	{
-	if (pollvec_valid)
-	    return;
-
-	event_handler_map_t::const_iterator src = event_handler_map.begin();
-	pollfd*                             dst = pollvec;
-	while(src != event_handler_map.end())
+	pair<eh_iterator,eh_iterator> i =
+	    equal_range(event_handlers.begin(), event_handlers.end(), fd, less_cmp());
+	if (i.first == i.second)
 	    {
-	    dst->fd      = src->second.fd;
-	    dst->events  = ((src->second.readable != 0) ? POLLIN : 0)
-		         | ((src->second.writable != 0) ? POLLOUT : 0);
-	    dst->revents = 0;
-	    ++src;
-	    ++dst;
+	    pos = i.first - event_handlers.begin();
+	    return false;
+	    }
+	else
+	    {
+	    if (i.second - i.first != 1)
+		throw logic_error("Scheduler: Internal list of event handlers is corrupted!");
+	    pos = i.first - event_handlers.begin();
+	    return true;
 	    }
 	}
     };
@@ -126,6 +180,7 @@ class Scheduler
 Scheduler::io_callback_t::~io_callback_t()
     {
     }
+
 Scheduler::to_callback_t::~to_callback_t()
     {
     }
