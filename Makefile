@@ -5,8 +5,8 @@ AR		= ar
 RANLIB		= ranlib
 
 CPPFLAGS	=
-CXXFLAGS	= -finline-functions -pipe -Wall -pedantic
-LDFLAGS		=
+CXXFLAGS	= -O -finline-functions -pipe -Wall -pedantic
+LDFLAGS		= -s
 
 OBJS		= scheduler.o
 
