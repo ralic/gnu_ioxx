@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.1 $
- * $Date: 2000/08/21 15:48:30 $
+ * $Revision: 1.2 $
+ * $Date: 2000/08/22 16:06:38 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
@@ -92,45 +92,22 @@ class Scheduler
 
     void set_read_handler(int fd, io_callback_t* handler)
 	{
-	int pos;
-	if (find_event_handler(fd, pos) == false)
-	    {
-	    if (handler == 0)
-		return;
+	set_handler(fd, handler, POLLIN);
+	}
 
-	    pollvec.insert(pos);
-	    try {
-		event_handlers.insert(event_handlers.begin()+pos, EventHandler());
-		}
-	    catch(...)
-		{
-		pollvec.erase(pos);
-		throw;
-		}
-	    event_handlers[pos].fd = fd;
-	    event_handlers[pos].readable = handler;
-	    pollvec[pos].fd = fd;
-	    pollvec[pos].events = POLLIN;
-	    }
-	else
-	    {
-	    if (handler)
-		{
-		event_handlers[pos].readable = handler;
-		pollvec[pos].events |= POLLIN;
-		}
-	    else
-		{
-		// TODO
-		}
-	    }
+    void set_write_handler(int fd, io_callback_t* handler)
+	{
+	set_handler(fd, handler, POLLOUT);
 	}
 
     void dump()
 	{
+	cout << "Dumping contents of event_handlers and pollvec:" << endl;
 	for (size_t i = 0; i < event_handlers.size(); ++i)
 	    {
-	    cerr << "fd : " << event_handlers[i].fd << " / " << pollvec[i].fd << endl;
+	    cout << "fd : " << event_handlers[i].fd << " / " << pollvec[i].fd << ", "
+		 << "readable : " << event_handlers[i].readable << " / " << ((pollvec[i].events & POLLIN) ? "POLLIN" : "no")  << ", "
+		 << "writable : " << event_handlers[i].writable << " / " << ((pollvec[i].events & POLLOUT) ? "POLLOUT" : "no")  << endl;
 	    }
 	}
 
@@ -144,6 +121,11 @@ class Scheduler
 	int fd;
 	io_callback_t* readable;
 	io_callback_t* writable;
+
+	bool empty()
+	    {
+	    return (!readable && !writable);
+	    }
 	};
     vector<EventHandler> event_handlers;
     typedef vector<EventHandler>::iterator eh_iterator;
@@ -173,6 +155,57 @@ class Scheduler
 		throw logic_error("Scheduler: Internal list of event handlers is corrupted!");
 	    pos = i.first - event_handlers.begin();
 	    return true;
+	    }
+	}
+
+    void set_handler(int fd, io_callback_t* handler, int flag)
+	{
+	int pos;
+	if (find_event_handler(fd, pos) == false)
+	    {
+	    if (handler == 0)
+		return;
+
+	    pollvec.insert(pos);
+	    try {
+		event_handlers.insert(event_handlers.begin()+pos, EventHandler());
+		}
+	    catch(...)
+		{
+		pollvec.erase(pos);
+		throw;
+		}
+	    event_handlers[pos].fd = fd;
+	    if (flag == POLLIN)
+		event_handlers[pos].readable = handler;
+	    else
+		event_handlers[pos].writable = handler;
+	    pollvec[pos].fd = fd;
+	    pollvec[pos].events = flag;
+	    }
+	else
+	    {
+	    if (handler)
+		{
+		if (flag == POLLIN)
+		    event_handlers[pos].readable = handler;
+		else
+		    event_handlers[pos].writable = handler;
+		pollvec[pos].events |= flag;
+		}
+	    else
+		{
+		if (flag == POLLIN)
+		    event_handlers[pos].readable = 0;
+		else
+		    event_handlers[pos].writable = 0;
+		pollvec[pos].events &= ~flag;
+		if (event_handlers[pos].empty())
+		    {
+		    pollvec.erase(pos);
+		    event_handlers.erase(event_handlers.begin()+pos);
+		    }
+		}
 	    }
 	}
     };

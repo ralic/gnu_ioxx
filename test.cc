@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/test.cpp,v $
- * $Revision: 1.1 $
- * $Date: 2000/08/21 15:48:30 $
+ * $Revision: 1.2 $
+ * $Date: 2000/08/22 16:06:38 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
@@ -24,17 +24,19 @@ try
     Scheduler     sched;
 
     sched.set_read_handler(7, &rc);
-    sched.set_read_handler(2, &rc);
-    sched.set_read_handler(3, &rc);
-    sched.set_read_handler(3, &rc);
-    sched.set_read_handler(1, &rc);
-    sched.set_read_handler(0, &rc);
-    sched.set_read_handler(9, &rc);
-    sched.set_read_handler(0, 0);
-    sched.set_read_handler(7, &rc);
-    sched.set_read_handler(5, &rc);
-    sched.set_read_handler(5, &rc);
+    sched.dump();
+    sched.set_write_handler(7, &rc);
+    sched.dump();
+    sched.set_read_handler(7, 0);
+    sched.dump();
+    sched.set_write_handler(7, 0);
+    sched.dump();
     sched.set_read_handler(4, &rc);
+    sched.set_write_handler(2, &rc);
+    sched.set_read_handler(14, &rc);
+    sched.set_write_handler(25, &rc);
+    sched.set_read_handler(1, &rc);
+    sched.set_write_handler(99, &rc);
     sched.dump();
 
     // done
