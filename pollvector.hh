@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/pollvector.hpp,v $
- * $Revision: 1.1 $
- * $Date: 2001/01/20 21:31:40 $
+ * $Revision: 1.2 $
+ * $Date: 2001/01/22 10:15:33 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -76,14 +76,14 @@ class pollvector
 	return array;
 	}
 
-    void dump() const throw()
+    void dump(ostream& os) const
 	{
-	cout << "The poll vector has " << array_len << " entries; size is " << array_size << "." << endl;
+	os << "The poll vector has " << array_len << " entries; size is " << array_size << "." << endl;
 	for (size_t i = 0; i < array_len; ++i)
-	    cout << "fd = " << dec << array[i].fd << "; "
-		 << "events = 0x" << hex << array[i].events << "; "
-		 << "revents = 0x" << hex << array[i].revents << dec
-		 << endl;
+	    os << "fd = " << dec << array[i].fd << "; "
+	       << "events = 0x" << hex << array[i].events << "; "
+	       << "revents = 0x" << hex << array[i].revents << dec
+	       << endl;
 	}
 
   private:
