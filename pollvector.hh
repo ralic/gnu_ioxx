@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/pollvector.hpp,v $
- * $Revision: 1.2 $
- * $Date: 2001/01/22 10:15:33 $
+ * $Revision: 1.3 $
+ * $Date: 2001/01/22 14:22:54 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -11,6 +11,7 @@
 #define __POLLVECTOR_HPP__
 
 // ISO C++ headers
+#include <iostream>
 #include <stdexcept>
 #include <algorithm>
 
@@ -35,9 +36,9 @@ class pollvector
 
     pollfd& operator[](int fd)
 	{
-	pair<pollfd*,pollfd*> i = equal_range(array, array+array_len, fd, pollfd_less());
+	std::pair<pollfd*,pollfd*> i = std::equal_range(array, array+array_len, fd, pollfd_less());
 	if (i.first - i.second > 1)
-	    throw logic_error("scheduler::pollvector: The interal poll array is broken!");
+	    throw std::logic_error("scheduler::pollvector: The interal poll array is broken!");
 	else if (i.first == i.second)
 	    {			// We have to insert it.
 	    reserve(array_len+1);
@@ -54,9 +55,9 @@ class pollvector
 
     void erase(int fd)
 	{
-	pair<pollfd*,pollfd*> i = equal_range(array, array+array_len, fd, pollfd_less());
+	std::pair<pollfd*,pollfd*> i = std::equal_range(array, array+array_len, fd, pollfd_less());
 	if (i.first - i.second > 1)
-	    throw logic_error("scheduler::pollvector: The interal poll array is broken!");
+	    throw std::logic_error("scheduler::pollvector: The interal poll array is broken!");
 	else if (i.first == i.second)
 	    return;
 	else
@@ -76,14 +77,15 @@ class pollvector
 	return array;
 	}
 
-    void dump(ostream& os) const
+    void dump(std::ostream& os) const
 	{
-	os << "The poll vector has " << array_len << " entries; size is " << array_size << "." << endl;
+	os << "The poll vector has " << array_len << " entries; size is " << array_size << "." << std::endl;
 	for (size_t i = 0; i < array_len; ++i)
-	    os << "fd = " << dec << array[i].fd << "; "
-	       << "events = 0x" << hex << array[i].events << "; "
-	       << "revents = 0x" << hex << array[i].revents << dec
-	       << endl;
+	    os << "fd = "        << std::dec << array[i].fd << "; "
+	       << "events = 0x"  << std::hex << array[i].events << "; "
+	       << "revents = 0x" << std::hex << array[i].revents
+	       << std::dec << std::endl;
+
 	}
 
   private:
@@ -113,7 +115,7 @@ class pollvector
 		;
 	    new_array = static_cast<pollfd*>(realloc(array, new_size*sizeof(pollfd)));
 	    if (new_array == 0)
-		throw bad_alloc();
+		throw std::bad_alloc();
 	    array      = new_array;
 	    array_size = new_size;
 	    }

@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.18 $
- * $Date: 2001/01/26 18:59:47 $
+ * $Revision: 1.19 $
+ * $Date: 2001/03/19 14:34:44 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -46,7 +46,7 @@ class scheduler
     void register_handler(int fd, event_handler& handler, const handler_properties& properties)
 	{
 	if (fd < 0)
-	    throw invalid_argument("scheduler::register_handle(): File descriptors must be 0 or greater!");
+	    throw std::invalid_argument("scheduler::register_handle(): File descriptors must be 0 or greater!");
 
 	if (properties.poll_events == 0)
 	    {
@@ -85,7 +85,7 @@ class scheduler
     void remove_handler(int fd)
 	{
 	if (fd < 0)
-	    throw invalid_argument("scheduler::remove_handle(): File descriptors must be 0 or greater!");
+	    throw std::invalid_argument("scheduler::remove_handle(): File descriptors must be 0 or greater!");
 	registered_handlers.erase(fd);
 	pollvec.erase(fd);
 	}
@@ -93,8 +93,8 @@ class scheduler
     const handler_properties* get_handler_properties(int fd)
 	{
 	if (fd < 0)
-	    throw invalid_argument("scheduler::remove_handle(): File descriptors must be 0 or greater!");
-	map<int,fd_context>::const_iterator i = registered_handlers.find(fd);
+	    throw std::invalid_argument("scheduler::remove_handle(): File descriptors must be 0 or greater!");
+	std::map<int,fd_context>::const_iterator i = registered_handlers.find(fd);
 	if (i != registered_handlers.end())
 	    return &(i->second);
 	else
@@ -116,7 +116,7 @@ class scheduler
 	    if (errno == EINTR)
 		goto poll_it;
 	    else
-		throw runtime_error(string("scheduler::schedule(): poll(2) failed: ") + strerror(errno));
+		throw std::runtime_error(std::string("scheduler::schedule(): poll(2) failed: ") + strerror(errno));
 	    }
 	time_t time_poll_returned = time(0);
 
@@ -166,10 +166,10 @@ class scheduler
 	return registered_handlers.empty();
 	}
 
-    void dump(ostream& os) const
+    void dump(std::ostream& os) const
 	{
-	os << "registered_handlers contains " << registered_handlers.size() << " entries." << endl;
-	map<int,fd_context>::const_iterator i;
+	os << "registered_handlers contains " << registered_handlers.size() << " entries." << std::endl;
+	std::map<int,fd_context>::const_iterator i;
 	for (i = registered_handlers.begin(); i != registered_handlers.end(); ++i)
 	    {
 	    os << "fd = " << i->first;
@@ -177,7 +177,7 @@ class scheduler
 		os << "; readable (timeout: " << i->second.next_read_timeout << ")";
 	    if (i->second.poll_events & POLLOUT)
 		os << "; writeable (timeout: " << i->second.next_write_timeout << ")";
-	    os << endl;
+	    os << std::endl;
 	    }
 	}
 
@@ -192,19 +192,19 @@ class scheduler
 	// future.
 
 	time_t next_timeout = 0;
-	map<int,fd_context>::const_iterator i;
+	std::map<int,fd_context>::const_iterator i;
 	for (i = registered_handlers.begin(); i != registered_handlers.end(); ++i)
 	    {
 	    if (i->second.next_read_timeout != 0)
 		if (next_timeout == 0)
 		    next_timeout = i->second.next_read_timeout;
 		else
-		    next_timeout = min(next_timeout, i->second.next_read_timeout);
+		    next_timeout = std::min(next_timeout, i->second.next_read_timeout);
 	    if (i->second.next_write_timeout != 0)
 		if (next_timeout == 0)
 		    next_timeout = i->second.next_write_timeout;
 		else
-		    next_timeout = min(next_timeout, i->second.next_write_timeout);
+		    next_timeout = std::min(next_timeout, i->second.next_write_timeout);
 	    }
 	if (next_timeout == 0)
 	    return -1;
@@ -227,7 +227,7 @@ class scheduler
 
 	fd_context() : next_read_timeout(0), next_write_timeout(0) { }
 	};
-    map<int,fd_context> registered_handlers;
+    std::map<int,fd_context> registered_handlers;
     pollvector pollvec;
     };
 

@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/test.cpp,v $
- * $Revision: 1.9 $
- * $Date: 2001/01/22 11:35:29 $
+ * $Revision: 1.10 $
+ * $Date: 2001/01/22 14:23:32 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -45,14 +45,14 @@ class my_handler : public scheduler::event_handler
 	}
     virtual void read_timeout(int fd)
 	{
-	cerr << "fd " << fd << " had a read timeout." << endl;
+	std::cerr << "fd " << fd << " had a read timeout." << std::endl;
 	}
     virtual void write_timeout(int fd)
 	{
-	cerr << "fd " << fd << " had a write timeout." << endl;
+	std::cerr << "fd " << fd << " had a write timeout." << std::endl;
 	}
     char tmp[1024];
-    string buffer;
+    std::string buffer;
     scheduler& mysched;
     };
 
@@ -68,19 +68,19 @@ try
     while (!sched.empty())
 	{
 	sched.schedule();
-	sched.dump(cerr);
+	sched.dump(std::cerr);
 	}
 
     // done
     return 0;
     }
-catch(const exception &e)
+catch(const std::exception &e)
     {
-    cerr << "Caught exception: " << e.what() << endl;
+    std::cerr << "Caught exception: " << e.what() << std::endl;
     return 1;
     }
 catch(...)
     {
-    cerr << "Caught unknown exception." << endl;
+    std::cerr << "Caught unknown exception." << std::endl;
     return 1;
     }
