@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.12 $
- * $Date: 2001/01/22 13:51:09 $
+ * $Revision: 1.13 $
+ * $Date: 2001/01/22 13:52:21 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -60,13 +60,13 @@ class scheduler
 	    fdc = properties;
 	    fdc.handler = &handler;
 	    time_t now = time(0);
-	    if (properties.poll_events & POLLIN)
+	    if (properties.poll_events & POLLIN && fdc.read_timeout > 0)
 		{
 		fdc.next_read_timeout = now + fdc.read_timeout;
 		}
 	    else
 		fdc.next_read_timeout = 0;
-	    if (properties.poll_events & POLLOUT)
+	    if (properties.poll_events & POLLOUT && fdc.write_timeout > 0)
 		{
 		fdc.next_write_timeout = now + fdc.write_timeout;
 		}
@@ -163,18 +163,18 @@ class scheduler
 	return registered_handlers.empty();
 	}
 
-    void dump() const throw()
+    void dump(ostream& os) const
 	{
-	cout << "registered_handlers contains " << registered_handlers.size() << " entries." << endl;
+	os << "registered_handlers contains " << registered_handlers.size() << " entries." << endl;
 	map<int,fd_context>::const_iterator i;
 	for (i = registered_handlers.begin(); i != registered_handlers.end(); ++i)
 	    {
-	    cout << "fd = " << i->first;
+	    os << "fd = " << i->first;
 	    if (i->second.poll_events & POLLIN)
-		cout << "; readable (timeout: " << i->second.next_read_timeout << ")";
+		os << "; readable (timeout: " << i->second.next_read_timeout << ")";
 	    if (i->second.poll_events & POLLOUT)
-		cout << "; writeable (timeout: " << i->second.next_write_timeout << ")";
-	    cout << endl;
+		os << "; writeable (timeout: " << i->second.next_write_timeout << ")";
+	    os << endl;
 	    }
 	}
 
