@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.11 $
- * $Date: 2001/01/22 13:34:52 $
+ * $Revision: 1.12 $
+ * $Date: 2001/01/22 13:51:09 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -143,11 +143,15 @@ class scheduler
 	    if (fdc.next_read_timeout > 0 && fdc.next_read_timeout <= time_poll_returned)
 		{
 		fdc.handler->read_timeout(pfd.fd);
+		if (i >= pollvec.length() || pollvec.get_pollfd_array()[i].fd != pfd.fd)
+		    continue;	// The handler was removed.
 		fdc.next_read_timeout = time_poll_returned + fdc.read_timeout;
 		}
 	    if (fdc.next_write_timeout > 0 && fdc.next_write_timeout <= time_poll_returned)
 		{
 		fdc.handler->write_timeout(pfd.fd);
+		if (i >= pollvec.length() || pollvec.get_pollfd_array()[i].fd != pfd.fd)
+		    continue;	// The handler was removed.
 		fdc.next_write_timeout = time_poll_returned + fdc.write_timeout;
 		}
 	    ++i;
