@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.14 $
- * $Date: 2001/01/22 14:22:46 $
+ * $Revision: 1.15 $
+ * $Date: 2001/01/22 14:26:52 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -13,6 +13,7 @@
 // ISO C++ headers
 #include <stdexcept>
 #include <map>
+#include <string>
 
 // POSIX system headers
 #include <time.h>
@@ -113,7 +114,7 @@ class scheduler
 	    if (errno == EINTR)
 		goto poll_it;
 	    else
-		throw runtime_error("poll failed");
+		throw runtime_error(string("scheduler::schedule(): poll(2) failed: ") + strerror(errno));
 	    }
 	time_t time_poll_returned = time(0);
 
