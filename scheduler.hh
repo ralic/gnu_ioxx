@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.16 $
- * $Date: 2001/01/22 14:37:54 $
+ * $Revision: 1.17 $
+ * $Date: 2001/01/22 14:44:43 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -63,13 +63,15 @@ class scheduler
 	    time_t now = time(0);
 	    if (properties.poll_events & POLLIN && fdc.read_timeout > 0)
 		{
-		fdc.next_read_timeout = now + fdc.read_timeout;
+		if (fdc.next_read_timeout == 0)
+		    fdc.next_read_timeout = now + fdc.read_timeout;
 		}
 	    else
 		fdc.next_read_timeout = 0;
 	    if (properties.poll_events & POLLOUT && fdc.write_timeout > 0)
 		{
-		fdc.next_write_timeout = now + fdc.write_timeout;
+		if (fdc.next_write_timeout == 0)
+		    fdc.next_write_timeout = now + fdc.write_timeout;
 		}
 	    else
 		fdc.next_write_timeout = 0;
@@ -222,6 +224,8 @@ class scheduler
 	event_handler* handler;
 	time_t next_read_timeout;
 	time_t next_write_timeout;
+
+	fd_context() : next_read_timeout(0), next_write_timeout(0) { }
 	};
     map<int,fd_context> registered_handlers;
     pollvector pollvec;
