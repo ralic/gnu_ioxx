@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.5 $
- * $Date: 2000/08/31 09:54:57 $
+ * $Revision: 1.6 $
+ * $Date: 2000/08/31 10:13:52 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
@@ -25,7 +25,7 @@ class Scheduler
 	virtual void writable(int) = 0;
 	};
 
-    Scheduler()  { }
+    Scheduler()  : current_handler(0) { }
     ~Scheduler() { }
 
     void dump()
@@ -43,12 +43,15 @@ class Scheduler
 	while(!event_handlers.empty())
 	    {
 	    poll(pollvec.get_pollvec(), pollvec.size(), -1);
-	    for (size_t i = 0; i < pollvec.size(); ++i)
+	    for (current_handler = 0; current_handler < pollvec.size(); ++current_handler)
 		{
-		if (pollvec[i].revents & POLLIN)
-		    event_handlers[i].handler->readable(pollvec[i].fd);
-		if (pollvec[i].revents & POLLOUT)
-		    event_handlers[i].handler->writable(pollvec[i].fd);
+		if (pollvec[current_handler].revents & POLLIN)
+		    event_handlers[current_handler].handler->readable(pollvec[current_handler].fd);
+		}
+	    for (current_handler = 0; current_handler < pollvec.size(); ++current_handler)
+		{
+		if (pollvec[current_handler].revents & POLLOUT)
+		    event_handlers[current_handler].handler->writable(pollvec[current_handler].fd);
 		}
 	    }
 	}
@@ -56,7 +59,7 @@ class Scheduler
     void set_handler(int fd, EventHandler* handler, short flags)
 	{
 	flags &= (POLLIN | POLLOUT);
-	int pos;
+	size_t pos;
 	if (find_event_handler(fd, pos) == false)
 	    {
 	    if (handler == 0 || flags == 0)
@@ -77,6 +80,8 @@ class Scheduler
 	    pollvec[pos].fd             = fd;
 	    pollvec[pos].events         = flags;
 	    pollvec[pos].revents        = 0;
+	    if (pos <= current_handler)
+		++current_handler;
 	    }
 	else
 	    {
@@ -89,6 +94,8 @@ class Scheduler
 		{
 		pollvec.erase(pos);
 		event_handlers.erase(event_handlers.begin()+pos);
+		if (pos <= current_handler)
+		    --current_handler;
 		}
 	    }
 	}
@@ -96,6 +103,9 @@ class Scheduler
   private:			// don't copy me
     Scheduler(const Scheduler&);
     Scheduler& operator= (const Scheduler&);
+
+  private:
+    size_t current_handler;
 
   private:
     struct HandlerContext
@@ -116,7 +126,7 @@ class Scheduler
 	    { return (lhs.fd < rhs); }
 	};
 
-    bool find_event_handler(int fd, int& pos)
+    bool find_event_handler(int fd, size_t& pos)
 	{
 	typedef vector<HandlerContext>::iterator eh_iterator;
 	pair<eh_iterator,eh_iterator> i =
