@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/pollvector.hh,v $
- * $Revision: 1.9 $
- * $Date: 2001/09/15 17:26:41 $
+ * $Revision: 1.10 $
+ * $Date: 2001/09/17 16:32:48 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -22,7 +22,7 @@
 class pollvector
     {
   public:
-    pollvector() : array(0), array_size(0), array_len(0)
+    explicit pollvector() : array(0), array_size(0), array_len(0)
 	{
 	reserve(1);
 	}
