@@ -5,7 +5,7 @@ AR		= ar
 RANLIB		= ranlib
 
 CPPFLAGS	=
-CXXFLAGS	= -Wall
+CXXFLAGS	= -pipe -Wall -pedantic
 LDFLAGS		=
 
 OBJS		=
