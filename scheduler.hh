@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hh,v $
- * $Revision: 1.21 $
- * $Date: 2001/09/12 17:38:11 $
+ * $Revision: 1.22 $
+ * $Date: 2001/09/12 17:39:41 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -34,6 +34,8 @@ class scheduler
 	virtual void fd_is_writable(int) = 0;
 	virtual void read_timeout(int) = 0;
 	virtual void write_timeout(int) = 0;
+	virtual void error_condition(int) = 0;
+	virtual void pollhup(int) = 0;
 	};
 
     struct handler_properties
@@ -142,6 +144,18 @@ class scheduler
 		    continue;	// The handler was removed.
 		if (fdc.next_write_timeout > 0)
 		    fdc.next_write_timeout = time_poll_returned + fdc.write_timeout;
+		}
+	    if (pfd.revents & POLLERR)
+		{
+		fdc.handler->error_condition(pfd.fd);
+		if (i >= pollvec.length() || pollvec.get_pollfd_array()[i].fd != pfd.fd)
+		    continue;	// The handler was removed.
+		}
+	    if (pfd.revents & POLLHUP)
+		{
+		fdc.handler->pollhup(pfd.fd);
+		if (i >= pollvec.length() || pollvec.get_pollfd_array()[i].fd != pfd.fd)
+		    continue;	// The handler was removed.
 		}
 	    if (fdc.next_read_timeout > 0 && fdc.next_read_timeout <= time_poll_returned)
 		{
