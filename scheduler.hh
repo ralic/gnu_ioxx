@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hh,v $
- * $Revision: 1.22 $
- * $Date: 2001/09/12 17:39:41 $
+ * $Revision: 1.23 $
+ * $Date: 2001/09/17 15:40:47 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -111,12 +111,12 @@ class scheduler
 	    return;
 
 	// Call poll(2).
-      poll_it:
+
 	int rc = poll(pollvec.get_pollfd_array(), pollvec.length(), get_poll_timeout());
 	if (rc == -1)
 	    {
 	    if (errno == EINTR)
-		goto poll_it;
+		return;
 	    else
 		throw std::runtime_error(std::string("scheduler::schedule(): poll(2) failed: ") + strerror(errno));
 	    }
