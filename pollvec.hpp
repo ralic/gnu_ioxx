@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/pollvec.hpp,v $
- * $Revision: 1.1 $
- * $Date: 2000/08/22 18:59:31 $
+ * $Revision: 1.2 $
+ * $Date: 2000/08/31 10:00:04 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
@@ -44,7 +44,7 @@ class pollvec_t
 	    throw out_of_range("Attempt to access pollvec beyond its contents.");
 	return pollvec[pos];
 	}
-    operator pollfd* ()
+    pollfd* get_pollvec()
 	{
 	return pollvec;
 	}
