@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hh,v $
- * $Revision: 1.27 $
- * $Date: 2001/09/19 09:59:34 $
+ * $Revision: 1.28 $
+ * $Date: 2001/09/19 20:34:31 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -47,6 +47,7 @@ class scheduler
 
     explicit scheduler()
 	{
+	use_accurate_timeouts();
 	}
 
     ~scheduler()
@@ -197,6 +198,18 @@ class scheduler
 	return registered_handlers.empty();
 	}
 
+    void set_hard_timeout(int to)
+	{
+	if (to < -1)
+	    throw std::invalid_argument("scheduler: Hard timeouts must be -1 or greater.");
+	hard_timeout = to;
+	}
+
+    void accurate_timeouts()
+	{
+	hard_timeout = -2;
+	}
+
 #if 0
     void dump(std::ostream& os) const
 	{
@@ -220,12 +233,8 @@ class scheduler
 
     int get_poll_timeout()
 	{
-	// This routine should use a sophisticated mechanism for
-	// determinig that timeout without having to walk through the
-	// whole container, but implementing this is a _lot_ of work
-	// and in most cases the performance benefit would be
-	// neglictable. Hence I leave that as a "to do" item for the
-	// future.
+	if (hard_timeout >= -1)
+	    return hard_timeout;
 
 	time_t next_timeout = 0;
 	handlermap_t::const_iterator i;
@@ -266,6 +275,7 @@ class scheduler
     typedef std::map<int,fd_context> handlermap_t;
     handlermap_t registered_handlers;
     pollvector pollvec;
+    int hard_timeout;
     };
 
 #endif // !defined(__SCHEDULER_HH__)
