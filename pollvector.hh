@@ -3,8 +3,8 @@
  * All rights reserved.
  */
 
-#ifndef __POLLVECTOR_HH__
-#define __POLLVECTOR_HH__
+#ifndef POLLVECTOR_HH
+#define POLLVECTOR_HH
 
 // ISO C++ headers
 #include <stdexcept>
@@ -133,4 +133,4 @@ class pollvector
 	};
     };
 
-#endif // !defined(__POLLVECTOR_HH__)
+#endif // !defined(POLLVECTOR_HH)

@@ -3,8 +3,8 @@
  * All rights reserved.
  */
 
-#ifndef __SCHEDULER_HH__
-#define __SCHEDULER_HH__
+#ifndef SCHEDULER_HH
+#define SCHEDULER_HH
 
 // ISO C++ headers
 #include <stdexcept>
@@ -275,4 +275,4 @@ class scheduler
     int hard_poll_interval;
     };
 
-#endif // !defined(__SCHEDULER_HH__)
+#endif // !defined(SCHEDULER_HH)
