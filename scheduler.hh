@@ -194,14 +194,14 @@ class scheduler
 	return registered_handlers.empty();
 	}
 
-    void set_poll_interval(int to)
+    void set_poll_interval(int to) throw(std::invalid_argument)
 	{
 	if (to < -1)
 	    throw std::invalid_argument("scheduler: Hard poll intervals must be -1 or greater.");
 	hard_poll_interval = to;
 	}
 
-    void use_accurate_poll_interval()
+    void use_accurate_poll_interval() throw()
 	{
 	hard_poll_interval = -2;
 	}
