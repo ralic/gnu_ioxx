@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/test.cpp,v $
- * $Revision: 1.5 $
- * $Date: 2000/08/31 09:54:57 $
+ * $Revision: 1.6 $
+ * $Date: 2000/08/31 13:55:36 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
@@ -35,7 +35,13 @@ class Pipe : public Scheduler::EventHandler
 	else if (len == 0)
 	    {
 	    sched.set_handler(fd, 0, 0);
-	    eof = true;
+	    if (buffer.empty())
+		{
+		sched.set_handler(out_fd, 0, 0);
+		delete this;
+		}
+	    else
+		eof = true;
 	    }
 	else
 	    {
@@ -46,18 +52,20 @@ class Pipe : public Scheduler::EventHandler
 	}
     virtual void writable(int fd)
 	{
-	ssize_t len = write(fd, buffer.data(), buffer.size());
-	if (len < 0)
-	    throw runtime_error("write() failed.");
-	else
-	    buffer.erase(0, len);
-	cerr << "write() returned " << len << endl;
-
 	if (buffer.empty())
 	    {
 	    sched.set_handler(fd, 0, 0);
 	    if (eof)
 		delete this;
+	    }
+	else
+	    {
+	    ssize_t len = write(fd, buffer.data(), buffer.size());
+	    if (len < 0)
+		throw runtime_error("write() failed.");
+	    else
+		buffer.erase(0, len);
+	    cerr << "write() returned " << len << endl;
 	    }
 	}
     };
