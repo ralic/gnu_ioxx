@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/test.cpp,v $
- * $Revision: 1.8 $
- * $Date: 2001/01/20 21:31:40 $
+ * $Revision: 1.9 $
+ * $Date: 2001/01/22 11:35:29 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -37,19 +37,19 @@ class my_handler : public scheduler::event_handler
 	}
     virtual void fd_is_writable(int fd)
 	{
+	if (buffer.empty())
+	    mysched.remove_handler(1);
 	int rc = write(fd, buffer.data(), buffer.length());
 	if (rc > 0)
 	    buffer.erase(0, rc);
-	if (buffer.empty())
-	    mysched.remove_handler(1);
 	}
     virtual void read_timeout(int fd)
 	{
-	cout << "fd " << fd << " had a read timeout." << endl;
+	cerr << "fd " << fd << " had a read timeout." << endl;
 	}
     virtual void write_timeout(int fd)
 	{
-	cout << "fd " << fd << " had a write timeout." << endl;
+	cerr << "fd " << fd << " had a write timeout." << endl;
 	}
     char tmp[1024];
     string buffer;
@@ -63,12 +63,12 @@ try
     my_handler my_handler(sched);
     my_handler.prop.poll_events   = POLLIN;
     my_handler.prop.read_timeout  = 5;
-    my_handler.prop.write_timeout = 5;
+    my_handler.prop.write_timeout = 0;
     sched.register_handler(0, my_handler, my_handler.prop);
     while (!sched.empty())
 	{
 	sched.schedule();
-	sched.dump();
+	sched.dump(cerr);
 	}
 
     // done
