@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/test.cpp,v $
- * $Revision: 1.3 $
- * $Date: 2000/08/22 17:45:14 $
+ * $Revision: 1.4 $
+ * $Date: 2000/08/22 18:59:31 $
  *
  * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
  * All rights reserved.
@@ -10,60 +10,62 @@
 #include <unistd.h>
 #include "scheduler.hpp"
 
-class read_callback : public Scheduler::io_callback_t
+class Pipe : public Scheduler::EventHandler
     {
-    string& buffer;
-  public:
-    read_callback(string& buf) : buffer(buf) { }
-    virtual ~read_callback() { }
-    virtual void operator() (int fd)
-	{
-	char buf[10];
-	ssize_t rc = read(fd, buf, sizeof(buf));
-	cout << "read_callback called, read() returned " << rc << "." << endl;
-	if (rc < 0)
-	    throw runtime_error("read() failed.");
-	else if (rc == 0)
-	    {
-	    // eof
-	    }
-	else
-	    buffer.append(buf, rc);
-	}
-    };
+    string      buffer;
+    Scheduler&  sched;
 
-class write_callback : public Scheduler::io_callback_t
-    {
-    string& buffer;
   public:
-    write_callback(string& buf) : buffer(buf) { }
-    virtual ~write_callback() { }
-    virtual void operator() (int fd)
+    Pipe(Scheduler& sched_arg) : sched(sched_arg)
 	{
-	ssize_t rc = write(fd, buffer.data(), buffer.size());
-	cout << "write_callback called, write() returned " << rc << "." << endl;
-	if (rc < 0)
+	}
+    virtual ~Pipe()
+	{
+	}
+
+    virtual void readable(int fd)
+	{
+	char buf[4*1024];
+	ssize_t len = read(fd, buf, sizeof(buf));
+	if (len < 0)
+	    throw runtime_error("read() failed.");
+	else if (len == 0)
+	    sched.set_handler(fd, 0, 0);
+	else
+	    {
+	    buffer.append(buf, len);
+	    sched.set_handler(1, this, POLLOUT);
+	    }
+	cerr << "read() returned " << len << endl;
+	}
+
+    virtual void writable(int fd)
+	{
+	if (buffer.empty())
+	    {
+	    sched.set_handler(fd, 0, 0);
+	    return;
+	    }
+
+	ssize_t len = write(fd, buffer.data(), buffer.size());
+	if (len < 0)
 	    throw runtime_error("write() failed.");
 	else
-	    buffer.erase(0, rc);
+	    buffer.erase(0, len);
+	cerr << "write() returned " << len << endl;
 	}
     };
 
 int main()
 try
     {
-    string buf;
-    read_callback  rc(buf);
-    write_callback wc(buf);
-    Scheduler      sched;
+    Scheduler  sched;
+    Pipe*      pipe = new Pipe(sched);
 
-    sched.set_read_handler(0, &rc);
-    sched.set_write_handler(2, &wc);
+    sched.set_handler(0, pipe, POLLIN);
+    sched.set_handler(1, pipe, POLLOUT);
     sched.dump();
-    for(;;)
-	{
-	sched.schedule();
-	}
+    sched.schedule();
 
     // done
     return 0;
