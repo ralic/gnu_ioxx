@@ -1,152 +1,174 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hpp,v $
- * $Revision: 1.6 $
- * $Date: 2000/08/31 10:13:52 $
+ * $Revision: 1.7 $
+ * $Date: 2000/08/31 13:54:41 $
  *
- * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
+ * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
  */
 
 #ifndef __SCHEDULER_HPP__
 #define __SCHEDULER_HPP__
 
-#include <vector>
-#include <algorithm>
-#include <time.h>
-#include "pollvec.hpp"
+// ISO C++ headers
+#include <stdexcept>
+#include <map>
 
-class Scheduler
+// POSIX system headers
+#include <time.h>
+
+// My own headers
+#include "pollvector.hpp"
+
+class scheduler
     {
   public:
-    struct EventHandler
+    class event_handler
 	{
-	virtual ~EventHandler() = 0;
-	virtual void readable(int) = 0;
-	virtual void writable(int) = 0;
+      public:
+	event_handler() { }
+	virtual ~event_handler() = 0;
+	virtual void fd_is_readable(int) = 0;
+	virtual void fd_is_writable(int) = 0;
+	virtual void read_timeout(int) = 0;
+	virtual void write_timeout(int) = 0;
 	};
 
-    Scheduler()  : current_handler(0) { }
-    ~Scheduler() { }
-
-    void dump()
+    struct handler_properties
 	{
-	cerr << "Dumping contents of event_handlers and pollvec:" << endl;
-	for (size_t i = 0; i < event_handlers.size(); ++i)
+	short        poll_events;
+	unsigned int read_timeout;
+	unsigned int write_timeout;
+	};
+
+    void register_handler(int fd, event_handler& handler, const handler_properties& properties)
+	{
+	if (fd < 0)
+	    throw invalid_argument("scheduler::register_handle(): File descriptors must be 0 or greater!");
+
+	// If we are adding a _new_ entry, the operation on both
+	// registered_handlers and pollvec may fail. In case the
+	// operation on pollvec fails, we have to restore the original
+	// state of registered_handlers. If the entry exists already,
+	// the only way pollvec will throw an exception is if the
+	// array is totally fucked up already, and then we're lost
+	// anyway, so I ignore this case.
+
+	map<int,fd_context>::iterator i = registered_handlers.find(fd);
+	if (i == registered_handlers.end())
 	    {
-	    cerr << "fd: " << event_handlers[i].fd    << " / " << pollvec[i].fd << ", "
-		 << "flags: " << event_handlers[i].flags << " / " << pollvec[i].events << endl;
+	    fd_context& fdc = registered_handlers[fd];
+	    fdc = properties;
+	    fdc.handler = &handler;
+	    try
+		{
+		pollvec[fd].events = properties.poll_events;
+		}
+	    catch(...)
+		{
+		registered_handlers.erase(fd);
+		throw;
+		}
 	    }
+	else
+	    {
+	    i->second = properties;
+	    i->second.handler = &handler;
+	    pollvec[fd].events = properties.poll_events;
+	    }
+	}
+
+    void remove_handler(int fd)
+	{
+	if (fd < 0)
+	    throw invalid_argument("scheduler::remove_handle(): File descriptors must be 0 or greater!");
+	registered_handlers.erase(fd);
+	pollvec.erase(fd);
+	}
+
+    const handler_properties* get_handler_properties(int fd)
+	{
+	if (fd < 0)
+	    throw invalid_argument("scheduler::remove_handle(): File descriptors must be 0 or greater!");
+	map<int,fd_context>::const_iterator i = registered_handlers.find(fd);
+	if (i != registered_handlers.end())
+	    return &(i->second);
+	else
+	    return 0;
 	}
 
     void schedule()
 	{
-	while(!event_handlers.empty())
+	// Do we have work to do at all?
+
+	if (empty())
+	    return;
+
+	// Call poll(2).
+
+	int rc = poll(pollvec.get_pollfd_array(), pollvec.length(), -1);
+	if (rc == -1)
+	    throw runtime_error("poll failed");
+	else if (rc == 0)
+	    return;
+
+	// Now deliver the callbacks.
+
+	for (size_t i = 0; i < pollvec.length(); )
 	    {
-	    poll(pollvec.get_pollvec(), pollvec.size(), -1);
-	    for (current_handler = 0; current_handler < pollvec.size(); ++current_handler)
+	    pollfd pfd = pollvec.get_pollfd_array()[i];
+	    fd_context& fdc = registered_handlers[pfd.fd];
+
+	    if (pfd.events & pfd.revents & POLLIN)
 		{
-		if (pollvec[current_handler].revents & POLLIN)
-		    event_handlers[current_handler].handler->readable(pollvec[current_handler].fd);
+		fdc.handler->fd_is_readable(pfd.fd);
+		if (i >= pollvec.length() || pollvec.get_pollfd_array()[i].fd != pfd.fd)
+		    continue;	// The handler was removed.
 		}
-	    for (current_handler = 0; current_handler < pollvec.size(); ++current_handler)
+	    if (pfd.events & pfd.revents & POLLOUT)
 		{
-		if (pollvec[current_handler].revents & POLLOUT)
-		    event_handlers[current_handler].handler->writable(pollvec[current_handler].fd);
+		fdc.handler->fd_is_writable(pfd.fd);
+		if (i >= pollvec.length() || pollvec.get_pollfd_array()[i].fd != pfd.fd)
+		    continue;	// The handler was removed.
 		}
+	    ++i;
 	    }
 	}
 
-    void set_handler(int fd, EventHandler* handler, short flags)
+    bool empty() const
 	{
-	flags &= (POLLIN | POLLOUT);
-	size_t pos;
-	if (find_event_handler(fd, pos) == false)
-	    {
-	    if (handler == 0 || flags == 0)
-		return;
-
-	    pollvec.insert(pos);
-	    try {
-		event_handlers.insert(event_handlers.begin()+pos, HandlerContext());
-		}
-	    catch(...)
-		{
-		pollvec.erase(pos);
-		throw;
-		}
-	    event_handlers[pos].fd      = fd;
-	    event_handlers[pos].handler = handler;
-	    event_handlers[pos].flags   = flags;
-	    pollvec[pos].fd             = fd;
-	    pollvec[pos].events         = flags;
-	    pollvec[pos].revents        = 0;
-	    if (pos <= current_handler)
-		++current_handler;
-	    }
-	else
-	    {
-	    if (handler && flags)
-		{
-		event_handlers[pos].handler = handler;
-		event_handlers[pos].flags   = flags;
-		}
-	    else
-		{
-		pollvec.erase(pos);
-		event_handlers.erase(event_handlers.begin()+pos);
-		if (pos <= current_handler)
-		    --current_handler;
-		}
-	    }
+	return registered_handlers.empty();
 	}
 
-  private:			// don't copy me
-    Scheduler(const Scheduler&);
-    Scheduler& operator= (const Scheduler&);
-
-  private:
-    size_t current_handler;
-
-  private:
-    struct HandlerContext
+    void dump() const throw()
 	{
-	int            fd;
-	EventHandler*  handler;
-	short          flags;
+#if 1
+	cout << "registered_handlers contains " << registered_handlers.size() << " entries." << endl;
+	map<int,fd_context>::const_iterator i;
+	for (i = registered_handlers.begin(); i != registered_handlers.end(); ++i)
+	    cout << "fd = " << i->first << endl;
+	pollvec.dump();
+#endif
+	}
+
+  private:
+    struct fd_context : public handler_properties
+	{
+	event_handler* handler;
+
+	fd_context& operator= (const handler_properties& rhs)
+	    {
+	    this->handler_properties::operator=(rhs);
+	    return *this;
+	    }
 	};
-    vector<HandlerContext> event_handlers;
-    pollvec_t pollvec;
-
-  private:
-    struct less_cmp
-	{
-	bool operator() (const int lhs, const HandlerContext& rhs) const
-	    { return (lhs < rhs.fd); }
-	bool operator() (const HandlerContext& lhs, const int rhs) const
-	    { return (lhs.fd < rhs); }
-	};
-
-    bool find_event_handler(int fd, size_t& pos)
-	{
-	typedef vector<HandlerContext>::iterator eh_iterator;
-	pair<eh_iterator,eh_iterator> i =
-	    equal_range(event_handlers.begin(), event_handlers.end(), fd, less_cmp());
-	if (i.first == i.second)
-	    {
-	    pos = i.first - event_handlers.begin();
-	    return false;
-	    }
-	else
-	    {
-	    if (i.second - i.first != 1)
-		throw logic_error("Scheduler: Internal list of event handlers is corrupt!");
-	    pos = i.first - event_handlers.begin();
-	    return true;
-	    }
-	}
+    map<int,fd_context> registered_handlers;
+    pollvector pollvec;
     };
 
-Scheduler::EventHandler::~EventHandler()
+// Destructors must exist, even if they're pure virtual.
+
+scheduler::event_handler::~event_handler()
     {
     }
 

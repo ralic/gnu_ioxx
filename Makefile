@@ -5,7 +5,7 @@ AR		= ar
 RANLIB		= ranlib
 
 CPPFLAGS	=
-CXXFLAGS	= -pipe -Wall -pedantic
+CXXFLAGS	= -finline-functions -pipe -Wall -pedantic
 LDFLAGS		=
 
 OBJS		=
@@ -13,15 +13,15 @@ OBJS		=
 .cpp.o:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $<
 
-all:		libscheduler.a test
+all:		test
 
 libscheduler.a:	$(OBJS)
 	@rm -f $@
 	$(AR) cr $@ $(OBJS)
 	$(RANLIB) $@
 
-test:		test.o libscheduler.a
-	$(CXX) $(LDFLAGS) -o $@ test.o libscheduler.a
+test:		test.o
+	$(CXX) $(LDFLAGS) -o $@ test.o
 
 clean::
 	rm -f libscheduler.a $(OBJS)
@@ -29,4 +29,4 @@ clean::
 
 # Dependencies
 
-test.o: scheduler.hpp pollvec.hpp
+test.o: scheduler.hpp pollvector.hpp

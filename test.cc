@@ -1,82 +1,70 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/test.cpp,v $
- * $Revision: 1.6 $
- * $Date: 2000/08/31 13:55:36 $
+ * $Revision: 1.7 $
+ * $Date: 2000/09/11 10:25:08 $
  *
- * Copyright (c) 2000 by Peter Simons <simons@ieee.org>.
+ * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
  */
 
+#include <iostream>
+#include <string>
 #include <unistd.h>
 #include "scheduler.hpp"
 
-class Pipe : public Scheduler::EventHandler
+class my_handler : public scheduler::event_handler
     {
-    string      buffer;
-    Scheduler&  sched;
-    int         out_fd;
-    bool        eof;
-
   public:
-    Pipe(Scheduler& sched_arg, int in_fd_arg, int out_fd_arg)
-	    : sched(sched_arg), out_fd(out_fd_arg), eof(false)
-	{
-	sched.set_handler(in_fd_arg, this, POLLIN);
-	}
-    virtual ~Pipe()
+    my_handler(scheduler& sched) : mysched(sched)
 	{
 	}
-    virtual void readable(int fd)
+    ~my_handler()
 	{
-	char buf[128];
-	ssize_t len = read(fd, buf, sizeof(buf));
-	if (len < 0)
-	    throw runtime_error("read() failed.");
-	else if (len == 0)
+	}
+    scheduler::handler_properties prop;
+  private:
+    virtual void fd_is_readable(int fd)
+	{
+	int rc = read(fd, &tmp, sizeof(tmp));
+	if (rc == 0)
+	    mysched.remove_handler(0);
+	else if (rc > 0)
 	    {
-	    sched.set_handler(fd, 0, 0);
-	    if (buffer.empty())
-		{
-		sched.set_handler(out_fd, 0, 0);
-		delete this;
-		}
-	    else
-		eof = true;
+	    buffer.append(tmp, rc);
+	    prop.poll_events = POLLOUT;
+	    mysched.register_handler(1, *this, prop);
 	    }
-	else
-	    {
-	    buffer.append(buf, len);
-	    sched.set_handler(out_fd, this, POLLOUT);
-	    }
-	cerr << "read() returned " << len << endl;
 	}
-    virtual void writable(int fd)
+    virtual void fd_is_writable(int fd)
 	{
+	int rc = write(fd, buffer.data(), buffer.length());
+	if (rc > 0)
+	    buffer.erase(0, rc);
 	if (buffer.empty())
-	    {
-	    sched.set_handler(fd, 0, 0);
-	    if (eof)
-		delete this;
-	    }
-	else
-	    {
-	    ssize_t len = write(fd, buffer.data(), buffer.size());
-	    if (len < 0)
-		throw runtime_error("write() failed.");
-	    else
-		buffer.erase(0, len);
-	    cerr << "write() returned " << len << endl;
-	    }
+	    mysched.remove_handler(1);
 	}
+    virtual void read_timeout(int fd)
+	{
+	cout << "fd " << fd << " had a read timeout." << endl;
+	}
+    virtual void write_timeout(int fd)
+	{
+	cout << "fd " << fd << " had a write timeout." << endl;
+	}
+    char tmp[1024];
+    string buffer;
+    scheduler& mysched;
     };
 
 int main()
 try
     {
-    Scheduler  sched;
-    new Pipe(sched, 0, 1);
-    sched.dump();
-    sched.schedule();
+    scheduler sched;
+    my_handler my_handler(sched);
+    my_handler.prop.poll_events = POLLIN;
+    sched.register_handler(0, my_handler, my_handler.prop);
+    while (!sched.empty())
+	sched.schedule();
 
     // done
     return 0;
