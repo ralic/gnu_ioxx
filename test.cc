@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/test.cpp,v $
- * $Revision: 1.7 $
- * $Date: 2000/09/11 10:25:08 $
+ * $Revision: 1.8 $
+ * $Date: 2001/01/20 21:31:40 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -61,10 +61,15 @@ try
     {
     scheduler sched;
     my_handler my_handler(sched);
-    my_handler.prop.poll_events = POLLIN;
+    my_handler.prop.poll_events   = POLLIN;
+    my_handler.prop.read_timeout  = 5;
+    my_handler.prop.write_timeout = 5;
     sched.register_handler(0, my_handler, my_handler.prop);
     while (!sched.empty())
+	{
 	sched.schedule();
+	sched.dump();
+	}
 
     // done
     return 0;
