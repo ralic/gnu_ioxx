@@ -1,7 +1,7 @@
 /*
  * $Source: /home/cvs/lib/libscheduler/scheduler.hh,v $
- * $Revision: 1.26 $
- * $Date: 2001/09/18 16:21:45 $
+ * $Revision: 1.27 $
+ * $Date: 2001/09/19 09:59:34 $
  *
  * Copyright (c) 2001 by Peter Simons <simons@computer.org>.
  * All rights reserved.
@@ -44,6 +44,14 @@ class scheduler
 	unsigned int read_timeout;
 	unsigned int write_timeout;
 	};
+
+    explicit scheduler()
+	{
+	}
+
+    ~scheduler()
+	{
+	}
 
     void register_handler(int fd, event_handler& handler, const handler_properties& properties)
 	{
@@ -207,6 +215,9 @@ class scheduler
 #endif
 
   private:
+    scheduler(const scheduler&);
+    scheduler& operator= (const scheduler&);
+
     int get_poll_timeout()
 	{
 	// This routine should use a sophisticated mechanism for
