@@ -24,7 +24,7 @@ class scheduler
     class event_handler
 	{
       public:
-	event_handler() { }
+	explicit event_handler() { }
 	virtual ~event_handler() = 0;
 	virtual void fd_is_readable(int) = 0;
 	virtual void fd_is_writable(int) = 0;
@@ -36,6 +36,7 @@ class scheduler
 
     struct handler_properties
 	{
+	explicit handler_properties() { }
 	short        poll_events;
 	unsigned int read_timeout;
 	unsigned int write_timeout;
