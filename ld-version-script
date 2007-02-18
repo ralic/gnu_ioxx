@@ -1,0 +1,12 @@
+# ld-version-script
+#
+# symbol management for the ioxx library
+
+VERS
+{
+    global:
+                extern "C++" { ioxx* };
+                extern "C++" { boost*logging* };
+    local:
+                *;
+};
