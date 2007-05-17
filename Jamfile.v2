@@ -1,29 +1,3 @@
-project ioxx ;
+# ioxx/Jamfile.v2
 
-path-constant VERSION_SCRIPT : ld-version-script ;
-
-lib ioxx
-  : iovector.cpp
-    logging.cpp
-    new-socket.cpp
-    probe-poll.cpp
-    probe.cpp
-    socket.cpp
-  : <use>/boost
-    <use>/boost/log//boost_log
-    <toolset>gcc:<cxxflags>"-fvisibility=hidden"
-#   <link>shared:<linkflags>"-Wl,--version-script=$(VERSION_SCRIPT)"
-  :
-  : <use>/boost <library>/boost/log//boost_log
-  ;
-
-test-suite ioxx_tests
-    : [ run     test-iovector.cpp                               ]
-      [ run     test-probe.cpp ioxx boost_prgmon                ]
-      [ run     test-socket.cpp ioxx                            ]
-    ;
-
-
-# libraries
-
-alias boost_prgmon : /boost/test//boost_prg_exec_monitor ;
+build-project test ;

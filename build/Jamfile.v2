@@ -1,0 +1,6 @@
+# ioxx/build/Jamfile.v2
+
+project /ioxx
+  : source-location ../src
+    requirements    <include>..
+  ;

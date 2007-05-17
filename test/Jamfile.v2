@@ -1,0 +1,12 @@
+# ioxx/test/Jamfile.v2
+
+project
+  : requirements <include>..
+  ;
+
+test-suite ioxx_tests
+  : [ compile   memory.cpp ]
+    [ link      iovec-is-valid-range.cpp ]
+  ;
+
+alias boost_prgmon : /boost/test//boost_prg_exec_monitor ;
