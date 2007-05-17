@@ -79,18 +79,16 @@ namespace boost
 namespace ioxx
 {
   template<>
-  inline iovec & reset_begin(iovec & iov, byte_iterator b)
+  inline void reset_begin(iovec & iov, byte_iterator b)
   {
     iov.iov_base = b;
-    return iov;
   }
 
   template<>
-  inline iovec & reset_end(iovec & iov, byte_iterator e)
+  inline void reset_end(iovec & iov, byte_iterator e)
   {
     BOOST_ASSERT(begin(iov) <= e);
     iov.iov_len = e - begin(iov);
-    return iov;
   }
 }
 
