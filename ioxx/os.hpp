@@ -45,7 +45,13 @@ namespace ioxx
    *  \return number of \em bytes actually read; zero signifies end of input
    *  \throw  socket_error in case of an I/O error
    */
-  byte_size read(weak_socket s, iovec * begin, iovec const * end);
+  byte_size read( weak_socket             s
+                , iovec *                 begin
+                , iovec const *           end
+                , native::address *       peer_addr     = 0
+                , native::address_size *  peer_addr_len = 0
+                , char const *            error_context = 0
+                );
 
   /**
    *  \brief Write a non-continuous memory buffer.
@@ -57,7 +63,13 @@ namespace ioxx
    *  \return number of \em bytes actually written
    *  \throw  socket_error in case of an I/O error
    */
-  byte_size write(weak_socket s, iovec const * begin, iovec const * end);
+  byte_size write( weak_socket s
+                 , iovec const *           begin
+                 , iovec const *           end
+                 , native::address *       peer_addr     = 0
+                 , native::address_size    peer_addr_len = 0
+                 , char const *            error_context = 0
+                 );
 }
 
 #endif // IOXX_OS_HPP_INCLUDED
