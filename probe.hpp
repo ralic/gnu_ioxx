@@ -28,8 +28,7 @@ namespace ioxx
     { None      = 1 << 0
     , Readable  = 1 << 1
     , Writable  = 1 << 2
-    , Error     = 1 << 6
-    , UNUSED    = 1 << 7      // all bits above the 8th are free
+    , Error     = 1 << 7      // all bits above the 8th are free
     };
 
   ///@{
