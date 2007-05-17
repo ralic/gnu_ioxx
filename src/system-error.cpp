@@ -13,12 +13,18 @@
 #include "ioxx/os.hpp"
 #include <cerrno>
 
+static std::string str()
+{
+    using namespace std;
+    return strerror(errno);
+}
+
 ioxx::system_error::system_error()
-: boost::system::system_error(errno, boost::system::errno_ecat)
+: std::runtime_error(str())
 {
 }
 
 ioxx::system_error::system_error(std::string const & msg)
-: boost::system::system_error(errno, boost::system::errno_ecat, msg)
+: std::runtime_error(msg + ": " + str())
 {
 }

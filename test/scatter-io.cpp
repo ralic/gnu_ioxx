@@ -24,8 +24,8 @@ int main(int, char**)
   std::vector<ioxx::byte_type>  buffer(1024u);
   std::vector<ioxx::iovec>      iovec_array(1u);
   ioxx::reset(iovec_array[0], &buffer[0], &buffer[buffer.size()]);
-  ioxx::byte_size n( ioxx::read(sin, &iovec_array[0], &iovec_array[iovec_array.size()], 0, 0, "can't read") );
-  n = ioxx::write(sin, &iovec_array[0], &iovec_array[iovec_array.size()]);
+  ioxx::read(sin, &iovec_array[0], &iovec_array[iovec_array.size()], 0, 0, "can't read");
+  ioxx::write(sout, &iovec_array[0], &iovec_array[iovec_array.size()]);
 
   return 0;
 }

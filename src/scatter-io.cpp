@@ -17,23 +17,23 @@
 
 using namespace std;
 
-ioxx::byte_size ioxx::read( weak_socket             s
-                          , iovec *                 begin
-                          , iovec const *           end
-                          , native::address *       peer_addr
-                          , native::address_size *  peer_addr_len
-                          , char const *            error_context
-                          )
+ioxx::scatter_iterator ioxx::read( weak_socket             s
+                                 , iovec_iterator          iov_begin
+                                 , iovec_const_iterator    iov_end
+                                 , native::address *       peer_addr
+                                 , native::address_size *  peer_addr_len
+                                 , char const *            error_context
+                                 )
 {
   BOOST_ASSERT(s >= 0);
-  BOOST_ASSERT(begin < end);
+  BOOST_ASSERT(iov_begin < iov_end);
   BOOST_ASSERT(peer_addr  || !peer_addr_len);
   BOOST_ASSERT(!peer_addr || (peer_addr_len && *peer_addr_len > 0));
   msghdr msg =
     { peer_addr
     , peer_addr_len ? *peer_addr_len : static_cast<native::address_size>(0)
-    , begin
-    , static_cast<size_t>(end - begin)
+    , iov_begin
+    , static_cast<size_t>(iov_end - iov_begin)
     , static_cast<void *>(0)                    // control data
     , static_cast<native::address_size>(0)      // control data size
     , static_cast<int>(0)                       // flags: set on return
@@ -41,30 +41,34 @@ ioxx::byte_size ioxx::read( weak_socket             s
   ssize_t const rc( recvmsg(s, &msg, MSG_DONTWAIT) );
   if (rc < 0) throw system_error(error_context ? error_context : "read() failed");
   if (peer_addr_len) *peer_addr_len = msg.msg_namelen;
-  return rc;
+  byte_iterator i( begin(*iov_begin) );
+  paged_advance(iov_begin, i, static_cast<byte_size>(rc));
+  return scatter_iterator(iov_begin, i);
 }
 
-ioxx::byte_size ioxx::write( weak_socket             s
-                           , iovec const *           begin
-                           , iovec const *           end
-                           , native::address *       peer_addr
-                           , native::address_size    peer_addr_len
-                           , char const *            error_context
-                           )
+ioxx::scatter_const_iterator ioxx::write( weak_socket             s
+                                        , iovec_const_iterator    iov_begin
+                                        , iovec_const_iterator    iov_end
+                                        , native::address *       peer_addr
+                                        , native::address_size    peer_addr_len
+                                        , char const *            error_context
+                                        )
 {
   BOOST_ASSERT(s >= 0);
-  BOOST_ASSERT(begin < end);
+  BOOST_ASSERT(iov_begin < iov_end);
   BOOST_ASSERT(peer_addr  || !peer_addr_len);
   BOOST_ASSERT(!peer_addr || peer_addr_len > 0);
   msghdr msg =
     { peer_addr, peer_addr_len
-    , const_cast<iovec *>(begin)
-    , static_cast<size_t>(end - begin)
+    , const_cast<iovec_iterator>(iov_begin)
+    , static_cast<size_t>(iov_end - iov_begin)
     , static_cast<void *>(0)                    // control data
     , static_cast<native::address_size>(0)      // control data size
     , static_cast<int>(0)                       // flags: set on return
     };
   ssize_t const rc( sendmsg(s, &msg, MSG_DONTWAIT | MSG_NOSIGNAL) );
-  if (rc < 0)   throw system_error(error_context ? error_context : "write() failed");
-  else          return rc;
+  if (rc < 0) throw system_error(error_context ? error_context : "write() failed");
+  byte_const_iterator i( const_begin(*iov_begin) );
+  paged_advance(iov_begin, i, static_cast<byte_size>(rc));
+  return scatter_const_iterator(iov_begin, i);
 }

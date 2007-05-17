@@ -14,8 +14,9 @@
 #define IOXX_OS_HPP_INCLUDED
 
 #include "memory.hpp"
-#include <boost/system/system_error.hpp>
+#include <stdexcept>
 #include <string>
+#include <utility>
 
 #include <boost/config.hpp>
 #ifdef _POSIX_SOURCE
@@ -26,13 +27,40 @@
 
 namespace ioxx
 {
-  typedef native::iovec  iovec;
-  typedef native::socket weak_socket;
+  typedef native::socket        weak_socket;
+  typedef native::iovec         iovec;
+  typedef iovec *               iovec_iterator;
+  typedef iovec const *         iovec_const_iterator;
 
-  struct system_error : public boost::system::system_error
+  struct scatter_iterator : public std::pair<iovec_iterator, byte_iterator>
+  {
+    typedef std::pair<iovec_iterator, byte_iterator> base;
+
+    scatter_iterator()                                      : base(0, 0)     { }
+    scatter_iterator(iovec_iterator iov, byte_iterator pos) : base(iov, pos) { }
+    scatter_iterator(base const & pair)                     : base(pair)     { }
+
+    iovec_iterator  iov_ptr()  const { return first; }
+    byte_iterator   byte_ptr() const { return second; }
+  };
+
+  struct scatter_const_iterator : public std::pair<iovec_const_iterator, byte_const_iterator>
+  {
+    typedef std::pair<iovec_const_iterator, byte_const_iterator> base;
+
+    scatter_const_iterator()                                           : base(0, 0)     { }
+    scatter_const_iterator(iovec const * iov, byte_const_iterator pos) : base(iov, pos) { }
+    scatter_const_iterator(scatter_iterator const & i)                 : base(i.iov_ptr(), i.byte_ptr()) { }
+    scatter_const_iterator(base const & pair)                          : base(pair)     { }
+
+    iovec const *       iov_ptr()  const { return first; }
+    byte_const_iterator byte_ptr() const { return second; }
+  };
+
+  struct system_error : public std::runtime_error
   {
     system_error();
-    explicit system_error(std::string const & what);
+    explicit system_error(std::string const & context);
   };
 
   /**
@@ -41,17 +69,16 @@ namespace ioxx
    *  \param  s      socket to read from
    *  \param  begin  begin of iovector array
    *  \param  end    end of iovector array
-   *  \pre    <code>s && begin &lt; end</code>
-   *  \return number of \em bytes actually read; zero signifies end of input
-   *  \throw  socket_error in case of an I/O error
+   *  \pre    <code>begin &lt; end</code>
+   *  \throw  system_error in case of an I/O error
    */
-  byte_size read( weak_socket             s
-                , iovec *                 begin
-                , iovec const *           end
-                , native::address *       peer_addr     = 0
-                , native::address_size *  peer_addr_len = 0
-                , char const *            error_context = 0
-                );
+  scatter_iterator read( weak_socket             s
+                       , iovec_iterator          begin
+                       , iovec_const_iterator    end
+                       , native::address *       peer_addr     = 0
+                       , native::address_size *  peer_addr_len = 0
+                       , char const *            error_context = 0
+                       );
 
   /**
    *  \brief Write a non-continuous memory buffer.
@@ -59,17 +86,16 @@ namespace ioxx
    *  \param  s      socket to write to
    *  \param  begin  begin of iovector array
    *  \param  end    end of iovector array
-   *  \pre    <code>s && begin &lt;= end</code>
-   *  \return number of \em bytes actually written
-   *  \throw  socket_error in case of an I/O error
+   *  \pre    <code>begin &lt;= end</code>
+   *  \throw  system_error in case of an I/O error
    */
-  byte_size write( weak_socket s
-                 , iovec const *           begin
-                 , iovec const *           end
-                 , native::address *       peer_addr     = 0
-                 , native::address_size    peer_addr_len = 0
-                 , char const *            error_context = 0
-                 );
+  scatter_const_iterator write( weak_socket s
+                              , iovec_const_iterator    begin
+                              , iovec_const_iterator    end
+                              , native::address *       peer_addr     = 0
+                              , native::address_size    peer_addr_len = 0
+                              , char const *            error_context = 0
+                              );
 }
 
 #endif // IOXX_OS_HPP_INCLUDED
