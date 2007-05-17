@@ -1,7 +1,7 @@
 # ioxx/test/Jamfile.v2
 
 project
-  : requirements <include>..
+  : requirements <use>/boost <include>..
   ;
 
 test-suite ioxx_tests
