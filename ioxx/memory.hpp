@@ -28,6 +28,7 @@ namespace ioxx
   typedef std::reverse_iterator<byte_iterator>          byte_reverse_iterator;
   typedef std::reverse_iterator<byte_const_iterator>    byte_const_reverse_iterator;
 
+  using boost::iterator_range;
   using boost::range_value;
   using boost::range_size;
   using boost::range_difference;
@@ -50,15 +51,40 @@ namespace ioxx
   using boost::const_rend;
 
   template<class range>
-  inline range & reset_begin(range & iov, typename range_iterator<range>::type);
+  inline void reset_begin(range & iov, typename range_iterator<range>::type);
 
   template<class range>
-  inline range & reset_end(range & iov, typename range_iterator<range>::type);
+  inline void reset_end(range & iov, typename range_iterator<range>::type);
 
   template<class range>
-  inline range & reset(range & iov, typename range_iterator<range>::type b, typename range_iterator<range>::type e)
+  inline void reset( range & iov
+                   , typename range_iterator<range>::type b
+                   , typename range_iterator<range>::type e
+                   )
   {
-    return reset_end(reset_begin(iov, b), e);
+    reset_begin(iov, b);
+    reset_end(iov, e);
+  }
+
+  template <class page_iterator, class value_iterator, class size_type>
+  inline void paged_advance( page_iterator &    page_iter
+                           , value_iterator &   val_iter
+                           , size_type          i
+                           )
+  {
+    size_type n;
+    while (i)
+    {
+      n = std::distance(val_iter, end(*page_iter));
+      if (i > n)
+      {
+        i -= n;
+        ++page_iter;
+        val_iter = begin(*page_iter);
+      }
+      else
+        return std::advance(val_iter, i);
+    }
   }
 
 } // namespace ioxx
