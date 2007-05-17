@@ -19,28 +19,26 @@
 
 #include <boost/assert.hpp>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <sys/uio.h>
 
-namespace ioxx { namespace native
+namespace ioxx
 {
-  using ::iovec;
-  typedef int socket;
-}}
+  namespace native
+  {
+    using ::iovec;
+    typedef int       socket;
+    typedef sockaddr  address;
+    typedef addrinfo  address_info;
+    typedef socklen_t address_size;
+  }
+}
+
+#include "iovec-traits.hpp"
 
 namespace boost
 {
-#define IOXX_SPECIALIZE_IOVEC_TRAITS(t, mv, cv)                                         \
-  template<> struct range_ ## t<ioxx::native::iovec>       { typedef ioxx::mv type; };  \
-  template<> struct range_ ## t<ioxx::native::iovec const> { typedef ioxx::cv type; }
-  IOXX_SPECIALIZE_IOVEC_TRAITS(value,                   byte_type,                    byte_type const);
-  IOXX_SPECIALIZE_IOVEC_TRAITS(size,                    byte_size,                    byte_size);
-  IOXX_SPECIALIZE_IOVEC_TRAITS(difference,              byte_offset,                  byte_offset);
-  IOXX_SPECIALIZE_IOVEC_TRAITS(iterator,                byte_iterator,                byte_const_iterator);
-  IOXX_SPECIALIZE_IOVEC_TRAITS(const_iterator,          byte_const_iterator,          byte_const_iterator);
-  IOXX_SPECIALIZE_IOVEC_TRAITS(reverse_iterator,        byte_reverse_iterator,        byte_const_reverse_iterator);
-  IOXX_SPECIALIZE_IOVEC_TRAITS(const_reverse_iterator,  byte_const_reverse_iterator,  byte_const_reverse_iterator);
-#undef IOXX_SPECIALIZE_IOVEC_TRAITS
-
   template<>
   inline ioxx::byte_size size(iovec const & iov)
   {
