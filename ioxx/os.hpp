@@ -14,6 +14,8 @@
 #define IOXX_OS_HPP_INCLUDED
 
 #include "memory.hpp"
+#include <boost/system/system_error.hpp>
+#include <string>
 
 #include <boost/config.hpp>
 #ifdef _POSIX_SOURCE
@@ -27,8 +29,14 @@ namespace ioxx
   typedef native::iovec  iovec;
   typedef native::socket weak_socket;
 
+  struct system_error : public boost::system::system_error
+  {
+    system_error();
+    explicit system_error(std::string const & what);
+  };
+
   /**
-   *  \brief Read available input data into memory designated by iovectors.
+   *  \brief Read available input into a scattered memory buffer.
    *
    *  \param  s      socket to read from
    *  \param  begin  begin of iovector array
@@ -40,7 +48,7 @@ namespace ioxx
   byte_size read(weak_socket s, iovec * begin, iovec const * end);
 
   /**
-   *  \brief Write data designated by iovector array to socket.
+   *  \brief Write a non-continuous memory buffer.
    *
    *  \param  s      socket to write to
    *  \param  begin  begin of iovector array

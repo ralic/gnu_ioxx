@@ -1,6 +1,16 @@
 # ioxx/build/Jamfile.v2
 
 project /ioxx
-  : source-location ../src
-    requirements    <use>/boost <include>..
+  : source-location     ../src
+  : requirements        <use>/boost <include>..
+  :
+  : usage-requirements  <use>/boost <include>..
+  ;
+
+lib ioxx_error
+  : system-error.cpp
+  :
+  :
+  : <use>/boost/system//boost_system
+    <library>/boost/system//boost_system
   ;
