@@ -9,8 +9,4 @@ project /ioxx
 
 lib ioxx_error
   : system-error.cpp scatter-io.cpp
-  :
-  :
-  : <use>/boost/system//boost_system
-    <library>/boost/system//boost_system
   ;
