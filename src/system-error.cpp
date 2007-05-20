@@ -10,7 +10,7 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#include "ioxx/os.hpp"
+#include "ioxx/system.hpp"
 #include <cerrno>
 
 static std::string str()

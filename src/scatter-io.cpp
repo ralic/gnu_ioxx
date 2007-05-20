@@ -10,7 +10,7 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#include "ioxx/os.hpp"
+#include "ioxx/system.hpp"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <boost/assert.hpp>
@@ -20,8 +20,8 @@ using namespace std;
 ioxx::scatter_iterator ioxx::read( weak_socket             s
                                  , iovec_iterator          iov_begin
                                  , iovec_const_iterator    iov_end
-                                 , native::address *       peer_addr
-                                 , native::address_size *  peer_addr_len
+                                 , system::address *       peer_addr
+                                 , system::address_size *  peer_addr_len
                                  , char const *            error_context
                                  )
 {
@@ -31,11 +31,11 @@ ioxx::scatter_iterator ioxx::read( weak_socket             s
   BOOST_ASSERT(!peer_addr || (peer_addr_len && *peer_addr_len > 0));
   msghdr msg =
     { peer_addr
-    , peer_addr_len ? *peer_addr_len : static_cast<native::address_size>(0)
+    , peer_addr_len ? *peer_addr_len : static_cast<system::address_size>(0)
     , iov_begin
     , static_cast<size_t>(iov_end - iov_begin)
     , static_cast<void *>(0)                    // control data
-    , static_cast<native::address_size>(0)      // control data size
+    , static_cast<system::address_size>(0)      // control data size
     , static_cast<int>(0)                       // flags: set on return
     };
   ssize_t const rc( recvmsg(s, &msg, MSG_DONTWAIT) );
@@ -49,8 +49,8 @@ ioxx::scatter_iterator ioxx::read( weak_socket             s
 ioxx::scatter_const_iterator ioxx::write( weak_socket             s
                                         , iovec_const_iterator    iov_begin
                                         , iovec_const_iterator    iov_end
-                                        , native::address *       peer_addr
-                                        , native::address_size    peer_addr_len
+                                        , system::address *       peer_addr
+                                        , system::address_size    peer_addr_len
                                         , char const *            error_context
                                         )
 {
@@ -63,7 +63,7 @@ ioxx::scatter_const_iterator ioxx::write( weak_socket             s
     , const_cast<iovec_iterator>(iov_begin)
     , static_cast<size_t>(iov_end - iov_begin)
     , static_cast<void *>(0)                    // control data
-    , static_cast<native::address_size>(0)      // control data size
+    , static_cast<system::address_size>(0)      // control data size
     , static_cast<int>(0)                       // flags: set on return
     };
   ssize_t const rc( sendmsg(s, &msg, MSG_DONTWAIT | MSG_NOSIGNAL) );

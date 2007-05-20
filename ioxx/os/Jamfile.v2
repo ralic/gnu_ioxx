@@ -1,3 +1,0 @@
-# ioxx/ioxx/os/Jamfile.v2
-
-build-project .. ;
