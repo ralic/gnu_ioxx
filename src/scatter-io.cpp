@@ -17,7 +17,7 @@
 
 using namespace std;
 
-ioxx::scatter_iterator ioxx::read( weak_socket             s
+ioxx::scatter_iterator ioxx::read( system::socket          s
                                  , iovec_iterator          iov_begin
                                  , iovec_const_iterator    iov_end
                                  , system::address *       peer_addr
@@ -46,7 +46,7 @@ ioxx::scatter_iterator ioxx::read( weak_socket             s
   return scatter_iterator(iov_begin, i);
 }
 
-ioxx::scatter_const_iterator ioxx::write( weak_socket             s
+ioxx::scatter_const_iterator ioxx::write( system::socket          s
                                         , iovec_const_iterator    iov_begin
                                         , iovec_const_iterator    iov_end
                                         , system::address *       peer_addr
