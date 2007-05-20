@@ -8,5 +8,13 @@ project /ioxx
   ;
 
 lib ioxx_error
-  : system-error.cpp scatter-io.cpp
+  : system-error.cpp
+  ;
+
+lib ioxx_scatter_io
+  : scatter-io.cpp ioxx_error
+  ;
+
+lib ioxx_probe
+  : probe.cpp ioxx_error
   ;

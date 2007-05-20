@@ -12,10 +12,11 @@
 
 #include "ioxx/probe.hpp"
 
+ioxx::probe::~socket()
+{
+}
+
 ioxx::probe::~probe()
 {
 }
 
-ioxx::probe::overflow::overflow(char const * msg) : std::length_error(msg)
-{
-}
