@@ -20,8 +20,8 @@
 #include <boost/assert.hpp>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
 #include <sys/uio.h>
+#include <netdb.h>
 
 namespace ioxx
 {
