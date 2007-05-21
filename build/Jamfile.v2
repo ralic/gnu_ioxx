@@ -31,5 +31,5 @@ lib ioxx_probe_poll
   : probe-poll.cpp
   :
   :
-  : <library>ioxx_probe <library>ioxx_error
+  : <library>ioxx_probe <library>ioxx_socket <library>ioxx_error
   ;

@@ -5,10 +5,10 @@ project
   ;
 
 test-suite ioxx_tests
-  : [ compile   memory.cpp                                                              ]
-    [ link      iovec-is-valid-range.cpp                                                ]
-    [ link      scatter-io.cpp /                /ioxx//ioxx_scatter_io                  ]
-    [ run       probe.cpp                       /ioxx//ioxx_probe_poll boost_unit_test  ]
+  : [ compile   memory.cpp                                                       ]
+    [ link      iovec-is-valid-range.cpp                                         ]
+    [ link      scatter-io.cpp /         /ioxx//ioxx_scatter_io                  ]
+    [ run       probe.cpp                /ioxx//ioxx_probe_poll boost_unit_test  ]
   ;
 
 alias boost_prgmon    : /boost/test//boost_prg_exec_monitor ;

@@ -12,12 +12,8 @@
 
 #include "ioxx/probe.hpp"
 #include <iostream>
-// #include <boost/array.hpp>
 #include <boost/scoped_ptr.hpp>
-// #include <sys/types.h>
-// #include <sys/stat.h>
-// #include <fcntl.h>
-// #include "logging.hpp"
+#include <boost/array.hpp>
 
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/auto_unit_test.hpp>
@@ -25,136 +21,78 @@
 using namespace std;
 using namespace ioxx;
 
-#if 0
-struct echo : private boost::noncopyable
+/**
+ *  \todo It sucks that echo must derive publicly.
+ *
+ *  \todo Echo must be able to terminate without needing a reference to probe.
+ *        One way to achieve that is to make probe de-register a handler that
+ *        doesn't probe for anything. Alternatively, calling probe::remove()
+ *        can remain the only way to terminate, but then probe should
+ *        consistently pass reference back to itself to the callback.
+ *
+ *  \todo Sockets must be made non-blocking in some portable way.
+ */
+class echo : public ioxx::socket
 {
-  struct acceptor
+  ioxx::probe &                 _probe;
+  ioxx::system::socket const    _sin;
+  ioxx::system::socket const    _sout;
+  boost::array<char, 1024>      _buffer;
+  byte_size                     _size;
+
+public:
+  echo(ioxx::probe & p, ioxx::system::socket const & inout)
+  : _probe(p), _sin(inout), _sout(inout), _size(0u)
   {
-    void operator() (socket const & s, probe & p) const
-    {
-      I(s);
-      add_shared_handler(p, s, Readable | Writable, boost::shared_ptr<echo>(new echo(s)));
-      throw false;                // shut down acceptor after one connection
-    }
-  };
-
-  boost::array<char, 1024>      _buffer_array;
-  ioxx::stream_buffer<char>     _buf;
-
-  data_socket           _insock, _outsock;
-  bool                  _done;
-
-  echo(data_socket const & inout) : _buf(_buffer_array), _insock(inout), _outsock(inout), _done(false)
-  {
-    IOXX_DEBUG_MSG(catchall) << "create full-duplex echo handler " << this;
-    I(inout);
-    _insock.nonblocking();
+    cerr << "creating full-duplex echo handler " << this << endl;
+    BOOST_REQUIRE(inout >= 0);
   }
 
-  echo(data_socket in, data_socket out) : _buf(_buffer_array), _insock(in), _outsock(out), _done(false)
+  echo(ioxx::probe & p, ioxx::system::socket const & in, ioxx::system::socket const & out)
+  : _probe(p), _sin(in), _sout(out), _size(0u)
   {
-    IOXX_DEBUG_MSG(catchall) << "create connecting echo handler " << this;
-    I(in); I(out);
-    _insock.nonblocking();
-    _outsock.nonblocking();
+    cerr << "creating connecting echo handler " << this << endl;
+    BOOST_REQUIRE(in >= 0); BOOST_REQUIRE(out >= 0);
   }
 
   ~echo()
   {
-    IOXX_DEBUG_MSG(catchall) << "destroy echo handler " << this;
-    if (_insock == _outsock) _outsock.release();
+    cerr << "destroy echo handler " << this << endl;
   }
 
-  void mark_eof()         { _done = true; }
-  void invalidate()       { mark_eof(); _buf.reset(); }
-  bool can_read()  const  { return !_done && !_buf.full(); }
-  bool can_write() const  { return !_buf.empty(); }
+private:
+  bool input_blocked() const    { cerr << "want read: "  << (_size == 0u) << endl; return _size == 0u; }
+  bool output_blocked() const   { cerr << "want write: " << (_size != 0u) << endl; return _size != 0u; }
 
-  event operator() (socket s, event e, probe & p)
+  void unblock_input()
   {
-    I(s == _insock || s == _outsock);
-
-    if (is_error(e)) { invalidate(); p.del(s); }
-
-    bool const was_reading = can_read();
-    bool const was_writing = can_write();
-
-    try
+    cerr << "descriptor " << _sin << " is readable" << endl;
+    BOOST_REQUIRE_EQUAL(_size, 0u);
+    int const rc( read(_sin, _buffer.begin(), _buffer.size()) );
+    cerr << "read returned " << rc << endl;
+    BOOST_REQUIRE(rc >= 0);
+    if (rc == 0)
     {
-      /// \todo get in shape for edge-triggered
-      if (is_readable(e) && can_read())
-      {
-        if (!_buf.read(_insock))         mark_eof();
-        if (!_buf.full())               e &= ~Readable;
-      }
-
-      if (is_writable(e) && can_write())
-      {
-        _buf.write(_outsock);
-        if (!_buf.empty())              e &= ~Writable;
-      }
+      _probe.remove(_sin);
+      _probe.remove(_sout);
     }
-    catch(exception const & ex)
-    {
-      IOXX_WARN_MSG(catchall) << "caught: " << ex.what();
-      invalidate();
-    }
-
-    IOXX_DEBUG_MSG(catchall)
-      << "was_reading = " << (was_reading ? "yes" : "no") << "; "
-      << "was_writing = " << (was_writing ? "yes" : "no") << "; "
-      << "can_read = "    << (can_read()  ? "yes" : "no") << "; "
-      << "can_write = "   << (can_write() ? "yes" : "no") << "; "
-      ;
-
-    event mask = None;
-
-    if (can_read())
-    {
-      if (s == _insock)         { mask |= Readable; }
-      else                      { if (!was_reading) p.modify(_insock, Readable); }
-    }
-
-    if (can_write())
-    {
-      if (s == _outsock)        { mask |= Writable; }
-      else                      { if (!was_writing) p.modify(_outsock, Writable); }
-    }
-
-    if (can_read() || can_write())      return mask;
     else
-    {
-      if (_insock  && s != _insock)  p.del(_insock);
-      if (_outsock && s != _outsock) p.del(_outsock);
-      p.del(s);
-      return Error;
-    }
+      _size = static_cast<size_t>(rc);
+  }
+
+  void unblock_output()
+  {
+    BOOST_REQUIRE(_size);
+    cerr << "descriptor " << _sin << " is writable" << endl;
   }
 };
-#endif
 
 BOOST_AUTO_TEST_CASE( test_probe )
 {
   boost::scoped_ptr<probe>  probe(make_probe_poll());
-  BOOST_ASSERT(probe);
-
-#if 0
-  socket sin;
-  if (argc > 1)
-  {
-    IOXX_DEBUG_MSG(catchall) << "filter mode";
-    sin = socket(STDIN_FILENO);
-  }
-  else
-  {
-    IOXX_DEBUG_MSG(catchall) << "echo /etc/modules.conf";
-    sin = socket(open("/etc/modules.conf", O_RDONLY));
-  }
-  socket sout = socket(STDOUT_FILENO);
-  echo eh(sin, sout);
-  add_shared_handler(*probe, sin,  Readable, &eh);
-  add_shared_handler(*probe, sout, None, &eh);
-#endif
-
+  BOOST_REQUIRE(probe);
+  ioxx::socket::pointer p( new echo(*probe, STDIN_FILENO, STDOUT_FILENO) );
+  probe->insert(STDIN_FILENO, p);
+  probe->insert(STDOUT_FILENO, p);
   while (!probe->empty()) probe->run_once();
 }
