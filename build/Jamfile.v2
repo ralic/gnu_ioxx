@@ -17,14 +17,8 @@ lib ioxx_scatter_io
   : <library>ioxx_error
   ;
 
-lib ioxx_probe_socket
-  : probe-socket.cpp
-  ;
-
 lib ioxx_probe
-  : probe.cpp
-  :
-  : <library>ioxx_probe_socket
+  : probe.cpp probe-socket.cpp
   ;
 
 lib ioxx_probe_poll

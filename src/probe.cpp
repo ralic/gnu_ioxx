@@ -15,7 +15,3 @@
 ioxx::probe::~probe()
 {
 }
-
-ioxx::probe::socket::~socket()
-{
-}

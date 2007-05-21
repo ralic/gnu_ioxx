@@ -31,16 +31,11 @@ namespace ioxx
 
       virtual ~socket() = 0;
 
-      virtual bool input_blocked()  const = 0;
-      virtual bool output_blocked() const = 0;
+      virtual bool input_blocked(weak_socket const & s)  const = 0;
+      virtual bool output_blocked(weak_socket const & s) const = 0;
 
       virtual void unblock_input(probe & p, weak_socket const & s)  = 0;
-      virtual void unblock_output(probe & p, weak_socket const & s)  = 0;
-      virtual void unblock_input_and_output(probe & p, weak_socket const & s)
-      {
-        unblock_input(p, s);
-        unblock_output(p, s);
-      }
+      virtual void unblock_output(probe & p, weak_socket const & s) = 0;
     };
 
     virtual ~probe() = 0;
@@ -48,8 +43,9 @@ namespace ioxx
     virtual void insert(weak_socket const &, socket::pointer const &) = 0;
     void remove(weak_socket const & s) { insert(s, socket::pointer()); }
 
-    // virtual socket::pointer operator[] (weak_socket const &) = 0;
-    // virtual socket::pointer operator[] (socket const &) = 0;
+    virtual void force(weak_socket const &) = 0;
+
+    virtual socket::pointer operator[] (weak_socket const &) const = 0;
 
     virtual std::size_t size()  const = 0;
     virtual bool        empty() const = 0;

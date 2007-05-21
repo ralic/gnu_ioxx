@@ -37,18 +37,20 @@ class echo : public ioxx::probe::socket
   ioxx::weak_socket const       _sout;
   boost::array<char, 1024>      _buffer;
   ioxx::byte_size               _size;
+  ioxx::byte_size               _gap;
 
 public:
   typedef boost::shared_ptr<echo> pointer;
 
-  echo(ioxx::weak_socket const & inout) : _sin(inout), _sout(inout), _size(0u)
+  echo(ioxx::weak_socket const & inout)
+  : _sin(inout), _sout(inout), _size(0u), _gap(0u)
   {
     cerr << "creating full-duplex echo handler " << this << endl;
     BOOST_REQUIRE(inout >= 0);
   }
 
   echo(ioxx::weak_socket const & in, ioxx::weak_socket const & out)
-  : _sin(in), _sout(out), _size(0u)
+  : _sin(in), _sout(out), _size(0u), _gap(0u)
   {
     cerr << "creating connecting echo handler " << this << endl;
     BOOST_REQUIRE(in >= 0); BOOST_REQUIRE(out >= 0);
@@ -60,29 +62,63 @@ public:
   }
 
 private:
-  bool input_blocked() const    { cerr << "want read: "  << (_size == 0u) << endl; return _size == 0u; }
-  bool output_blocked() const   { cerr << "want write: " << (_size != 0u) << endl; return _size != 0u; }
+  bool input_blocked(ioxx::weak_socket const & s) const
+  {
+    bool const want_read( s == _sin && _size == 0u );
+    cerr << "fd " << s << " requests" << (want_read ? "" : " no") << " input" << endl;
+    return want_read;
+  }
+
+  bool output_blocked(ioxx::weak_socket const & s) const
+  {
+    bool const want_write( s == _sout && _size != 0u );
+    cerr << "fd " << s << " requests" << (want_write ? "" : " no") << " output" << endl;
+    return want_write;
+  }
 
   void unblock_input(ioxx::probe & p, ioxx::weak_socket const & s)
   {
-    cerr << "descriptor " << _sin << " is readable" << endl;
+    cerr << "fd " << s << " is readable" << endl;
+    BOOST_REQUIRE_EQUAL(s, _sin);
     BOOST_REQUIRE_EQUAL(_size, 0u);
     int const rc( read(_sin, _buffer.begin(), _buffer.size()) );
-    cerr << "read returned " << rc << endl;
-    BOOST_REQUIRE(rc >= 0);
-    if (rc == 0)
+    BOOST_CHECK(rc >= 0);
+    if (rc <= 0)
     {
       p.remove(_sin);
       p.remove(_sout);
     }
     else
+    {
       _size = static_cast<size_t>(rc);
+      p.force(_sout);
+    }
   }
 
   void unblock_output(ioxx::probe & p, ioxx::weak_socket const & s)
   {
+    cerr << "fd " << s << " is writable" << endl;
+    BOOST_REQUIRE_EQUAL(s, _sout);
     BOOST_REQUIRE(_size);
-    cerr << "descriptor " << _sin << " is writable" << endl;
+    BOOST_REQUIRE(_gap < _size);
+    int const rc( write(_sout, _buffer.begin() + _gap, _size) );
+    BOOST_CHECK(rc > 0);
+    BOOST_CHECK(static_cast<size_t>(rc) <= _size);
+    if (rc <= 0)
+    {
+      p.remove(_sin);
+      p.remove(_sout);
+    }
+    else
+    {
+      _gap  += static_cast<size_t>(rc);
+      _size -= static_cast<size_t>(rc);
+      if (!_size)
+      {
+        _gap = 0u;
+        p.force(_sin);
+      }
+    }
   }
 };
 
