@@ -13,7 +13,6 @@
 #include "ioxx/probe.hpp"
 #include <vector>
 #include <map>
-#include <boost/foreach.hpp>
 #include <boost/assert.hpp>
 #include <boost/compatibility/cpp_c_headers/cerrno>
 #include <sys/poll.h>           // XPG4-UNIX
@@ -44,23 +43,17 @@ using ioxx::hot_fd;
  *  can be looked up by file descriptors. The state is managed as
  *  follows:
  *
- *    add        Appended handler's pollfd to the end of the
- *               array, then record the appropriate context in the
- *               handler set.
+ *    insert()   Append handler's pollfd to the end of the array,
+ *               then record the appropriate context in the handler set.
  *
- *    modify     Lookup handler context. Use the index to access the
- *               assigned pollfd, and update registered events.
- *
- *    del        Erase the pollfd by copying the last valid array
+ *    erase()    Erase the pollfd by copying the last valid array
  *               entry down, into its position. Erase the entry from
  *               the set, and then update the pfd index context of the
  *               handler we copied down.
  *
- *    run_once   After poll() has returned, we iterate over the
- *               handler set and check the corresponding pollfd
- *               entries for events to deliver. Deliver them. In case
- *               of \c Error being delivered or returned, we erase the
- *               handler through del().
+ *  Attempts to delete the currently running handler are recognized and are
+ *  carried out by reset()ing the socket::pointer. The event delivery loop
+ *  checks this and deletes the entry once it is safe.
  */
 struct Poll : public ioxx::probe
 {
