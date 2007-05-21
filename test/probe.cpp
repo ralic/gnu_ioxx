@@ -10,19 +10,21 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#include "ioxx/shared-handler.hpp"
-#include "ioxx/stream-buffer.hpp"
-#include "ioxx/tcp-acceptor.hpp"
+#include "ioxx/probe.hpp"
 #include <iostream>
-#include <boost/array.hpp>
+// #include <boost/array.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include "logging.hpp"
+// #include <sys/types.h>
+// #include <sys/stat.h>
+// #include <fcntl.h>
+// #include "logging.hpp"
+
+#define BOOST_AUTO_TEST_MAIN
+#include <boost/test/auto_unit_test.hpp>
 
 using namespace std;
 using namespace ioxx;
+
 #if 0
 struct echo : private boost::noncopyable
 {
@@ -130,12 +132,12 @@ struct echo : private boost::noncopyable
   }
 };
 #endif
-int main(int argc, char**)
-{
-  logging::init_cerr();
 
+BOOST_AUTO_TEST_CASE( test_probe )
+{
   boost::scoped_ptr<probe>  probe(make_probe_poll());
-  I(probe);
+  BOOST_ASSERT(probe);
+
 #if 0
   socket sin;
   if (argc > 1)
@@ -154,6 +156,5 @@ int main(int argc, char**)
   add_shared_handler(*probe, sout, None, &eh);
 #endif
 
-  while (probe->active()) probe->run_once();
-  return 0;
+  while (!probe->empty()) probe->run_once();
 }

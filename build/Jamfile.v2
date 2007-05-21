@@ -12,7 +12,9 @@ lib ioxx_error
   ;
 
 lib ioxx_scatter_io
-  : scatter-io.cpp ioxx_error
+  : scatter-io.cpp
+  :
+  : <library>ioxx_error
   ;
 
 lib ioxx_socket
@@ -21,8 +23,13 @@ lib ioxx_socket
 
 lib ioxx_probe
   : probe.cpp
+  :
+  : <library>ioxx_socket
   ;
 
 lib ioxx_probe_poll
   : probe-poll.cpp
+  :
+  :
+  : <library>ioxx_probe <library>ioxx_error
   ;

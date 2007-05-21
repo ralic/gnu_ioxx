@@ -10,7 +10,7 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#include "ioxx/os.hpp"
+#include "ioxx/system.hpp"
 #include <vector>
 
 #include <sys/stat.h>           // open(2)
@@ -18,9 +18,9 @@
 
 int main(int, char**)
 {
-  ioxx::weak_socket             sin( open("/etc/profile", O_RDONLY) );
+  ioxx::system::socket          sin( open("/etc/profile", O_RDONLY) );
   if (sin < 0) throw ioxx::system_error("cannot open /etc/profile");
-  ioxx::weak_socket             sout( STDOUT_FILENO );
+  ioxx::system::socket          sout( STDOUT_FILENO );
   std::vector<ioxx::byte_type>  buffer(1024u);
   std::vector<ioxx::iovec>      iovec_array(1u);
   ioxx::reset(iovec_array[0], &buffer[0], &buffer[buffer.size()]);
