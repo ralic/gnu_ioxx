@@ -18,21 +18,15 @@
 
 namespace ioxx
 {
-  class probe;                // necessary forward declaration
-
-  class socket : private boost::noncopyable
+  struct socket : private boost::noncopyable
   {
   public:
     typedef boost::shared_ptr<socket>   pointer;
 
     virtual ~socket() = 0;
-    virtual void shutdown() = 0;
 
-  protected:
-    friend class probe;
-
-    virtual bool input_blocked()  = 0;
-    virtual bool output_blocked() = 0;
+    virtual bool input_blocked()  const = 0;
+    virtual bool output_blocked() const = 0;
 
     virtual void unblock_input()  = 0;
     virtual void unblock_output() = 0;

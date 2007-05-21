@@ -10,21 +10,8 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#include "ioxx/system.hpp"
-#include <boost/compatibility/cpp_c_headers/cerrno>
+#include "ioxx/socket.hpp"
 
-static std::string str()
-{
-    using namespace std;
-    return strerror(errno);
-}
-
-ioxx::system_error::system_error()
-: std::runtime_error(str())
-{
-}
-
-ioxx::system_error::system_error(std::string const & msg)
-: std::runtime_error(msg + ": " + str())
+ioxx::socket::~socket()
 {
 }

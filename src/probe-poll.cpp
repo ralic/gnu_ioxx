@@ -11,59 +11,28 @@
  */
 
 #include "ioxx/probe.hpp"
-#include "sanity/system-error.hpp"
-#include "logging.hpp"
-#include "hot-var.hpp"
 #include <vector>
 #include <map>
-#include <cerrno>
+#include <boost/compatibility/cpp_c_headers/cerrno>
 #include <sys/poll.h>           // XPG4-UNIX
 
-// ----- Local Definitions and Namespace Configuration ------------------------
-
-using namespace ioxx;
-using std::size_t;
+// Invariants short and easy.
+#include <boost/assert.hpp>
+#define I(exp) BOOST_ASSERT(exp)
 
 // Abstract access to our logger.
-#define TRACE() IOXX_DEBUG_MSG(probe)
-#define INFO()  IOXX_INFO_MSG(probe)
-#define WARN()  IOXX_WARN_MSG(probe)
-#define ERROR() IOXX_ERROR_MSG(probe)
+#ifndef NDEBUG
+#  include <iostream>
+#  define TRACE(msg)           std::cerr << msg << std::endl;
+#  define SOCKET_TRACE(s, msg) TRACE("socket " << s << ": " << msg)
+#else
+#  define TRACE(msg)           ((void)(0))
+#  define SOCKET_TRACE(s, msg) ((void)(0))
+#endif
 
-// Continue with literal string or operator<<().
-#define SOCKET_TRACE(s) TRACE() << "socket " << s << ": "
-#define SOCKET_INFO(s)  INFO()  << "socket " << s << ": "
-#define SOCKET_ERROR(s) ERROR() << "socket " << s << ": "
+namespace {                     // don't export the following code
 
-// ----- System Know-how ------------------------------------------------------
-
-static event to_event(short revents)            // pollfd events to ioxx events
-{
-  return ((revents & POLLIN)              ? Readable : None)
-       | ((revents & POLLOUT)             ? Writable : None)
-       | ((revents & ~(POLLIN | POLLOUT)) ? Error    : None)
-       ;
-}
-
-static short to_pollfd(event e)                 // ioxx event to pollfd events
-{
-  I(no_error(e));
-  return short( (is_readable(e) ? POLLIN  : 0)
-              | (is_writable(e) ? POLLOUT : 0)
-              );
-}
-
-static pollfd to_pollfd(int fd, event evmask)   // pollfd constructor
-{
-  I(no_error(evmask));
-  pollfd pfd;
-  pfd.fd      = fd;
-  pfd.events  = to_pollfd(evmask);
-  pfd.revents = 0;
-  return pfd;
-}
-
-// ----- Implementation of the probe API --------------------------------------
+using std::size_t;
 
 /**
  *  \brief A probe implementation based on poll(2).
@@ -92,15 +61,19 @@ static pollfd to_pollfd(int fd, event evmask)   // pollfd constructor
  *               of \c Error being delivered or returned, we erase the
  *               handler through del().
  */
-struct Poll : public probe
+struct Poll : public ioxx::probe
 {
   struct context
   {
-    socket const _s;
-    handler      _f;
-    size_t       _pfd_index;
+    ioxx::system::socket const  _s;
+    ioxx::socket::pointer       _f;
+    size_t                      _pfd_index;
 
-    context(socket const & s, handler const & f, size_t i) : _s(s), _f(f), _pfd_index(i) { I(s); I(f); }
+    context(int s, ioxx::socket::pointer const & f, size_t i) : _s(s), _f(f), _pfd_index(i)
+    {
+      I(s >= 0);
+      I(f);
+    }
   };
 
   typedef std::vector<pollfd>           pfd_array;
@@ -113,18 +86,10 @@ struct Poll : public probe
 
   // Trivial construction and destruction.
 
-  Poll()        { TRACE() << "constructing poll(2) probe at " << this;  }
-  ~Poll()       { TRACE() << "shutting down poll(2) probe at " << this; }
-
-  // Recognize the currently running handler.
-
-  typedef ioxx::hot_var<int, -1>        hot_fd;
-  hot_fd                                _hot_fd;
-  bool is_hot(int fd) const             { return (_hot_fd.hot() && _hot_fd == fd); }
+  Poll()        { TRACE("constructing poll(2) probe at " << this);  }
+  ~Poll()       { TRACE("shutting down poll(2) probe at " << this); }
 
   // For convenience.
-
-  void throw_overflow() const { throw overflow("poll()-based probe reached its maximum capacity"); }
 
   iterator check_consistency(iterator p) const
   {
@@ -142,152 +107,128 @@ struct Poll : public probe
 
   // User access to our status.
 
-  std::size_t   size()   const  { return _hset.size(); }
-  bool          active() const  { return _hset.begin() != _hset.end(); }
+  std::size_t   size()  const  { return _hset.size(); }
+  bool          empty() const  { return _hset.empty(); }
 
   // Append the new entry at the end of the pollfd array, then record
   // it in the handler set.
 
-  void add(socket const & s, event evmask, handler const & f)
+  void insert(ioxx::system::socket const & s, ioxx::socket::pointer const & f)
   {
-    SOCKET_INFO(s) "registering handler for " << evmask;
-    I(s); I(f); I(no_error(evmask));
-    int    const fd = s->fd;
-    size_t const i  = size();
-    SOCKET_TRACE(s) "assign pfd position " << i << "; have " << _pfd.size() << " in set.";
-    I(i == _pfd.size());
-    _pfd.push_back(to_pollfd(fd, evmask));
-    iterator p = _hset.insert(pair_type(fd, context(s, f, i))).first;
-    check_consistency(p);
-  }
-
-  // Find the context for the given socket, then use the recorded
-  // index to update the pollfd array.
-
-  void modify(socket const & s, event evmask)
-  {
-    SOCKET_INFO(s) "modifying event mask to " << evmask;
-    I(s); I(no_error(evmask));
-    I(!is_hot(s->fd));             // would be meaningless: return code wins
-    size_t const i = lookup(s->fd)->second._pfd_index;
-    _pfd[i].events = to_pollfd(evmask);
-  }
-
-  // We fill the gap in the pollfd array by copying the last entry
-  // down.
-
-  void del(iterator p)
-  {
-    check_consistency(p);
-    int const fd = p->first;
-
-    if (is_hot(fd))
-    {
-      SOCKET_INFO(fd) "Handler committed suicide.";
-      _pfd[p->second._pfd_index].revents = POLLERR;
-    }
+    I(s >= 0);
+    iterator p = _hset.find(s);
+    if (p != _hset.end())  p->second._f = f;
     else
     {
-      SOCKET_INFO(fd) "unregister handler";
-      p->second._f = handler();         // run destructor
-      size_t const i    = p->second._pfd_index;
-      size_t const last = size() - 1; I(last == _pfd.size() - 1);
-      if (i != last)
-      {
-        SOCKET_TRACE(p->first) "moving pfd entry " << last << " to index " << i << " to erase";
-        iterator const plast = lookup(_pfd[last].fd);
-        I(plast->second._pfd_index == last);
-        plast->second._pfd_index = i;
-        _pfd[i] = _pfd[last];
-      }
-      _pfd.resize(last);
-      _hset.erase(p);
-    }
-  }
-
-  // Trigger a handler, and delete it in case of an error. The
-  // iterator has been advanced when trigger() returns.
-
-  bool trigger(iterator & p, event e)
-  {
-    {
-      size_t const        i   = p->second._pfd_index;
-      pollfd &            pfd = _pfd[i];
-      hot_fd::scope const fd(_hot_fd, pfd.fd);
-
-      SOCKET_TRACE(fd) "triggering " << e;
-      I(p->second._f);
-      event evmask = p->second._f(p->second._s, e, *this);
+      if (!f) return;
+      size_t const i( size() );
+      SOCKET_TRACE(s, "assign pfd position " << i << "; have " << _pfd.size() << " in set.");
+      I(i == _pfd.size());
+      pollfd pfd = { s, 0, 0 };
+      pfd.events |= f->input_blocked()  ? POLLIN  : 0;
+      pfd.events |= f->output_blocked() ? POLLOUT : 0;
+      _pfd.push_back(pfd);
+      /// \todo If this call fails with an exception, the containers are
+      /// inconsistent.
+      p = _hset.insert(pair_type(s, context(s, f, i))).first;
       check_consistency(p);
-
-      if (no_error(e) && no_error(evmask) && no_error(to_event(pfd.revents)))
-      {
-        size_t const j = p->second._pfd_index;
-        I(i == j); /// todo Can the index change? A del() might have relocated us.
-        _pfd[j].events = to_pollfd(evmask);
-        ++p;
-        return true;
-      }
-      p->second._f = handler();         // run destructor.
     }
-    del(p++);
-    return false;
   }
-
-  // Public API forwards to functions above.
-
-  bool trigger(socket const & s, event e)       { iterator p = lookup(s->fd); return trigger(p, e); }
-  void del(socket const & s)                    { del(lookup(s->fd)); }
 
   // The event delivery loop.
 
-  size_t run_once(msec_timeout_t timeout)
+  size_t run_once(ioxx::msec_timeout_t timeout)
   {
-    I(active()); I(timeout >= -1);
+    I(!empty()); I(timeout >= -1);
 
     // Do the system call and handle errors.
 
-    size_t nfds = size();
+    size_t nfds( size() );
     I(nfds > 0);
-    INFO() << "probing " << nfds << " sockets, " << timeout << " msec timeout";
+    TRACE("probing " << nfds << " sockets, " << timeout << " msec timeout");
     int const rc = ::poll(&_pfd[0], nfds, timeout);
     if (rc < 0)
     {
       static char const id[] = "probe::run_once() failed";
       switch(errno)
       {
+#if 0                           /// \todo What to do in case of EINTR?
         case EINTR:     throw false;
-        case EINVAL:    throw_overflow();
+#endif
         case ENOMEM:    throw std::bad_alloc();
-        default:        throw system_error(id);
+        default:        throw ioxx::system_error(id);
       }
     }
     nfds = rc;
-    TRACE() << nfds << " sockets are active";
+    TRACE(nfds << " sockets are active");
 
     // Deliver the events.
 
     for (iterator p = _hset.begin(); nfds != 0 && p != _hset.end(); /**/)
     {
       check_consistency(p);
-      short const revents = _pfd[p->second._pfd_index].revents;
+      context &                 ctx( p->second );
+      ioxx::socket::pointer &   f( ctx._f );
+      short const &             revents( _pfd[ctx._pfd_index].revents );
       if (revents)
       {
         --nfds;
-        trigger(p, to_event(revents)); // advances p for us
+        if (f)
+        {
+          if (revents & POLLIN)
+          {
+            if (revents & POLLOUT)      f->unblock_input_and_output();
+            else                        f->unblock_input();
+          }
+          else
+          {
+            if (revents & POLLOUT)      f->unblock_output();
+            else                        f.reset();
+          }
+          check_consistency(p);
+        }
       }
-      else
+      if (f)                    // handler is still active
+      {
+        /// \todo This code queries every registered handler every time the
+        /// loop is iterated. Is this wise? It makes the handler more
+        /// responsive: they get a chance to run even when no i/o takes place.
+        /// It is a certain overhead though.
+        _pfd[ctx._pfd_index].events
+          = f->input_blocked()  ? POLLIN  : 0
+          | f->output_blocked() ? POLLOUT : 0
+          ;
         ++p;
+      }
+      else                      // handler is inactive: remove it
+      {
+        size_t const i( ctx._pfd_index );
+        size_t const last( size() - 1u );
+        I(last == _pfd.size() - 1u);
+        if (i != last)
+        {
+          SOCKET_TRACE(ctx._s, "moving pfd entry " << last << " to index " << i << " to erase");
+          iterator const plast( lookup(_pfd[last].fd) );
+          I(plast->second._pfd_index == last);
+          plast->second._pfd_index = i;
+          _pfd[i] = _pfd[last];
+        }
+        _pfd.resize(last);
+        /// \todo An exception here leads to inconsistent containers.
+        _hset.erase(p++);
+      }
     }
 
-    INFO() << rc << " events delivered; " << size() << " sockets waiting";
+    TRACE(rc << " events delivered; " << size() << " sockets waiting");
     return rc;
   }
 };
 
+} // end of anonymous namespace
+
 // ----- Public Constructor Function ------------------------------------------
 
-probe * ioxx::make_probe_poll()
+ioxx::probe * ioxx::make_probe_poll()
 {
   return new Poll;
 }

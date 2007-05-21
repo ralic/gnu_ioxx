@@ -26,10 +26,10 @@ namespace ioxx
     virtual ~probe() = 0;
 
     virtual void insert(system::socket const &, socket::pointer const &) = 0;
-    void remove(system::socket const &) { insert(s, socket::pointer()); }
+    void remove(system::socket const & s) { insert(s, socket::pointer()); }
 
-    virtual socket::pointer operator[] (system::socket const &) = 0;
-    virtual socket::pointer operator[] (socket const &) = 0;
+    // virtual socket::pointer operator[] (system::socket const &) = 0;
+    // virtual socket::pointer operator[] (socket const &) = 0;
 
     virtual std::size_t size()  const = 0;
     virtual bool        empty() const = 0;
