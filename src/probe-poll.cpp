@@ -17,6 +17,7 @@
 #include <boost/assert.hpp>
 #include <boost/compatibility/cpp_c_headers/cerrno>
 #include <sys/poll.h>           // XPG4-UNIX
+#include "hot-fd.hpp"
 
 // Abstract access to our logger.
 #ifndef NDEBUG
@@ -32,35 +33,7 @@ namespace {                     // don't export the following code
 
 using std::size_t;
 using ioxx::weak_socket;
-
-class hot_fd : private boost::noncopyable
-{
-  weak_socket _fd;
-
-public:
-  hot_fd() : _fd(-1)                    { }
-  ~hot_fd()                             { BOOST_ASSERT(_fd == -1); }
-
-  bool hot(weak_socket const & s) const { BOOST_ASSERT(s >= 0); return s == _fd; }
-
-  class scope
-  {
-    weak_socket &  _fd;
-
-  public:
-    scope(hot_fd & self, weak_socket v) : _fd(self._fd)
-    {
-      BOOST_ASSERT(_fd == -1);
-      BOOST_ASSERT(v >= 0);
-      _fd = v;
-    }
-    ~scope()
-    {
-      BOOST_ASSERT(_fd >= 0);
-      _fd = -1;
-    }
-  };
-};
+using ioxx::hot_fd;
 
 /**
  *  \brief A probe implementation based on poll(2).
