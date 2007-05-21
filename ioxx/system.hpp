@@ -27,6 +27,7 @@
 
 namespace ioxx
 {
+  typedef system::socket        weak_socket;
   typedef system::iovec         iovec;
   typedef iovec *               iovec_iterator;
   typedef iovec const *         iovec_const_iterator;
@@ -77,8 +78,9 @@ namespace ioxx
    *  \param  end    end of iovector array
    *  \pre    <code>begin &lt; end</code>
    *  \throw  system_error in case of an I/O error
+   *  \todo   need network address type in ioxx namespace
    */
-  scatter_iterator read( system::socket          s
+  scatter_iterator read( weak_socket             s
                        , iovec_iterator          begin
                        , iovec_const_iterator    end
                        , system::address *       peer_addr     = 0
@@ -94,8 +96,9 @@ namespace ioxx
    *  \param  end    end of iovector array
    *  \pre    <code>begin &lt;= end</code>
    *  \throw  system_error in case of an I/O error
+   *  \todo   need network address type in ioxx namespace
    */
-  scatter_const_iterator write( system::socket          s
+  scatter_const_iterator write( weak_socket             s
                               , iovec_const_iterator    begin
                               , iovec_const_iterator    end
                               , system::address *       peer_addr     = 0

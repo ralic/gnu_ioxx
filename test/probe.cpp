@@ -19,7 +19,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 using namespace std;
-using namespace ioxx;
 
 /**
  *  \todo It sucks that echo must derive publicly.
@@ -32,24 +31,24 @@ using namespace ioxx;
  *
  *  \todo Sockets must be made non-blocking in some portable way.
  */
-class echo : public ioxx::socket
+class echo : public ioxx::probe::socket
 {
-  ioxx::probe &                 _probe;
-  ioxx::system::socket const    _sin;
-  ioxx::system::socket const    _sout;
+  ioxx::weak_socket const       _sin;
+  ioxx::weak_socket const       _sout;
   boost::array<char, 1024>      _buffer;
-  byte_size                     _size;
+  ioxx::byte_size               _size;
 
 public:
-  echo(ioxx::probe & p, ioxx::system::socket const & inout)
-  : _probe(p), _sin(inout), _sout(inout), _size(0u)
+  typedef boost::shared_ptr<echo> pointer;
+
+  echo(ioxx::weak_socket const & inout) : _sin(inout), _sout(inout), _size(0u)
   {
     cerr << "creating full-duplex echo handler " << this << endl;
     BOOST_REQUIRE(inout >= 0);
   }
 
-  echo(ioxx::probe & p, ioxx::system::socket const & in, ioxx::system::socket const & out)
-  : _probe(p), _sin(in), _sout(out), _size(0u)
+  echo(ioxx::weak_socket const & in, ioxx::weak_socket const & out)
+  : _sin(in), _sout(out), _size(0u)
   {
     cerr << "creating connecting echo handler " << this << endl;
     BOOST_REQUIRE(in >= 0); BOOST_REQUIRE(out >= 0);
@@ -64,7 +63,7 @@ private:
   bool input_blocked() const    { cerr << "want read: "  << (_size == 0u) << endl; return _size == 0u; }
   bool output_blocked() const   { cerr << "want write: " << (_size != 0u) << endl; return _size != 0u; }
 
-  void unblock_input()
+  void unblock_input(ioxx::probe & p, ioxx::weak_socket const & s)
   {
     cerr << "descriptor " << _sin << " is readable" << endl;
     BOOST_REQUIRE_EQUAL(_size, 0u);
@@ -73,14 +72,14 @@ private:
     BOOST_REQUIRE(rc >= 0);
     if (rc == 0)
     {
-      _probe.remove(_sin);
-      _probe.remove(_sout);
+      p.remove(_sin);
+      p.remove(_sout);
     }
     else
       _size = static_cast<size_t>(rc);
   }
 
-  void unblock_output()
+  void unblock_output(ioxx::probe & p, ioxx::weak_socket const & s)
   {
     BOOST_REQUIRE(_size);
     cerr << "descriptor " << _sin << " is writable" << endl;
@@ -89,9 +88,9 @@ private:
 
 BOOST_AUTO_TEST_CASE( test_probe )
 {
-  boost::scoped_ptr<probe>  probe(make_probe_poll());
+  boost::scoped_ptr<ioxx::probe>  probe(ioxx::make_probe_poll());
   BOOST_REQUIRE(probe);
-  ioxx::socket::pointer p( new echo(*probe, STDIN_FILENO, STDOUT_FILENO) );
+  echo::pointer p( new echo(STDIN_FILENO, STDOUT_FILENO) );
   probe->insert(STDIN_FILENO, p);
   probe->insert(STDOUT_FILENO, p);
   while (!probe->empty()) probe->run_once();

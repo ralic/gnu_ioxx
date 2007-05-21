@@ -13,8 +13,9 @@
 #ifndef IOXX_PROBE_HPP_INCLUDED
 #define IOXX_PROBE_HPP_INCLUDED
 
-#include "socket.hpp"
 #include "system.hpp"
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace ioxx
 {
@@ -23,12 +24,31 @@ namespace ioxx
   class probe : private boost::noncopyable
   {
   public:
+
+    struct socket : private boost::noncopyable
+    {
+      typedef boost::shared_ptr<socket>   pointer;
+
+      virtual ~socket() = 0;
+
+      virtual bool input_blocked()  const = 0;
+      virtual bool output_blocked() const = 0;
+
+      virtual void unblock_input(probe & p, weak_socket const & s)  = 0;
+      virtual void unblock_output(probe & p, weak_socket const & s)  = 0;
+      virtual void unblock_input_and_output(probe & p, weak_socket const & s)
+      {
+        unblock_input(p, s);
+        unblock_output(p, s);
+      }
+    };
+
     virtual ~probe() = 0;
 
-    virtual void insert(system::socket const &, socket::pointer const &) = 0;
-    void remove(system::socket const & s) { insert(s, socket::pointer()); }
+    virtual void insert(weak_socket const &, socket::pointer const &) = 0;
+    void remove(weak_socket const & s) { insert(s, socket::pointer()); }
 
-    // virtual socket::pointer operator[] (system::socket const &) = 0;
+    // virtual socket::pointer operator[] (weak_socket const &) = 0;
     // virtual socket::pointer operator[] (socket const &) = 0;
 
     virtual std::size_t size()  const = 0;

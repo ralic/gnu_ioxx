@@ -65,11 +65,11 @@ struct Poll : public ioxx::probe
 {
   struct context
   {
-    ioxx::system::socket const  _s;
-    ioxx::socket::pointer       _f;
-    size_t                      _pfd_index;
+    ioxx::weak_socket const  _s;
+    socket::pointer          _f;
+    size_t                   _pfd_index;
 
-    context(int s, ioxx::socket::pointer const & f, size_t i) : _s(s), _f(f), _pfd_index(i)
+    context(int s, socket::pointer const & f, size_t i) : _s(s), _f(f), _pfd_index(i)
     {
       I(s >= 0);
       I(f);
@@ -113,7 +113,7 @@ struct Poll : public ioxx::probe
   // Append the new entry at the end of the pollfd array, then record
   // it in the handler set.
 
-  void insert(ioxx::system::socket const & s, ioxx::socket::pointer const & f)
+  void insert(ioxx::weak_socket const & s, socket::pointer const & f)
   {
     I(s >= 0);
     iterator p = _hset.find(s);
@@ -167,9 +167,9 @@ struct Poll : public ioxx::probe
     for (iterator p = _hset.begin(); nfds != 0 && p != _hset.end(); /**/)
     {
       check_consistency(p);
-      context &                 ctx( p->second );
-      ioxx::socket::pointer &   f( ctx._f );
-      short const &             revents( _pfd[ctx._pfd_index].revents );
+      context &         ctx( p->second );
+      socket::pointer & f( ctx._f );
+      short const &     revents( _pfd[ctx._pfd_index].revents );
       if (revents)
       {
         --nfds;
@@ -177,12 +177,12 @@ struct Poll : public ioxx::probe
         {
           if (revents & POLLIN)
           {
-            if (revents & POLLOUT)      f->unblock_input_and_output();
-            else                        f->unblock_input();
+            if (revents & POLLOUT)      f->unblock_input_and_output(*this, ctx._s);
+            else                        f->unblock_input(*this, ctx._s);
           }
           else
           {
-            if (revents & POLLOUT)      f->unblock_output();
+            if (revents & POLLOUT)      f->unblock_output(*this, ctx._s);
             else                        f.reset();
           }
           check_consistency(p);

@@ -10,8 +10,8 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#include "ioxx/socket.hpp"
+#include "ioxx/probe.hpp"
 
-ioxx::socket::~socket()
+ioxx::probe::socket::~socket()
 {
 }
