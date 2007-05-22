@@ -34,44 +34,21 @@ using std::size_t;
 using ioxx::weak_socket;
 using ioxx::hot_fd;
 
-/**
- *  \brief A probe implementation based on poll(2).
- *
- *  We manage two containers at once: (1) a set of registered handlers
- *  and (2) an array of pollfd structures. A socket handler's context
- *  tells us which pfd[] index is assigned to this socket. Contexts
- *  can be looked up by file descriptors. The state is managed as
- *  follows:
- *
- *    insert()   Append handler's pollfd to the end of the array,
- *               then record the appropriate context in the handler set.
- *
- *    erase()    Erase the pollfd by copying the last valid array
- *               entry down, into its position. Erase the entry from
- *               the set, and then update the pfd index context of the
- *               handler we copied down.
- *
- *  Attempts to delete the currently running handler are recognized and are
- *  carried out by reset()ing the socket::pointer. The event delivery loop
- *  checks this and deletes the entry once it is safe.
- */
 struct Poll : public ioxx::probe
 {
   struct context
   {
-    weak_socket const   _s;
-    socket::pointer     _f;
-    size_t              _pfd_index;
+    socket::pointer     _f;             // shared_ptr to callback
+    size_t              _pfd_index;     // index of this handler's pollfd?
 
-    context(int s, socket::pointer const & f, size_t i) : _s(s), _f(f), _pfd_index(i)
+    context(socket::pointer const & f, size_t i) : _f(f), _pfd_index(i)
     {
-      BOOST_ASSERT(s >= 0);
-      BOOST_ASSERT(f);
+      BOOST_ASSERT(_f);
     }
   };
 
   typedef std::vector<pollfd>           pfd_array;
-  typedef std::map<int,context>         handler_set;
+  typedef std::map<weak_socket,context> handler_set;
   typedef handler_set::iterator         iterator;
   typedef handler_set::const_iterator   const_iterator;
   typedef handler_set::value_type       pair_type;
@@ -79,11 +56,6 @@ struct Poll : public ioxx::probe
   handler_set           _hset;
   pfd_array             _pfd;
   hot_fd                _hot_fd;
-
-  // Trivial construction and destruction.
-
-  Poll()   { TRACE("constructing poll(2) probe at " << this);  }
-  ~Poll()  { TRACE("shutting down poll(2) probe at " << this); }
 
   // Guarantee that an iterator is valid and points into consistent data.
 
@@ -115,8 +87,8 @@ struct Poll : public ioxx::probe
     context const & ctx( p->second );
     BOOST_ASSERT(ctx._f);
     _pfd[ctx._pfd_index].events
-      = (ctx._f->input_blocked(ctx._s)  ? POLLIN : 0)
-      | (ctx._f->output_blocked(ctx._s) ? POLLOUT : 0)
+      = (ctx._f->input_blocked(p->first)  ? POLLIN : 0)
+      | (ctx._f->output_blocked(p->first) ? POLLOUT : 0)
       ;
     BOOST_ASSERT(ctx._f);       // handler must still exist
   }
@@ -159,7 +131,7 @@ struct Poll : public ioxx::probe
       _pfd.push_back(pfd);
       /// \todo If this call fails with an exception, the containers are
       ///       inconsistent.
-      p = _hset.insert(pair_type(s, context(s, f, i))).first;
+      p = _hset.insert(pair_type(s, context(f, i))).first;
       force(p);
     }
     else                        // overwrite existing entry
@@ -215,13 +187,13 @@ struct Poll : public ioxx::probe
       short const       revents( _pfd[ctx._pfd_index].revents );
       if (revents)
       {
-        hot_fd::scope guard(_hot_fd, ctx._s);
+        hot_fd::scope guard(_hot_fd, p->first);
         --nfds;
         if (revents & ~(POLLIN | POLLOUT)) f.reset();
         else
         {
-          if (f && (revents & POLLIN))  f->unblock_input(*this, ctx._s);
-          if (f && (revents & POLLOUT)) f->unblock_output(*this, ctx._s);
+          if (f && (revents & POLLIN))  f->unblock_input(*this, p->first);
+          if (f && (revents & POLLOUT)) f->unblock_output(*this, p->first);
         }
         check_consistency(p);
       }
@@ -240,6 +212,11 @@ struct Poll : public ioxx::probe
     TRACE(rc << " events delivered; " << size() << " sockets waiting");
     return rc;
   }
+
+  // Trivial construction and destruction.
+
+  Poll()   { TRACE("constructing poll(2) probe at " << this);  }
+  ~Poll()  { TRACE("shutting down poll(2) probe at " << this); }
 };
 
 } // end of anonymous namespace
