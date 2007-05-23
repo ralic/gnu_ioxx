@@ -93,7 +93,6 @@ struct Poll : public ioxx::probe
 
   void force(iterator const & p)
   {
-    SOCKET_TRACE(fd(p), "forced query");
     check_consistency(p);
     socket::pointer const & f( p->second._f );
     BOOST_ASSERT(f);
@@ -101,6 +100,7 @@ struct Poll : public ioxx::probe
       = (f->input_blocked(fd(p))  ? POLLIN : 0)
       | (f->output_blocked(fd(p)) ? POLLOUT : 0)
       ;
+    SOCKET_TRACE(fd(p), "requests probe event " << _pfd[pfd_idx(p)].events);
     BOOST_ASSERT(f);            // handler must still exist
   }
 
@@ -111,7 +111,7 @@ struct Poll : public ioxx::probe
   {
     SOCKET_TRACE(s, (f ? "insert" : "remove") << " handler");
     BOOST_ASSERT(s >= 0);
-    iterator const p( _hset.find(s) );
+    iterator p( _hset.find(s) );
     if (p == _hset.end())       // add new entry
     {
       SOCKET_TRACE(s, "is not registered");
@@ -121,9 +121,9 @@ struct Poll : public ioxx::probe
       BOOST_ASSERT(i == _pfd.size());
       pollfd const pfd = { s, 0, 0};
       _pfd.push_back(pfd);
-      /// \todo If this call fails with an exception, the containers are
-      ///       inconsistent.
-      force( _hset.insert(pair_type(s, context(f, i))).first );
+      try        { p = _hset.insert(pair_type(s, context(f, i))).first; }
+      catch(...) { _pfd.resize(i); throw; }
+      force(p);
     }
     else                        // overwrite existing entry
     {
@@ -150,9 +150,8 @@ struct Poll : public ioxx::probe
       plast->second._pfd_index = i;
       _pfd[i] = _pfd[last];
     }
+    _hset.erase(p); /// \todo An exception here leads to inconsistent containers.
     _pfd.resize(last);
-    /// \todo An exception here leads to inconsistent containers.
-    _hset.erase(p);
   }
 
   // The event delivery loop.
@@ -163,7 +162,7 @@ struct Poll : public ioxx::probe
 
     // Do the system call and handle errors.
 
-    size_t const nfds( size() );
+    size_t nfds( size() );
     BOOST_ASSERT(nfds > 0);
     TRACE("probing " << nfds << " sockets, " << timeout << " msec timeout");
     int const rc = ::poll(&_pfd[0], nfds, timeout);
@@ -179,20 +178,23 @@ struct Poll : public ioxx::probe
         default:        throw ioxx::system_error(id);
       }
     }
+    nfds = rc;
     TRACE("probe found " << rc << " active sockets");
 
     // Deliver the events.
 
-    for (iterator p( _hset.begin() ); p != _hset.end(); /**/)
+    for (iterator p( _hset.begin() ); nfds && p != _hset.end(); /**/)
     {
       check_consistency(p);
-      socket::pointer & f( p->second._f );
-      BOOST_ASSERT(f);
-      short const & revents( _pfd[pfd_idx(p)].revents );
-      if (revents)
+      short const revents( _pfd[pfd_idx(p)].revents );
+      if (!revents) { ++p; continue; }
+      SOCKET_TRACE(fd(p), "received probe event " << revents);
+      --nfds;
+      try
       {
-        SOCKET_TRACE(fd(p), "is hot: " << revents);
         hot_fd::scope guard(_hot_fd, fd(p));
+        socket::pointer const & f( p->second._f );
+        BOOST_ASSERT(f);
         if (revents & ~(POLLIN | POLLOUT))
         {
           f->shutdown(*this, fd(p));
@@ -203,21 +205,27 @@ struct Poll : public ioxx::probe
           f->unblock_input(*this, fd(p));
           if (!f) goto inactive;
         }
-        else
+        if (revents & POLLOUT);
         {
-          BOOST_ASSERT(revents & POLLOUT);
           f->unblock_output(*this, fd(p));
           if (!f) goto inactive;
         }
+        force(p);
       }
-      /// This code queries every registered handler every time the loop is
-      /// iterated. Is this wise? It makes the handler more responsive: they
-      /// get a chance to run even when no i/o takes place. It is a certain
-      /// overhead though.
-      force(p++);
+      catch(std::exception const & e)
+      {
+        SOCKET_TRACE(fd(p), "*** error " << e.what());
+        goto inactive;
+      }
+      catch(...)
+      {
+        SOCKET_TRACE(fd(p), "terminate");
+        goto inactive;
+      }
+      ++p;
       continue;
 
-    inactive:
+    inactive:            // jump out of the hod_fd scope before calling erase
       erase(p++);
     }
 
