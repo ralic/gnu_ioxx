@@ -65,24 +65,24 @@ private:
   bool input_blocked(ioxx::weak_socket const & s) const
   {
     bool const want_read( s == _sin && _size == 0u );
-    cerr << "fd " << s << " requests" << (want_read ? "" : " no") << " input" << endl;
+    cerr << "socket " << s << ": requests" << (want_read ? "" : " no") << " input" << endl;
     return want_read;
   }
 
   bool output_blocked(ioxx::weak_socket const & s) const
   {
     bool const want_write( s == _sout && _size != 0u );
-    cerr << "fd " << s << " requests" << (want_write ? "" : " no") << " output" << endl;
+    cerr << "socket " << s << ": requests" << (want_write ? "" : " no") << " output" << endl;
     return want_write;
   }
 
   void unblock_input(ioxx::probe & p, ioxx::weak_socket const & s)
   {
-    cerr << "fd " << s << " is readable" << endl;
+    cerr << "socket " << s << ": is readable" << endl;
     BOOST_REQUIRE_EQUAL(s, _sin);
     BOOST_REQUIRE_EQUAL(_size, 0u);
     int const rc( read(_sin, _buffer.begin(), _buffer.size()) );
-    cerr << "fd " << s << " read " << rc << " bytes" << endl;
+    cerr << "socket " << s << ": read " << rc << " bytes" << endl;
     BOOST_CHECK(rc >= 0);
     if (rc <= 0)        echo::shutdown(p, s);
     else
@@ -94,12 +94,13 @@ private:
 
   void unblock_output(ioxx::probe & p, ioxx::weak_socket const & s)
   {
-    cerr << "fd " << s << " is writable" << endl;
+    cerr << "socket " << s << ": is writable" << endl;
+    if (s == _sin) return;
     BOOST_REQUIRE_EQUAL(s, _sout);
     BOOST_REQUIRE(_size);
     BOOST_REQUIRE(_gap < _size);
     int const rc( write(_sout, _buffer.begin() + _gap, _size) );
-    cerr << "fd " << s << " wrote " << rc << " bytes" << endl;
+    cerr << "socket " << s << ": wrote " << rc << " bytes" << endl;
     BOOST_CHECK(rc > 0);
     BOOST_CHECK(static_cast<size_t>(rc) <= _size);
     if (rc <= 0)        echo::shutdown(p, s);
