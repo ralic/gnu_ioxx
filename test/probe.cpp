@@ -128,8 +128,10 @@ BOOST_AUTO_TEST_CASE( test_probe )
 {
   boost::scoped_ptr<ioxx::probe>  probe(ioxx::make_probe_poll());
   BOOST_REQUIRE(probe);
-  echo::pointer p( new echo(STDIN_FILENO, STDOUT_FILENO) );
-  probe->insert(STDIN_FILENO, p);
-  probe->insert(STDOUT_FILENO, p);
+  {
+    echo::pointer p( new echo(STDIN_FILENO, STDOUT_FILENO) );
+    probe->insert(STDIN_FILENO, p);
+    probe->insert(STDOUT_FILENO, p);
+  }
   while (!probe->empty()) probe->run_once();
 }

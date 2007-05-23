@@ -117,7 +117,7 @@ struct Poll : public ioxx::probe
       SOCKET_TRACE(s, "is not registered");
       if (!f) return;
       size_t const i( size() );
-      SOCKET_TRACE(s, "insert at pfd position " << i << "; have " << _pfd.size() << " in set.");
+      SOCKET_TRACE(s, "insert at end of pfd array, " << i + 1u << " in set.");
       BOOST_ASSERT(i == _pfd.size());
       pollfd const pfd = { s, 0, 0};
       _pfd.push_back(pfd);
@@ -127,7 +127,6 @@ struct Poll : public ioxx::probe
     }
     else                        // overwrite existing entry
     {
-      SOCKET_TRACE(s, (f ? "erase" : "reset") << " handler");
       p->second._f = f;
       if (f)                    force(p);
       else if (!_hot_fd.hot(s)) erase(p);
