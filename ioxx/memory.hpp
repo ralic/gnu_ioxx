@@ -20,12 +20,25 @@
 
 namespace ioxx
 {
+  /// \brief Bytes are signed or unsigned, we don't know.
   typedef char                                          byte_type;
+
+  /// \brief An unsigned number of bytes.
   typedef std::size_t                                   byte_size;
+
+  /// \brief A signed distance between two byte addresses.
   typedef std::ptrdiff_t                                byte_offset;
+
+  /// \brief An iterator over mutable bytes.
   typedef byte_type *                                   byte_iterator;
+
+  /// \brief An iterator over immutable bytes.
   typedef byte_type const *                             byte_const_iterator;
+
+  /// \brief A direction-reversed iterator over mutable bytes.
   typedef std::reverse_iterator<byte_iterator>          byte_reverse_iterator;
+
+  /// \brief A direction-reversed iterator over immutable bytes.
   typedef std::reverse_iterator<byte_const_iterator>    byte_const_reverse_iterator;
 
   using boost::iterator_range;
@@ -50,22 +63,18 @@ namespace ioxx
   using boost::rend;
   using boost::const_rend;
 
-  template<class range>
-  inline void reset_begin(range & iov, typename range_iterator<range>::type);
+  /**
+   *  \pre  <code>b &lt;= e</code>
+   */
+  template<class Range>
+  inline void reset( Range & iov
+                   , typename range_iterator<Range>::type b
+                   , typename range_iterator<Range>::type e
+                   );
 
-  template<class range>
-  inline void reset_end(range & iov, typename range_iterator<range>::type);
-
-  template<class range>
-  inline void reset( range & iov
-                   , typename range_iterator<range>::type b
-                   , typename range_iterator<range>::type e
-                   )
-  {
-    reset_begin(iov, b);
-    reset_end(iov, e);
-  }
-
+  /**
+   *  \brief Advance iterators into a paged container by a value offset.
+   */
   template <class page_iterator, class value_iterator, class size_type>
   inline void paged_advance( page_iterator &    page_iter
                            , value_iterator &   val_iter

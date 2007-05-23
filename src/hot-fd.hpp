@@ -18,6 +18,10 @@
 
 namespace ioxx
 {
+  /** \internal
+   *
+   *  \brief An exception-safe "hot" file descriptor.
+   */
   class hot_fd : private boost::noncopyable
   {
     weak_socket _fd;
@@ -28,17 +32,20 @@ namespace ioxx
 
     bool hot(weak_socket const & s) const { BOOST_ASSERT(s >= 0); return s == _fd; }
 
+    /// \brief Make a descriptor "hot" for the current scope.
     class scope
     {
       weak_socket &  _fd;
 
     public:
+      /// \brief Assign \c v to \c fd for the lifetime of this object.
       scope(hot_fd & self, weak_socket v) : _fd(self._fd)
       {
         BOOST_ASSERT(_fd == -1);
         BOOST_ASSERT(v >= 0);
         _fd = v;
       }
+      /// \brief Make the descriptor "un-hot" during destruction.
       ~scope()
       {
         BOOST_ASSERT(_fd >= 0);
@@ -46,7 +53,6 @@ namespace ioxx
       }
     };
   };
-
 } // namespace ioxx
 
 #endif // IOXX_HOT_FD_HPP_INCLUDED

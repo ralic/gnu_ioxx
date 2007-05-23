@@ -27,5 +27,9 @@ int main(int, char**)
   ioxx::read(sin, &iovec_array[0], &iovec_array[iovec_array.size()], 0, 0, "can't read");
   ioxx::write(sout, &iovec_array[0], &iovec_array[iovec_array.size()]);
 
+  ioxx::iovec iov;
+  ioxx::reset(iov, 0, 0);
+  ioxx::make_iovec(0, 0);
+
   return 0;
 }

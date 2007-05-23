@@ -127,7 +127,7 @@ private:
 
 BOOST_AUTO_TEST_CASE( test_probe )
 {
-  boost::scoped_ptr<ioxx::probe>  probe(ioxx::make_probe_poll());
+  boost::scoped_ptr<ioxx::probe>  probe(ioxx::make_probe());
   BOOST_REQUIRE(probe);
   {
     echo::pointer p( new echo(STDIN_FILENO, STDOUT_FILENO) );

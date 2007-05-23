@@ -25,13 +25,21 @@
 #  error "ioxx does not know this system"
 #endif
 
-namespace ioxx
+namespace ioxx                  /// C++ API to the native I/O system.
 {
+  /// \brief The native system socket type.
   typedef system::socket        weak_socket;
+
+  /// \brief The native i/o vector type.
   typedef system::iovec         iovec;
+
+  /// \brief A pointer to an mutable ioxx::iovec.
   typedef iovec *               iovec_iterator;
+
+  /// \brief A pointer to an immutable ioxx::iovec.
   typedef iovec const *         iovec_const_iterator;
 
+  /// \brief Construct ioxx::iovec using an iterator range.
   inline iovec make_iovec(byte_iterator begin, byte_iterator end)
   {
     iovec v;
@@ -39,6 +47,7 @@ namespace ioxx
     return v;
   }
 
+  /// \brief A byte iterator for mutable scatter/gather arrays.
   struct scatter_iterator : public std::pair<iovec_iterator, byte_iterator>
   {
     typedef std::pair<iovec_iterator, byte_iterator> base;
@@ -51,6 +60,7 @@ namespace ioxx
     byte_iterator   byte_ptr() const { return second; }
   };
 
+  /// \brief A byte iterator for immutable scatter/gather arrays.
   struct scatter_const_iterator : public std::pair<iovec_const_iterator, byte_const_iterator>
   {
     typedef std::pair<iovec_const_iterator, byte_const_iterator> base;
@@ -64,6 +74,7 @@ namespace ioxx
     byte_const_iterator byte_ptr() const { return second; }
   };
 
+  /// \brief System errors are nondescript and sudden.
   struct system_error : public std::runtime_error
   {
     system_error();

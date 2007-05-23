@@ -156,7 +156,7 @@ struct Poll : public ioxx::probe
 
   // The event delivery loop.
 
-  size_t run_once(ioxx::msec_timeout_t timeout)
+  size_t run_once(ioxx::millisecond_t timeout)
   {
     BOOST_ASSERT(!empty()); BOOST_ASSERT(timeout >= -1);
 
@@ -243,7 +243,7 @@ struct Poll : public ioxx::probe
 
 // ----- Public Constructor Function ------------------------------------------
 
-ioxx::probe * ioxx::make_probe_poll()
+ioxx::probe * ioxx::make_probe()
 {
   return new Poll;
 }

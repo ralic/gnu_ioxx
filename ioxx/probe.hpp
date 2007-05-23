@@ -19,60 +19,161 @@
 
 namespace ioxx
 {
-  typedef int msec_timeout_t;
+  /// \brief A signed type for milliseconds (<code>1/10^6</code> seconds).
+  typedef int millisecond_t;
 
+  /**
+   *  \brief The system's socket event dispatcher.
+   *
+   *  Over its lifetime a ioxx::weak_socket alternates between four states:
+   *  Input can be blocked or available and output can be blocked or available.
+   *  There are special kinds of sockets that support only input or only
+   *  output: IPC pipes or listener sockets, for example. As far as the event
+   *  dispatcher is concerned, however, those sockets are special only insofar
+   *  as that they don't receive certain events.
+   *
+   *  A ioxx::probe signals those state changes for a registered by invoking an
+   *  appropriate handler object derived from ioxx::probe::socket. The
+   *  internals of the probe object are system-dependent and remain opaque.
+   */
   class probe : private boost::noncopyable
   {
   public:
-
+    /**
+     *  \brief A probed socket.
+     *
+     *  Derive from this class to create a low-level I/O service that can be
+     *  registered in ioxx::probe.
+     */
     struct socket : private boost::noncopyable
     {
+      /**
+       *  \brief Sockets are generally stored in smart pointers.
+       *
+       *  Resource leaks are devastating in I/O code, particularly in
+       *  long-living servers. The reference-counting overhead is well worth
+       *  having transparent resource tracking in return. If it is necessary to
+       *  register a non-head-allocated ioxx::probe::socket, the shared pointer
+       *  can be constructed with an empty deleter.
+       */
       typedef boost::shared_ptr<socket>   pointer;
 
+      /// \brief Derived class provides destructor.
       virtual ~socket() = 0;
 
+      /**
+       *  \brief Shall we probe for input?
+       *
+       *  ioxx::probe invokes this method for every registered socket handler
+       *  to determine whether input becoming available is a requested signal.
+       *  The method is also invoked after state change event has been
+       *  delivered.
+       *
+       *  \note A handler is not supposed to modify the probe in this method.
+       */
       virtual bool input_blocked(weak_socket const & s)  const = 0;
+
+      /**
+       *  \brief Shall we probe for output?
+       *  \sa    ioxx::probe::input_blocked()
+       */
       virtual bool output_blocked(weak_socket const & s) const = 0;
 
+      /**
+       *  \brief Input can be read without blocking.
+       *
+       *  If the last call to ioxx::socket::input_blocked() has returned true,
+       *  ioxx::probe will invoke this method once the associated socket has
+       *  become readable.
+       */
       virtual void unblock_input(probe & p, weak_socket const & s)  = 0;
+
+      /**
+       *  \brief Output can be written without blocking.
+       *  \sa    ioxx::probe::unblock_input()
+       */
       virtual void unblock_output(probe & p, weak_socket const & s) = 0;
+
+      /**
+       *  \brief The OS has invalidated the socket.
+       *
+       *  This method is invoked when ioxx::probe receives an error condition
+       *  from the underlying system call.
+       */
       virtual void shutdown(probe & p, weak_socket const & s) = 0;
     };
 
+    /// \brief System-dependent Implementation provides destructor.
     virtual ~probe() = 0;
 
-    virtual void insert(weak_socket const &, socket::pointer const &) = 0;
+    /**
+     *  \brief Manipulate the set of probed sockets.
+     *
+     *  Add \c s to set of probed sockets using \c p as its handler. If \c p is
+     *  invalid, the socket will be \em removed from the set instead. When
+     *  insert() is called for a socket that is already registered, it's
+     *  handler will be replaced by \c p (if \c p is valid).
+     *
+     *  After inserting/replacing a handler, ioxx::probe::force() is invoked to
+     *  determine the events it is interested in.
+     *
+     *  Adding, replacing, or deleting a handler is always a safe operation. It
+     *  is possible for the currently running handler to modify its own entry.
+     *  However, changes are immediate. If a handler replaces itself in the
+     *  probe, it effectively performs <code>delete this</code> (unless another
+     *  copy of the shared pointer exists somewhere else).
+     *
+     *  \param s  Socket to probe.
+     *  \param p  Pointer to socket handler for \c s.
+     */
+    virtual void insert(weak_socket const & s, socket::pointer const & p) = 0;
+
+    /// \brief A simple forwarder to ioxx::probe::insert().
     void remove(weak_socket const & s) { insert(s, socket::pointer()); }
 
+    /**
+     *  \brief Refresh the events this socket is probed for.
+     *
+     *  If \p s is a valid socket,  ioxx::probe::socket::input_blocked() and
+     *  ioxx::probe::socket::output_blocked() will be invoked on its handler.
+     */
     virtual void force(weak_socket const &) = 0;
 
-    virtual socket::pointer operator[] (weak_socket const &) const = 0;
+    /// \brief  Obtain a copy of the shared pointer to a socket's handler.
+    /// \return An invalid socket if \c s is not registered.
+    virtual socket::pointer operator[] (weak_socket const & s) const = 0;
 
+    /// \brief The number of registered socket in this probe.
     virtual std::size_t size()  const = 0;
+
+    /// \brief Test whether a probe is empty.
     virtual bool        empty() const = 0;
 
     /**
-     *  \brief   Probe for new events and deliver them.
-     *  \return  Number of socket events we delivered. \c 0u
-     *           signifies a timeout if \c empty() is false.
+     *  \brief Probe for new events and deliver them.
+     *
+     *  \param to  Block no longer than this many milliseconds
+     *             (<code>1/10^6</code> seconds).
+     *  \pre       <code>!empty() && to &gt;= -1</code>
+     *  \return    Number of sockets that had events delivered. \c 0u signifies
+     *             a timeout.
+     *
      */
-    virtual std::size_t run_once(msec_timeout_t timeout = -1) = 0;
+    virtual std::size_t run_once(millisecond_t to = -1) = 0;
   };
 
   /**
-   *  \brief Create a probe based on XPG4-UNIX's \c poll(2).
+   *  \brief Create a native probe.
    *
-   *  \return \c NULL if unavailable on this system.
+   *  \return Pointer to an instance of ioxx::probe. Failure is signaled using
+   *          exceptions.
    *
-   *  \throw  std::bad_alloc if there is insufficient memory.
+   *  \throw  std::bad_alloc Insufficient memory.
    *
-   *  \throw  probe::overflow if the maximum capacity of poll()
-   *          has been reached: \c add() and \c run_once().
-   *
-   *  \throw  system_error if \c poll() reports failure for
-   *          unspecified reasons: \c run_once().
+   *  \throw  ioxx::system_error Implementation reports failure for
+   *          reasons hard to describe other than std::exception::what().
    */
-  probe * make_probe_poll();
+  probe * make_probe();
 
 } // namespace ioxx
 
