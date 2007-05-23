@@ -57,14 +57,17 @@ struct Poll : public ioxx::probe
   pfd_array             _pfd;
   hot_fd                _hot_fd;
 
+  static inline int const &    fd(const_iterator const & p)       { return p->first; }
+  static inline size_t const & pfd_idx(const_iterator const & p)  { return p->second._pfd_index; }
+
   // Guarantee that an iterator is valid and points into consistent data.
 
   iterator const & check_consistency(iterator const & p) const
   {
     BOOST_ASSERT(p != _hset.end());
-    BOOST_ASSERT(p->second._pfd_index <= _hset.size());
-    BOOST_ASSERT(p->second._pfd_index <  _pfd.capacity());
-    BOOST_ASSERT(p->first == _pfd[p->second._pfd_index].fd);
+    BOOST_ASSERT(pfd_idx(p) <= _hset.size());
+    BOOST_ASSERT(pfd_idx(p) <  _pfd.capacity());
+    BOOST_ASSERT(fd(p) == _pfd[pfd_idx(p)].fd);
     return p;
   }
 
@@ -73,45 +76,32 @@ struct Poll : public ioxx::probe
   std::size_t   size()  const  { return _hset.size(); }
   bool          empty() const  { return _hset.empty(); }
 
+  socket::pointer operator[] (weak_socket const & fd) const
+  {
+    const_iterator const p( _hset.find(fd) );
+    return (p != _hset.end()) ? p->second._f : socket::pointer();
+  }
+
   // Force a handler to be queried.
 
   void force(weak_socket const & s)
   {
     iterator const p( _hset.find(s) );
-    if (p != _hset.end() && p->second._f) force(p);
+    if (p != _hset.end()) force(p);
+    else                  SOCKET_TRACE(s, "ignore user-forced query");
   }
 
   void force(iterator const & p)
   {
+    SOCKET_TRACE(fd(p), "forced query");
     check_consistency(p);
-    context const & ctx( p->second );
-    BOOST_ASSERT(ctx._f);
-    _pfd[ctx._pfd_index].events
-      = (ctx._f->input_blocked(p->first)  ? POLLIN : 0)
-      | (ctx._f->output_blocked(p->first) ? POLLOUT : 0)
+    socket::pointer const & f( p->second._f );
+    BOOST_ASSERT(f);
+    _pfd[pfd_idx(p)].events
+      = (f->input_blocked(fd(p))  ? POLLIN : 0)
+      | (f->output_blocked(fd(p)) ? POLLOUT : 0)
       ;
-    BOOST_ASSERT(ctx._f);       // handler must still exist
-  }
-
-  void erase(iterator p)
-  {
-    BOOST_ASSERT(!_hot_fd.hot(p->first));
-    check_consistency(p);
-    size_t const i( p->second._pfd_index );
-    size_t const last( size() - 1u );
-    BOOST_ASSERT(last == _pfd.size() - 1u);
-    if (i != last)
-    {
-      SOCKET_TRACE(p->first, "moving pfd entry " << last << " to index " << i << " to erase");
-      iterator const plast( _hset.find(_pfd[last].fd) );
-      check_consistency(plast); // must exist
-      BOOST_ASSERT(plast->second._pfd_index == last);
-      plast->second._pfd_index = i;
-      _pfd[i] = _pfd[last];
-    }
-    _pfd.resize(last);
-    /// \todo An exception here leads to inconsistent containers.
-    _hset.erase(p++);
+    BOOST_ASSERT(f);            // handler must still exist
   }
 
   // Append the new entry at the end of the pollfd array, then record
@@ -119,35 +109,51 @@ struct Poll : public ioxx::probe
 
   void insert(weak_socket const & s, socket::pointer const & f)
   {
+    SOCKET_TRACE(s, (f ? "insert" : "remove") << " handler");
     BOOST_ASSERT(s >= 0);
-    iterator p( _hset.find(s) );
+    iterator const p( _hset.find(s) );
     if (p == _hset.end())       // add new entry
     {
+      SOCKET_TRACE(s, "is not registered");
       if (!f) return;
       size_t const i( size() );
-      SOCKET_TRACE(s, "assign pfd position " << i << "; have " << _pfd.size() << " in set.");
+      SOCKET_TRACE(s, "insert at pfd position " << i << "; have " << _pfd.size() << " in set.");
       BOOST_ASSERT(i == _pfd.size());
       pollfd const pfd = { s, 0, 0};
       _pfd.push_back(pfd);
       /// \todo If this call fails with an exception, the containers are
       ///       inconsistent.
-      p = _hset.insert(pair_type(s, context(f, i))).first;
-      force(p);
+      force( _hset.insert(pair_type(s, context(f, i))).first );
     }
     else                        // overwrite existing entry
     {
+      SOCKET_TRACE(s, (f ? "erase" : "reset") << " handler");
       p->second._f = f;
       if (f)                    force(p);
       else if (!_hot_fd.hot(s)) erase(p);
     }
   }
 
-  // Lookup a shared pointer by socket.
-
-  socket::pointer operator[] (weak_socket const & fd) const
+  void erase(iterator const & p)
   {
-    const_iterator const p( _hset.find(fd) );
-    return (p != _hset.end()) ? p->second._f : socket::pointer();
+    SOCKET_TRACE(fd(p), "erase context");
+    check_consistency(p);
+    BOOST_ASSERT(!_hot_fd.hot(fd(p)));
+    size_t const i( pfd_idx(p) );
+    size_t const last( size() - 1u );
+    BOOST_ASSERT(last == _pfd.size() - 1u);
+    if (i != last)
+    {
+      iterator const plast( _hset.find(_pfd[last].fd) );
+      check_consistency(plast); // must exist
+      SOCKET_TRACE(fd(p), "move socket " << plast->first << " in pfd array to erase");
+      BOOST_ASSERT(pfd_idx(plast) == last);
+      plast->second._pfd_index = i;
+      _pfd[i] = _pfd[last];
+    }
+    _pfd.resize(last);
+    /// \todo An exception here leads to inconsistent containers.
+    _hset.erase(p);
   }
 
   // The event delivery loop.
@@ -158,7 +164,7 @@ struct Poll : public ioxx::probe
 
     // Do the system call and handle errors.
 
-    size_t nfds( size() );
+    size_t const nfds( size() );
     BOOST_ASSERT(nfds > 0);
     TRACE("probing " << nfds << " sockets, " << timeout << " msec timeout");
     int const rc = ::poll(&_pfd[0], nfds, timeout);
@@ -174,42 +180,49 @@ struct Poll : public ioxx::probe
         default:        throw ioxx::system_error(id);
       }
     }
-    nfds = rc;
-    TRACE(nfds << " sockets are active");
+    TRACE("probe found " << rc << " active sockets");
 
     // Deliver the events.
 
-    for (iterator p = _hset.begin(); nfds != 0 && p != _hset.end(); /**/)
+    for (iterator p( _hset.begin() ); p != _hset.end(); /**/)
     {
       check_consistency(p);
-      context &         ctx( p->second );
-      socket::pointer & f( ctx._f );
-      short const       revents( _pfd[ctx._pfd_index].revents );
+      socket::pointer & f( p->second._f );
+      BOOST_ASSERT(f);
+      short const & revents( _pfd[pfd_idx(p)].revents );
       if (revents)
       {
-        hot_fd::scope guard(_hot_fd, p->first);
-        --nfds;
-        if (revents & ~(POLLIN | POLLOUT)) f.reset();
+        SOCKET_TRACE(fd(p), "is hot: " << revents);
+        hot_fd::scope guard(_hot_fd, fd(p));
+        if (revents & ~(POLLIN | POLLOUT))
+        {
+          f->shutdown(*this, fd(p));
+          goto inactive;
+        }
+        if (revents & POLLIN)
+        {
+          f->unblock_input(*this, fd(p));
+          if (!f) goto inactive;
+        }
         else
         {
-          if (f && (revents & POLLIN))  f->unblock_input(*this, p->first);
-          if (f && (revents & POLLOUT)) f->unblock_output(*this, p->first);
+          BOOST_ASSERT(revents & POLLOUT);
+          f->unblock_output(*this, fd(p));
+          if (!f) goto inactive;
         }
-        check_consistency(p);
       }
-      if (f)                    // handler is still active
-      {
-        /// \todo This code queries every registered handler every time the
-        /// loop is iterated. Is this wise? It makes the handler more
-        /// responsive: they get a chance to run even when no i/o takes place.
-        /// It is a certain overhead though.
-        force(p++);
-      }
-      else                      // handler is inactive: remove it
-        erase(p++);
+      /// This code queries every registered handler every time the loop is
+      /// iterated. Is this wise? It makes the handler more responsive: they
+      /// get a chance to run even when no i/o takes place. It is a certain
+      /// overhead though.
+      force(p++);
+      continue;
+
+    inactive:
+      erase(p++);
     }
 
-    TRACE(rc << " events delivered; " << size() << " sockets waiting");
+    TRACE(rc << " events delivered; " << size() << " sockets registered");
     return rc;
   }
 

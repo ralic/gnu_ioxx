@@ -36,6 +36,7 @@ namespace ioxx
 
       virtual void unblock_input(probe & p, weak_socket const & s)  = 0;
       virtual void unblock_output(probe & p, weak_socket const & s) = 0;
+      virtual void shutdown(probe & p, weak_socket const & s) = 0;
     };
 
     virtual ~probe() = 0;

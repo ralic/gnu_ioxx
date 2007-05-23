@@ -82,12 +82,9 @@ private:
     BOOST_REQUIRE_EQUAL(s, _sin);
     BOOST_REQUIRE_EQUAL(_size, 0u);
     int const rc( read(_sin, _buffer.begin(), _buffer.size()) );
+    cerr << "fd " << s << " read " << rc << " bytes" << endl;
     BOOST_CHECK(rc >= 0);
-    if (rc <= 0)
-    {
-      p.remove(_sin);
-      p.remove(_sout);
-    }
+    if (rc <= 0)        echo::shutdown(p, s);
     else
     {
       _size = static_cast<size_t>(rc);
@@ -102,13 +99,10 @@ private:
     BOOST_REQUIRE(_size);
     BOOST_REQUIRE(_gap < _size);
     int const rc( write(_sout, _buffer.begin() + _gap, _size) );
+    cerr << "fd " << s << " wrote " << rc << " bytes" << endl;
     BOOST_CHECK(rc > 0);
     BOOST_CHECK(static_cast<size_t>(rc) <= _size);
-    if (rc <= 0)
-    {
-      p.remove(_sin);
-      p.remove(_sout);
-    }
+    if (rc <= 0)        echo::shutdown(p, s);
     else
     {
       _gap  += static_cast<size_t>(rc);
@@ -120,6 +114,14 @@ private:
       }
     }
   }
+
+  void shutdown(ioxx::probe & p, ioxx::weak_socket const & s)
+  {
+    cerr << "unregister echo handler " << this << endl;
+    p.remove(_sin);
+    p.remove(_sout);
+  }
+
 };
 
 BOOST_AUTO_TEST_CASE( test_probe )
