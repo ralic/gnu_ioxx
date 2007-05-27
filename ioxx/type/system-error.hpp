@@ -10,19 +10,10 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#ifndef IOXX_SYSTEM_HPP_INCLUDED
-#define IOXX_SYSTEM_HPP_INCLUDED
+#ifndef IOXX_TYPE_SYSTEM_ERROR_HPP_INCLUDED
+#define IOXX_TYPE_SYSTEM_ERROR_HPP_INCLUDED
 
-#include "memory.hpp"
 #include <stdexcept>
-#include <string>
-
-#include <boost/config.hpp>
-#ifdef _POSIX_SOURCE
-#  include "system/posix.hpp"
-#else
-#  error "ioxx does not know this system"
-#endif
 
 namespace ioxx                  /// C++ API to the native I/O system.
 {
@@ -34,4 +25,4 @@ namespace ioxx                  /// C++ API to the native I/O system.
   };
 }
 
-#endif // IOXX_SYSTEM_HPP_INCLUDED
+#endif // IOXX_TYPE_SYSTEM_ERROR_HPP_INCLUDED
