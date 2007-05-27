@@ -71,7 +71,7 @@ struct Poll : public ioxx::probe
   std::size_t   size()  const  { return _hset.size(); }
   bool          empty() const  { return _hset.empty(); }
 
-  socket::pointer operator[] (weak_socket const & fd) const
+  socket::pointer operator[] (weak_socket fd) const
   {
     const_iterator const p( _hset.find(fd) );
     return (p != _hset.end()) ? p->second._f : socket::pointer();
@@ -79,7 +79,7 @@ struct Poll : public ioxx::probe
 
   // Force a handler to be queried.
 
-  void force(weak_socket const & s)
+  void force(weak_socket s)
   {
     iterator const p( _hset.find(s) );
     if (p != _hset.end()) force(p);
@@ -102,7 +102,7 @@ struct Poll : public ioxx::probe
   // Append the new entry at the end of the pollfd array, then record
   // it in the handler set.
 
-  void insert(weak_socket const & s, socket::pointer const & f)
+  void insert(weak_socket s, socket::pointer const & f)
   {
     TRACE_SOCKET(s, (f ? "insert" : "remove") << " handler");
     BOOST_ASSERT(s >= 0);
@@ -151,16 +151,16 @@ struct Poll : public ioxx::probe
 
   // The event delivery loop.
 
-  size_t run_once(ioxx::millisecond_t timeout)
+  size_t run_once(int timeout)
   {
-    BOOST_ASSERT(!empty()); BOOST_ASSERT(timeout >= -1);
+    BOOST_ASSERT(!empty());
 
     // Do the system call and handle errors.
 
     size_t nfds( size() );
     BOOST_ASSERT(nfds > 0);
-    IOXX_TRACE_MSG("probing " << nfds << " sockets, " << timeout << " msec timeout");
-    int const rc = ::poll(&_pfd[0], nfds, timeout);
+    IOXX_TRACE_MSG("probing " << nfds << " sockets, " << timeout << " second timeout");
+    int const rc = ::poll(&_pfd[0], nfds, (timeout < 0 ? -1 : timeout * 1000));
     if (rc < 0)
     {
       static char const id[] = "probe::run_once() failed";

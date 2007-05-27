@@ -10,25 +10,16 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#ifndef IOXX_TYPE_SYSTEM_TIME_INCLUDED
-#define IOXX_TYPE_SYSTEM_TIME_INCLUDED
+#ifndef IOXX_TYPE_TIME_INCLUDED
+#define IOXX_TYPE_TIME_INCLUDED
 
-#include "time.hpp"
-#include <boost/noncopyable.hpp>
+#include <boost/compatibility/cpp_c_headers/ctime>
 
 namespace ioxx
 {
-  class system_time : private boost::noncopyable
-  {
-  public:
-    system_time()                       { update(); }
+  using std::time_t;
 
-    static time_t const &  now()        { return _now; }
-    static void            update();
-
-  private:
-    static time_t _now;
-  };
+  typedef unsigned int second_t;
 }
 
-#endif // IOXX_TYPE_SYSTEM_TIME_INCLUDED
+#endif // IOXX_TYPE_TIME_INCLUDED

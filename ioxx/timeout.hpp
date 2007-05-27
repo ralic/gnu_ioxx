@@ -35,7 +35,7 @@ namespace ioxx
       return event(to, _the_map.insert(context(to, f)));
     }
 
-    event in(unsigned int seconds, handler const & f)
+    event in(second_t seconds, handler const & f)
     {
       return at(now() + seconds, f);
     }
@@ -50,7 +50,7 @@ namespace ioxx
       return _the_map.empty();
     }
 
-    size_t deliver(unsigned int * next_in_seconds = 0)
+    size_t deliver(second_t * next_in_seconds = 0)
     {
       update();
       size_t n( 0u );
@@ -66,7 +66,7 @@ namespace ioxx
         else
         {
           if (next_in_seconds)
-            *next_in_seconds = static_cast<unsigned int>(i->first - now()) + 1u;
+            *next_in_seconds = static_cast<second_t>(i->first - now()) + 1u;
           break;
         }
       }

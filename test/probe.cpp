@@ -16,6 +16,7 @@
 #include <iostream>
 #include <boost/scoped_ptr.hpp>
 #include <boost/array.hpp>
+#include <boost/bind.hpp>
 
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/auto_unit_test.hpp>
@@ -44,14 +45,14 @@ class echo : public ioxx::probe::socket
 public:
   typedef boost::shared_ptr<echo> pointer;
 
-  echo(ioxx::weak_socket const & inout)
+  echo(ioxx::weak_socket inout)
   : _sin(inout), _sout(inout), _size(0u), _gap(0u)
   {
     cerr << "creating full-duplex echo handler " << this << endl;
     BOOST_REQUIRE(inout >= 0);
   }
 
-  echo(ioxx::weak_socket const & in, ioxx::weak_socket const & out)
+  echo(ioxx::weak_socket in, ioxx::weak_socket out)
   : _sin(in), _sout(out), _size(0u), _gap(0u)
   {
     cerr << "creating connecting echo handler " << this << endl;
@@ -63,22 +64,27 @@ public:
     cerr << "destroy echo handler " << this << endl;
   }
 
+  void shutdown(ioxx::probe & p)
+  {
+    shutdown(p, ioxx::invalid_weak_socket());
+  }
+
 private:
-  bool input_blocked(ioxx::weak_socket const & s) const
+  bool input_blocked(ioxx::weak_socket s) const
   {
     bool const want_read( s == _sin && _size == 0u );
     cerr << "socket " << s << ": requests" << (want_read ? "" : " no") << " input" << endl;
     return want_read;
   }
 
-  bool output_blocked(ioxx::weak_socket const & s) const
+  bool output_blocked(ioxx::weak_socket s) const
   {
     bool const want_write( s == _sout && _size != 0u );
     cerr << "socket " << s << ": requests" << (want_write ? "" : " no") << " output" << endl;
     return want_write;
   }
 
-  void unblock_input(ioxx::probe & p, ioxx::weak_socket const & s)
+  void unblock_input(ioxx::probe & p, ioxx::weak_socket s)
   {
     cerr << "socket " << s << ": is readable" << endl;
     BOOST_REQUIRE_EQUAL(s, _sin);
@@ -94,7 +100,7 @@ private:
     }
   }
 
-  void unblock_output(ioxx::probe & p, ioxx::weak_socket const & s)
+  void unblock_output(ioxx::probe & p, ioxx::weak_socket s)
   {
     cerr << "socket " << s << ": is writable" << endl;
     if (s == _sin) return;
@@ -118,23 +124,32 @@ private:
     }
   }
 
-  void shutdown(ioxx::probe & p, ioxx::weak_socket const & s)
+  void shutdown(ioxx::probe & p, ioxx::weak_socket)
   {
     cerr << "unregister echo handler " << this << endl;
     p.remove(_sin);
     p.remove(_sout);
   }
-
 };
 
 BOOST_AUTO_TEST_CASE( test_probe )
 {
-  boost::scoped_ptr<ioxx::probe>  probe(ioxx::make_probe());
+  boost::scoped_ptr<ioxx::probe>        probe(ioxx::make_probe());
+  ioxx::timeout                         timer;
   BOOST_REQUIRE(probe);
   {
     echo::pointer p( new echo(STDIN_FILENO, STDOUT_FILENO) );
     probe->insert(STDIN_FILENO, p);
     probe->insert(STDOUT_FILENO, p);
+    timer.in(5u, boost::bind(&echo::shutdown, p, boost::ref(*probe)));
   }
-  while (!probe->empty()) probe->run_once();
+  for(;;)
+  {
+    ioxx::second_t idle_time;
+    timer.deliver(&idle_time);
+    if (!probe->empty())
+      probe->run_once(timer.empty() ? -1 : static_cast<int>(idle_time));
+    else
+      break;
+  }
 }

@@ -14,14 +14,12 @@
 #define IOXX_PROBE_HPP_INCLUDED
 
 #include "type/weak-socket.hpp"
+#include "type/time.hpp"
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace ioxx
 {
-  /// \brief A signed type for milliseconds (<code>1/10^6</code> seconds).
-  typedef int millisecond_t;
-
   /**
    *  \brief The system's socket event dispatcher.
    *
@@ -71,13 +69,13 @@ namespace ioxx
        *
        *  \note A handler is not supposed to modify the probe in this method.
        */
-      virtual bool input_blocked(weak_socket const & s)  const = 0;
+      virtual bool input_blocked(weak_socket s)  const = 0;
 
       /**
        *  \brief Shall we probe for output?
        *  \sa    ioxx::probe::input_blocked()
        */
-      virtual bool output_blocked(weak_socket const & s) const = 0;
+      virtual bool output_blocked(weak_socket s) const = 0;
 
       /**
        *  \brief Input can be read without blocking.
@@ -86,13 +84,13 @@ namespace ioxx
        *  ioxx::probe will invoke this method once the associated socket has
        *  become readable.
        */
-      virtual void unblock_input(probe & p, weak_socket const & s)  = 0;
+      virtual void unblock_input(probe & p, weak_socket s)  = 0;
 
       /**
        *  \brief Output can be written without blocking.
        *  \sa    ioxx::probe::unblock_input()
        */
-      virtual void unblock_output(probe & p, weak_socket const & s) = 0;
+      virtual void unblock_output(probe & p, weak_socket s) = 0;
 
       /**
        *  \brief The OS has invalidated the socket.
@@ -100,7 +98,7 @@ namespace ioxx
        *  This method is invoked when ioxx::probe receives an error condition
        *  from the underlying system call.
        */
-      virtual void shutdown(probe & p, weak_socket const & s) = 0;
+      virtual void shutdown(probe & p, weak_socket s) = 0;
     };
 
     /// \brief System-dependent Implementation provides destructor.
@@ -126,10 +124,10 @@ namespace ioxx
      *  \param s  Socket to probe.
      *  \param p  Pointer to socket handler for \c s.
      */
-    virtual void insert(weak_socket const & s, socket::pointer const & p) = 0;
+    virtual void insert(weak_socket s, socket::pointer const & p) = 0;
 
     /// \brief A simple forwarder to ioxx::probe::insert().
-    void remove(weak_socket const & s) { insert(s, socket::pointer()); }
+    void remove(weak_socket s) { insert(s, socket::pointer()); }
 
     /**
      *  \brief Refresh the events this socket is probed for.
@@ -137,11 +135,11 @@ namespace ioxx
      *  If \p s is a valid socket,  ioxx::probe::socket::input_blocked() and
      *  ioxx::probe::socket::output_blocked() will be invoked on its handler.
      */
-    virtual void force(weak_socket const &) = 0;
+    virtual void force(weak_socket) = 0;
 
     /// \brief  Obtain a copy of the shared pointer to a socket's handler.
     /// \return An invalid socket if \c s is not registered.
-    virtual socket::pointer operator[] (weak_socket const & s) const = 0;
+    virtual socket::pointer operator[] (weak_socket s) const = 0;
 
     /// \brief The number of registered socket in this probe.
     virtual std::size_t size()  const = 0;
@@ -152,14 +150,14 @@ namespace ioxx
     /**
      *  \brief Probe for new events and deliver them.
      *
-     *  \param to  Block no longer than this many milliseconds
-     *             (<code>1/10^6</code> seconds).
-     *  \pre       <code>!empty() && to &gt;= -1</code>
+     *  \param to  Block no longer than this many seconds.  0u => return
+     *             immediately; -1 => block indefinitely.
+     *  \pre       <code>!empty()</code>
      *  \return    Number of sockets that had events delivered. \c 0u signifies
      *             a timeout.
      *
      */
-    virtual std::size_t run_once(millisecond_t to = -1) = 0;
+    virtual std::size_t run_once(int timeout = -1) = 0;
   };
 
   /**
