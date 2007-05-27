@@ -10,25 +10,15 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#ifndef IOXX_MEMORY_HPP_INCLUDED
-#define IOXX_MEMORY_HPP_INCLUDED
+#ifndef IOXX_TYPE_BYTE_RANGE_HPP_INCLUDED
+#define IOXX_TYPE_BYTE_RANGE_HPP_INCLUDED
 
-#include <algorithm>
-#include <iterator>
+#include "byte.hpp"
 #include <boost/range.hpp>
-#include <boost/compatibility/cpp_c_headers/cstddef>
+#include <iterator>
 
 namespace ioxx
 {
-  /// \brief Bytes are signed or unsigned, we don't know.
-  typedef char                                          byte_type;
-
-  /// \brief An unsigned number of bytes.
-  typedef std::size_t                                   byte_size;
-
-  /// \brief A signed distance between two byte addresses.
-  typedef std::ptrdiff_t                                byte_offset;
-
   /// \brief An iterator over mutable bytes.
   typedef byte_type *                                   byte_iterator;
 
@@ -63,39 +53,6 @@ namespace ioxx
   using boost::rend;
   using boost::const_rend;
 
-  /**
-   *  \pre  <code>b &lt;= e</code>
-   */
-  template<class Range>
-  inline void reset( Range & iov
-                   , typename range_iterator<Range>::type b
-                   , typename range_iterator<Range>::type e
-                   );
-
-  /**
-   *  \brief Advance iterators into a paged container by a value offset.
-   */
-  template <class page_iterator, class value_iterator, class size_type>
-  inline void paged_advance( page_iterator &    page_iter
-                           , value_iterator &   val_iter
-                           , size_type          i
-                           )
-  {
-    size_type n;
-    while (i)
-    {
-      n = std::distance(val_iter, end(*page_iter));
-      if (i > n)
-      {
-        i -= n;
-        ++page_iter;
-        val_iter = begin(*page_iter);
-      }
-      else
-        return std::advance(val_iter, i);
-    }
-  }
-
 } // namespace ioxx
 
-#endif // IOXX_MEMORY_HPP_INCLUDED
+#endif // IOXX_TYPE_BYTE_RANGE_HPP_INCLUDED
