@@ -10,9 +10,18 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#include "ioxx/memory.hpp"
+#ifndef IOXX_TYPE_ADDRESS_HPP_INCLUDED
+#define IOXX_TYPE_ADDRESS_HPP_INCLUDED
 
-int main(int, char**)
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+namespace ioxx
 {
-  return 0;
+  typedef sockaddr  address;
+  typedef socklen_t address_size;
+  typedef addrinfo  address_info;
 }
+
+#endif // IOXX_TYPE_ADDRESS_HPP_INCLUDED

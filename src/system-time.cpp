@@ -10,8 +10,17 @@
  * provided the copyright notice and this notice are preserved.
  */
 
-#include "ioxx/probe.hpp"
+#include "ioxx/type/system-time.hpp"
+#include "ioxx/type/system-error.hpp"
 
-ioxx::probe::~probe()
+std::time_t ioxx::system_time::_now = ioxx::time_t(0);
+
+void ioxx::system_time::update()
 {
+  using namespace std;
+  time_t new_now;
+  if (time(&new_now) == std::time_t(-1))
+    throw system_error("cannot determine system time");
+  else
+    _now = new_now;
 }

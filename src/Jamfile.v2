@@ -1,3 +1,16 @@
 # ioxx/src/Jamfile.v2
 
-build-project .. ;
+project /ioxx
+  : requirements        <use>/boost <include>..
+  :
+  : usage-requirements  <use>/boost <include>..
+  ;
+
+lib ioxx
+  : system-error.cpp
+    system-time.cpp
+    scatter-io.cpp
+    probe.cpp
+    probe-socket.cpp
+    probe-poll.cpp
+  ;

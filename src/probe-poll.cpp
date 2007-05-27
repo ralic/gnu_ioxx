@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Peter Simons <simons@cryp.to>
+ * Copyright (c) 2007 Peter Simons <simons@cryp.to>
  *
  * This software is provided 'as-is', without any express or
  * implied warranty. In no event will the authors be held liable
@@ -11,6 +11,8 @@
  */
 
 #include "ioxx/probe.hpp"
+#include "ioxx/type/system-error.hpp"
+#include "ioxx/config.hpp"
 #include <vector>
 #include <map>
 #include <boost/assert.hpp>
@@ -19,14 +21,7 @@
 #include "hot-fd.hpp"
 
 // Abstract access to our logger.
-#ifndef NDEBUG
-#  include <iostream>
-#  define TRACE(msg)           std::cerr << msg << std::endl;
-#  define SOCKET_TRACE(s, msg) TRACE("socket " << s << ": " << msg)
-#else
-#  define TRACE(msg)           ((void)(0))
-#  define SOCKET_TRACE(s, msg) ((void)(0))
-#endif
+#define TRACE_SOCKET(s, msg)     IOXX_TRACE_MSG("socket " << s << ": " << msg)
 
 namespace {                     // don't export the following code
 
@@ -88,7 +83,7 @@ struct Poll : public ioxx::probe
   {
     iterator const p( _hset.find(s) );
     if (p != _hset.end()) force(p);
-    else                  SOCKET_TRACE(s, "ignore user-forced query");
+    else                  TRACE_SOCKET(s, "ignore user-forced query");
   }
 
   void force(iterator const & p)
@@ -100,7 +95,7 @@ struct Poll : public ioxx::probe
       = (f->input_blocked(fd(p))  ? POLLIN : 0)
       | (f->output_blocked(fd(p)) ? POLLOUT : 0)
       ;
-    SOCKET_TRACE(fd(p), "requests probe event " << _pfd[pfd_idx(p)].events);
+    TRACE_SOCKET(fd(p), "requests probe event " << _pfd[pfd_idx(p)].events);
     BOOST_ASSERT(f);            // handler must still exist
   }
 
@@ -109,15 +104,15 @@ struct Poll : public ioxx::probe
 
   void insert(weak_socket const & s, socket::pointer const & f)
   {
-    SOCKET_TRACE(s, (f ? "insert" : "remove") << " handler");
+    TRACE_SOCKET(s, (f ? "insert" : "remove") << " handler");
     BOOST_ASSERT(s >= 0);
     iterator p( _hset.find(s) );
     if (p == _hset.end())       // add new entry
     {
-      SOCKET_TRACE(s, "is not registered");
+      TRACE_SOCKET(s, "is not registered");
       if (!f) return;
       size_t const i( size() );
-      SOCKET_TRACE(s, "insert at end of pfd array, " << i + 1u << " in set.");
+      TRACE_SOCKET(s, "insert at end of pfd array, " << i + 1u << " in set.");
       BOOST_ASSERT(i == _pfd.size());
       pollfd const pfd = { s, 0, 0};
       _pfd.push_back(pfd);
@@ -135,7 +130,7 @@ struct Poll : public ioxx::probe
 
   void erase(iterator const & p)
   {
-    SOCKET_TRACE(fd(p), "erase context");
+    TRACE_SOCKET(fd(p), "erase context");
     check_consistency(p);
     BOOST_ASSERT(!_hot_fd.hot(fd(p)));
     size_t const i( pfd_idx(p) );
@@ -145,7 +140,7 @@ struct Poll : public ioxx::probe
     {
       iterator const plast( _hset.find(_pfd[last].fd) );
       check_consistency(plast); // must exist
-      SOCKET_TRACE(fd(p), "move socket " << plast->first << " in pfd array to erase");
+      TRACE_SOCKET(fd(p), "move socket " << plast->first << " in pfd array to erase");
       BOOST_ASSERT(pfd_idx(plast) == last);
       plast->second._pfd_index = i;
       _pfd[i] = _pfd[last];
@@ -164,7 +159,7 @@ struct Poll : public ioxx::probe
 
     size_t nfds( size() );
     BOOST_ASSERT(nfds > 0);
-    TRACE("probing " << nfds << " sockets, " << timeout << " msec timeout");
+    IOXX_TRACE_MSG("probing " << nfds << " sockets, " << timeout << " msec timeout");
     int const rc = ::poll(&_pfd[0], nfds, timeout);
     if (rc < 0)
     {
@@ -179,7 +174,7 @@ struct Poll : public ioxx::probe
       }
     }
     nfds = rc;
-    TRACE("probe found " << rc << " active sockets");
+    IOXX_TRACE_MSG("probe found " << rc << " active sockets");
 
     // Deliver the events.
 
@@ -188,7 +183,7 @@ struct Poll : public ioxx::probe
       check_consistency(p);
       short const revents( _pfd[pfd_idx(p)].revents );
       if (!revents) { ++p; continue; }
-      SOCKET_TRACE(fd(p), "received probe event " << revents);
+      TRACE_SOCKET(fd(p), "received probe event " << revents);
       --nfds;
       try
       {
@@ -214,12 +209,12 @@ struct Poll : public ioxx::probe
       }
       catch(std::exception const & e)
       {
-        SOCKET_TRACE(fd(p), "*** error " << e.what());
+        TRACE_SOCKET(fd(p), "*** error " << e.what());
         goto inactive;
       }
       catch(...)
       {
-        SOCKET_TRACE(fd(p), "terminate");
+        TRACE_SOCKET(fd(p), "terminate");
         goto inactive;
       }
       ++p;
@@ -229,14 +224,14 @@ struct Poll : public ioxx::probe
       erase(p++);
     }
 
-    TRACE(rc << " events delivered; " << size() << " sockets registered");
+    IOXX_TRACE_MSG(rc << " events delivered; " << size() << " sockets registered");
     return rc;
   }
 
   // Trivial construction and destruction.
 
-  Poll()   { TRACE("constructing poll(2) probe at " << this);  }
-  ~Poll()  { TRACE("shutting down poll(2) probe at " << this); }
+  Poll()   { IOXX_TRACE_MSG("constructing poll(2) probe at " << this);  }
+  ~Poll()  { IOXX_TRACE_MSG("shutting down poll(2) probe at " << this); }
 };
 
 } // end of anonymous namespace

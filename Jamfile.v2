@@ -1,4 +1,4 @@
 # ioxx/Jamfile.v2
 
-build-project build ;
+build-project src  ;
 build-project test ;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Peter Simons <simons@cryp.to>
+ * Copyright (c) 2007 Peter Simons <simons@cryp.to>
  *
  * This software is provided 'as-is', without any express or
  * implied warranty. In no event will the authors be held liable
@@ -13,7 +13,7 @@
 #ifndef IOXX_PROBE_HPP_INCLUDED
 #define IOXX_PROBE_HPP_INCLUDED
 
-#include "system.hpp"
+#include "type/weak-socket.hpp"
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Peter Simons <simons@cryp.to>
+ * Copyright (c) 2007 Peter Simons <simons@cryp.to>
  *
  * This software is provided 'as-is', without any express or
  * implied warranty. In no event will the authors be held liable
@@ -18,12 +18,12 @@
 #ifndef NDEBUG
 #  include <iostream>
 #  include <boost/assert.hpp>
-#  define IOXX_MSG_TRACE(msg)           std::cerr << "[ioxx." <<__func__ << "] " << msg << std::endl
+#  define IOXX_TRACE_MSG(msg)           std::cerr << "[ioxx." <<__func__ << "] " << msg << std::endl
 #  define IOXX_ASSERT(exp)              BOOST_ASSERT(exp)
 #  define IOXX_ASSERT_EQ(lhs,rhs)       IOXX_ASSERT((lhs) == (rhs))
 #  define IOXX_ASSERT_LT(lhs,rhs)       IOXX_ASSERT((lhs) <  (rhs))
 #else
-#  define IOXX_MSG_TRACE(msg)           ((void)(0))
+#  define IOXX_TRACE_MSG(msg)           ((void)(0))
 #  define IOXX_ASSERT(exp)              ((void)(0))
 #  define IOXX_ASSERT_EQ(lhs,rhs)       ((void)(0))
 #  define IOXX_ASSERT_LT(lhs,rhs)       ((void)(0))

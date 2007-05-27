@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2007 Peter Simons <simons@cryp.to>
+ * Copyright (c) 2007 Peter Simons <simons@cryp.to>
  *
  * This software is provided 'as-is', without any express or
  * implied warranty. In no event will the authors be held liable
@@ -15,6 +15,7 @@
 
 #include "type/weak-socket.hpp"
 #include "type/iovec.hpp"
+#include "type/address.hpp"
 #include <utility>              // std::pair
 
 namespace ioxx
@@ -60,14 +61,14 @@ namespace ioxx
    *  \param  end    end of iovector array
    *  \pre    <code>begin &lt; end</code>
    *  \throw  system_error in case of an I/O error
-   *  \todo   need network address type in ioxx namespace
+   *  \todo   need real network address type
    */
-  scatter_iterator read( weak_socket             s
-                       , iovec_iterator          begin
-                       , iovec_const_iterator    end
-                       , system::address *       peer_addr     = 0
-                       , system::address_size *  peer_addr_len = 0
-                       , char const *            error_context = 0
+  scatter_iterator read( weak_socket            s
+                       , iovec_iterator         begin
+                       , iovec_const_iterator   end
+                       , address *              peer_addr     = 0
+                       , address_size *         peer_addr_len = 0
+                       , char const *           error_context = 0
                        );
 
   /**
@@ -78,13 +79,13 @@ namespace ioxx
    *  \param  end    end of iovector array
    *  \pre    <code>begin &lt;= end</code>
    *  \throw  system_error in case of an I/O error
-   *  \todo   need network address type in ioxx namespace
+   *  \todo   need real network address type
    */
   scatter_const_iterator write( weak_socket             s
                               , iovec_const_iterator    begin
                               , iovec_const_iterator    end
-                              , system::address *       peer_addr     = 0
-                              , system::address_size    peer_addr_len = 0
+                              , address *               peer_addr     = 0
+                              , address_size            peer_addr_len = 0
                               , char const *            error_context = 0
                               );
 
