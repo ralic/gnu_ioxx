@@ -26,12 +26,6 @@ using namespace std;
 /**
  *  \todo It sucks that echo must derive publicly.
  *
- *  \todo Echo must be able to terminate without needing a reference to probe.
- *        One way to achieve that is to make probe de-register a handler that
- *        doesn't probe for anything. Alternatively, calling probe::remove()
- *        can remain the only way to terminate, but then probe should
- *        consistently pass reference back to itself to the callback.
- *
  *  \todo Sockets must be made non-blocking in some portable way.
  */
 class echo : public ioxx::probe::socket
