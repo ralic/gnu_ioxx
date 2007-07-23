@@ -12,6 +12,6 @@
 
 #include "ioxx/probe.hpp"
 
-ioxx::probe::socket::~socket()
+ioxx::socket::~socket()
 {
 }

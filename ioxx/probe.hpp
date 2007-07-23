@@ -21,6 +21,73 @@
 namespace ioxx
 {
   /**
+   *  \brief A probed socket.
+   *
+   *  Derive from this class to create a low-level I/O service that can be
+   *  registered in ioxx::socket::probe.
+   */
+  struct socket : private boost::noncopyable
+  {
+    struct probe;
+
+    /**
+     *  \brief Sockets are generally stored in smart pointers.
+     *
+     *  Resource leaks are devastating in I/O code, particularly in
+     *  long-living servers. The reference-counting overhead is well worth
+     *  having transparent resource tracking in return. If it is necessary to
+     *  register a non-head-allocated ioxx::socket::probe::socket, the shared pointer
+     *  can be constructed with an empty deleter.
+     */
+    typedef boost::shared_ptr<socket>   pointer;
+
+    /// \brief Derived class provides destructor.
+    virtual ~socket() = 0;
+
+    /**
+     *  \brief Shall we probe for input?
+     *
+     *  ioxx::socket::probe invokes this method for every registered socket
+     *  handler to determine whether input becoming available is a requested
+     *  signal. The method is also invoked after state change event has been
+     *  delivered.
+     *
+     *  \note A handler is not supposed to modify the probe in this method.
+     */
+    virtual bool input_blocked(weak_socket s)  const = 0;
+
+    /**
+     *  \brief Shall we probe for output?
+     *  \sa    ioxx::socket::input_blocked()
+     */
+    virtual bool output_blocked(weak_socket s) const = 0;
+
+    /**
+     *  \brief Input can be read without blocking.
+     *
+     *  If the last call to ioxx::socket::input_blocked() has returned true,
+     *  ioxx::socket::probe will invoke this method once the associated socket
+     *  has become readable.
+     */
+    virtual void unblock_input(probe & p, weak_socket s)  = 0;
+
+    /**
+     *  \brief Output can be written without blocking.
+     *  \sa    ioxx::socket::unblock_input()
+     */
+    virtual void unblock_output(probe & p, weak_socket s) = 0;
+
+    /**
+     *  \brief The OS has invalidated the socket.
+     *
+     *  This method is invoked when ioxx::probe receives an error condition
+     *  from the underlying system call.
+     */
+    virtual void shutdown(probe & p, weak_socket s) = 0;
+  };
+
+
+  /**
    *  \brief The system's socket event dispatcher.
    *
    *  Over its lifetime a ioxx::weak_socket alternates between four states:
@@ -30,76 +97,25 @@ namespace ioxx
    *  dispatcher is concerned, however, those sockets are special only insofar
    *  as that they don't receive certain events.
    *
-   *  A ioxx::probe signals those state changes for a registered by invoking an
-   *  appropriate handler object derived from ioxx::probe::socket. The
-   *  internals of the probe object are system-dependent and remain opaque.
+   *  A ioxx::socket::probe signals those state changes for a registered by
+   *  invoking an appropriate handler object derived from ioxx::probe::socket.
+   *  The internals of the probe object are system-dependent and remain opaque.
    */
-  class probe : private boost::noncopyable
+  class socket::probe : private boost::noncopyable
   {
   public:
     /**
-     *  \brief A probed socket.
+     *  \brief Create a native probe.
      *
-     *  Derive from this class to create a low-level I/O service that can be
-     *  registered in ioxx::probe.
+     *  \return Pointer to an instance of ioxx::probe. Failure is signaled using
+     *          exceptions.
+     *
+     *  \throw  std::bad_alloc Insufficient memory.
+     *
+     *  \throw  ioxx::system_error Implementation reports failure for
+     *          reasons hard to describe other than std::exception::what().
      */
-    struct socket : private boost::noncopyable
-    {
-      /**
-       *  \brief Sockets are generally stored in smart pointers.
-       *
-       *  Resource leaks are devastating in I/O code, particularly in
-       *  long-living servers. The reference-counting overhead is well worth
-       *  having transparent resource tracking in return. If it is necessary to
-       *  register a non-head-allocated ioxx::probe::socket, the shared pointer
-       *  can be constructed with an empty deleter.
-       */
-      typedef boost::shared_ptr<socket>   pointer;
-
-      /// \brief Derived class provides destructor.
-      virtual ~socket() = 0;
-
-      /**
-       *  \brief Shall we probe for input?
-       *
-       *  ioxx::probe invokes this method for every registered socket handler
-       *  to determine whether input becoming available is a requested signal.
-       *  The method is also invoked after state change event has been
-       *  delivered.
-       *
-       *  \note A handler is not supposed to modify the probe in this method.
-       */
-      virtual bool input_blocked(weak_socket s)  const = 0;
-
-      /**
-       *  \brief Shall we probe for output?
-       *  \sa    ioxx::probe::input_blocked()
-       */
-      virtual bool output_blocked(weak_socket s) const = 0;
-
-      /**
-       *  \brief Input can be read without blocking.
-       *
-       *  If the last call to ioxx::socket::input_blocked() has returned true,
-       *  ioxx::probe will invoke this method once the associated socket has
-       *  become readable.
-       */
-      virtual void unblock_input(probe & p, weak_socket s)  = 0;
-
-      /**
-       *  \brief Output can be written without blocking.
-       *  \sa    ioxx::probe::unblock_input()
-       */
-      virtual void unblock_output(probe & p, weak_socket s) = 0;
-
-      /**
-       *  \brief The OS has invalidated the socket.
-       *
-       *  This method is invoked when ioxx::probe receives an error condition
-       *  from the underlying system call.
-       */
-      virtual void shutdown(probe & p, weak_socket s) = 0;
-    };
+    static probe * make();
 
     /// \brief System-dependent Implementation provides destructor.
     virtual ~probe() = 0;
@@ -158,20 +174,6 @@ namespace ioxx
      */
     virtual std::size_t run_once(int timeout = -1) = 0;
   };
-
-  /**
-   *  \brief Create a native probe.
-   *
-   *  \return Pointer to an instance of ioxx::probe. Failure is signaled using
-   *          exceptions.
-   *
-   *  \throw  std::bad_alloc Insufficient memory.
-   *
-   *  \throw  ioxx::system_error Implementation reports failure for
-   *          reasons hard to describe other than std::exception::what().
-   */
-  probe * make_probe();
-
 } // namespace ioxx
 
 #endif // IOXX_PROBE_HPP_INCLUDED

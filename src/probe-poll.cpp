@@ -28,8 +28,9 @@ namespace {                     // don't export the following code
 using std::size_t;
 using ioxx::weak_socket;
 using ioxx::hot_fd;
+using ioxx::socket;
 
-struct Poll : public ioxx::probe
+struct Poll : public ioxx::socket::probe
 {
   struct context
   {
@@ -238,7 +239,7 @@ struct Poll : public ioxx::probe
 
 // ----- Public Constructor Function ------------------------------------------
 
-ioxx::probe * ioxx::make_probe()
+ioxx::socket::probe * ioxx::socket::probe::make()
 {
   return new Poll;
 }

@@ -28,7 +28,7 @@ using namespace std;
  *
  *  \todo Sockets must be made non-blocking in some portable way.
  */
-class echo : public ioxx::probe::socket
+class echo : public ioxx::socket
 {
   ioxx::weak_socket const       _sin;
   ioxx::weak_socket const       _sout;
@@ -58,7 +58,7 @@ public:
     cerr << "destroy echo handler " << this << endl;
   }
 
-  void shutdown(ioxx::probe & p)
+  void shutdown(ioxx::socket::probe & p)
   {
     shutdown(p, ioxx::invalid_weak_socket());
   }
@@ -78,7 +78,7 @@ private:
     return want_write;
   }
 
-  void unblock_input(ioxx::probe & p, ioxx::weak_socket s)
+  void unblock_input(ioxx::socket::probe & p, ioxx::weak_socket s)
   {
     cerr << "socket " << s << ": is readable" << endl;
     BOOST_REQUIRE_EQUAL(s, _sin);
@@ -94,7 +94,7 @@ private:
     }
   }
 
-  void unblock_output(ioxx::probe & p, ioxx::weak_socket s)
+  void unblock_output(ioxx::socket::probe & p, ioxx::weak_socket s)
   {
     cerr << "socket " << s << ": is writable" << endl;
     if (s == _sin) return;
@@ -118,7 +118,7 @@ private:
     }
   }
 
-  void shutdown(ioxx::probe & p, ioxx::weak_socket)
+  void shutdown(ioxx::socket::probe & p, ioxx::weak_socket)
   {
     cerr << "unregister echo handler " << this << endl;
     p.remove(_sin);
@@ -128,8 +128,8 @@ private:
 
 BOOST_AUTO_TEST_CASE( test_probe )
 {
-  boost::scoped_ptr<ioxx::probe>        probe(ioxx::make_probe());
-  ioxx::timeout                         timer;
+  boost::scoped_ptr<ioxx::socket::probe>  probe(ioxx::socket::probe::make());
+  ioxx::timeout                           timer;
   BOOST_REQUIRE(probe);
   {
     echo::pointer p( new echo(STDIN_FILENO, STDOUT_FILENO) );
