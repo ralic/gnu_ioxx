@@ -150,12 +150,11 @@ namespace ioxx
     /**
      *  \brief Probe for new events and deliver them.
      *
-     *  \param to  Block no longer than this many seconds.  0u => return
-     *             immediately; -1 => block indefinitely.
-     *  \pre       <code>!empty()</code>
-     *  \return    Number of sockets that had events delivered. \c 0u signifies
-     *             a timeout.
-     *
+     *  \param timeout  Block no longer than this many seconds.  0u => return
+     *                  immediately; -1 => block indefinitely.
+     *  \pre            <code>!empty()</code>
+     *  \return         Number of sockets that had events delivered. \c 0u
+     *                  signifies a timeout.
      */
     virtual std::size_t run_once(int timeout = -1) = 0;
   };
