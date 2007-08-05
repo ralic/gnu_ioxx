@@ -14,7 +14,6 @@
 #define IOXX_PROBE_HPP_INCLUDED
 
 #include "type/weak-socket.hpp"
-#include "type/time.hpp"
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
