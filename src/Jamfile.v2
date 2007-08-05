@@ -13,4 +13,5 @@ lib ioxx
     probe.cpp
     probe-socket.cpp
     probe-poll.cpp
+    weak-socket.cpp
   ;

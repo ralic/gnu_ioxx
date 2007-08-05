@@ -29,6 +29,14 @@ namespace ioxx
   {
     return s >= 0;
   }
+
+  void close(weak_socket s);
+  void enable_blocking(weak_socket s, bool enable = true);
+
+  char * read(weak_socket s, char * begin, char const * end);
+
+  char const * write(weak_socket s, char const * begin, char const * end);
+  char * write(weak_socket s, char * begin, char const * end);
 }
 
 #endif // IOXX_TYPE_WEAK_SOCKET_INCLUDED

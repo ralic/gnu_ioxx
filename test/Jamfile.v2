@@ -7,6 +7,7 @@ project
 test-suite ioxx_tests
   : [ link      iovec-is-valid-range.cpp                                ]
     [ link      scatter-io.cpp           /ioxx//ioxx                    ]
+    [ link      address.cpp              /ioxx//ioxx                    ]
     [ run       probe.cpp                /ioxx//ioxx boost_unit_test    ]
   ;
 

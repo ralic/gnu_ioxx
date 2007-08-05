@@ -10,37 +10,16 @@
  * provided the copyright notice and this notice are preserved.
  */
 
+#include "ioxx/type/system-error.hpp"
+#include "ioxx/probe.hpp"
+#include "ioxx/config.hpp"
 #include <sys/types.h>          // getaddrinfo() from POSIX.1-2001, RFC 2553
 #include <sys/socket.h>
 #include <netdb.h>
-#include <boost/scoped_ptr.hpp>
-#include "ioxx/probe.hpp"
-#include "sanity/system-error.hpp"
-#include "logging.hpp"
+#include <boost/shared_ptr.hpp>
 
-#define TRACE() IOXX_DEBUG_MSG(catchall) << __PRETTY_FUNCTION__
-#define TRACE_ARG1(arg) TRACE() << " " #arg " = " << arg
-#define TRACE_ARG2(arg1, arg2) TRACE_ARG1(arg1) << ", " #arg2 " = " << arg2
-
-// ----- i/o ------------------------------------------------------------------
-
-class World;
-typedef boost::shared_ptr<World> IO;
-
-struct protocol : private boost::noncopyable
-{
-  virtual ~protocol() { }
-  virtual void new_connection(IO, ioxx::data_socket) = 0;
-};
-
-class World
-{
-public:
-};
-
-
-
-// ----- peer address ---------------------------------------------------------
+#define TRACE_ARG1(arg)         IOXX_TRACE_MSG(" " #arg " = " << arg)
+#define TRACE_ARG2(arg1, arg2)  IOXX_TRACE_MSG(arg1 << ", " #arg2 " = " << arg2)
 
 class peer_address
 {
@@ -66,14 +45,14 @@ public:
 
   string_pair show() const
   {
-    I(good());
+    IOXX_ASSERT(good());
     char host[NI_MAXHOST], service[NI_MAXSERV];
     int const rc( ::getnameinfo( _addr->ai_addr, _addr->ai_addrlen
                                , host, sizeof(host), service, sizeof(service)
                                , NI_NUMERICHOST
                                )
                 );
-    if (rc != 0) throw system_error("getnameinfo failed");
+    if (rc != 0) throw ioxx::system_error("getnameinfo failed");
     return std::make_pair(host, service);
   }
 };
@@ -82,12 +61,6 @@ public:
 
 int main(int argc, char** argv)
 {
-  ioxx::logging::init_cerr();
-
-  boost::scoped_ptr<ioxx::probe> probe(ioxx::make_probe_poll());
-  I(probe);
-  while(probe->active()) probe->run_once();
-
   peer_address addr;
   switch (argc)
   {
@@ -99,10 +72,10 @@ int main(int argc, char** argv)
       addr = peer_address("195.234.152.69", "http");
   }
   if (addr.good())
-    TRACE() << " addr.show = " << addr.show().first << " : " << addr.show().second;
+    IOXX_TRACE_MSG(" addr.show = " << addr.show().first << " : " << addr.show().second);
   else
-    TRACE() << " addr.error = " << addr.error();
+    IOXX_TRACE_MSG(" addr.error = " << addr.error());
 
-  TRACE() << " terminating gracefully";
+  IOXX_TRACE_MSG(" terminating gracefully");
   return 0;
 }
