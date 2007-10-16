@@ -20,6 +20,22 @@
 namespace ioxx
 {
   typedef ::iovec iovec;
+
+  /// \brief Set ioxx::iovec to the given byte range.
+  inline void reset(iovec & iov, byte_iterator b, byte_iterator e)
+  {
+    BOOST_ASSERT(b <= e);
+    iov.iov_base = b;
+    iov.iov_len = static_cast<byte_size>(e - b);
+  }
+
+  /// \brief Construct ioxx::iovec using an iterator range.
+  inline iovec make_iovec(byte_iterator begin, byte_iterator end)
+  {
+    iovec v;
+    reset(v, begin, end);
+    return v;
+  }
 }
 
 namespace boost
@@ -72,25 +88,6 @@ namespace boost
   inline ioxx::byte_const_iterator end(iovec const & iov)
   {
     return const_begin(iov) + size(iov);
-  }
-}
-
-namespace ioxx
-{
-  /// \brief Set ioxx::iovec to the given byte range.
-  inline void reset(iovec & iov, byte_iterator b, byte_iterator e)
-  {
-    BOOST_ASSERT(b <= e);
-    iov.iov_base = b;
-    iov.iov_len = static_cast<byte_size>(e - b);
-  }
-
-  /// \brief Construct ioxx::iovec using an iterator range.
-  inline iovec make_iovec(byte_iterator begin, byte_iterator end)
-  {
-    iovec v;
-    reset(v, begin, end);
-    return v;
   }
 }
 
