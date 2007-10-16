@@ -53,7 +53,7 @@ namespace ioxx
      *
      *  \note A handler is not supposed to modify the probe in this method.
      */
-    virtual bool input_blocked(weak_socket s)  const = 0;
+    virtual bool input_blocked(weak_socket s) const = 0;
 
     /**
      *  \brief Shall we probe for output?
