@@ -9,9 +9,9 @@ test-suite ioxx_tests
     [ link      scatter-io.cpp           /ioxx//ioxx                    ]
     [ link      address.cpp              /ioxx//ioxx                    ]
     [ run       probe.cpp                /ioxx//ioxx boost_unit_test    ]
-    [ run       socket.cpp               /ioxx//ioxx boost_unit_test    ]
   ;
 
 alias boost_prgmon    : /boost/test//boost_prg_exec_monitor ;
 alias boost_unit_test : /boost//unit_test_framework ;
 alias boost_signals   : /boost//signals ;
+alias boost_system    : /boost//system ;
