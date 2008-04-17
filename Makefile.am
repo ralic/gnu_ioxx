@@ -1,5 +1,7 @@
 # ~/Makefile.am -- build and install the ioxx libraries
 
+SUBDIRS			= src test
+
 # dist_pkgdata_DATA       = README
 CLEANFILES              = $(DIST_ARCHIVES)
 MAINTAINERCLEANFILES    = missing install-sh configure Makefile.in aclocal.m4
