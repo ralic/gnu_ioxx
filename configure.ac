@@ -19,14 +19,14 @@ AC_PREPROC_IFELSE(
   [AC_MSG_RESULT([>= 1.35])],
   [AC_MSG_FAILURE([boost version is too old])])
 
-AC_MSG_CHECKING([whether boost_unit_test_framework is available])
-LIBS="${LIBS} -lboost_unit_test_framework${BOOST_SUFFIX}"
+AC_MSG_CHECKING([whether boost_system is available])
+LIBS="${LIBS} -lboost_system${BOOST_SUFFIX}"
 AC_LINK_IFELSE([AC_LANG_CALL([], [exit])],
   [AC_MSG_RESULT([yes])],
   [AC_MSG_FAILURE([no])])
 
-AC_CHECK_LIB([boost_thread${BOOST_SUFFIX}], [exit])
-AC_CHECK_LIB([boost_system${BOOST_SUFFIX}], [exit])
+# AC_CHECK_LIB([boost_thread${BOOST_SUFFIX}], [exit])
+# AC_CHECK_LIB([boost_system${BOOST_SUFFIX}], [exit])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
