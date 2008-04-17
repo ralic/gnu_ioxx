@@ -1,2 +1,14 @@
-bin
-html
+/Makefile
+/Makefile.in
+/aclocal.m4
+/aminclude.m4
+/autom4te.cache/*
+/config.guess
+/config.log
+/config.status
+/config.sub
+/configure
+/install-sh
+/libtool
+/ltmain.sh
+/missing
