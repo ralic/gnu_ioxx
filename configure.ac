@@ -25,6 +25,12 @@ AC_LINK_IFELSE([AC_LANG_CALL([], [exit])],
   [AC_MSG_RESULT([yes])],
   [AC_MSG_FAILURE([no])])
 
+AC_MSG_CHECKING([whether boost_unit_test_framework is available])
+LIBS="${LIBS} -lboost_unit_test_framework${BOOST_SUFFIX}"
+AC_LINK_IFELSE([AC_LANG_CALL([], [exit])],
+  [AC_MSG_RESULT([yes])],
+  [AC_MSG_FAILURE([no])])
+
 # AC_CHECK_LIB([boost_thread${BOOST_SUFFIX}], [exit])
 # AC_CHECK_LIB([boost_system${BOOST_SUFFIX}], [exit])
 
