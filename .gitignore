@@ -1,5 +1,6 @@
 *.la
 *.lo
+*.loT
 *.o
 */.deps/*
 */.libs/*
@@ -18,6 +19,7 @@
 /ltmain.sh
 /missing
 /test/iovec_is_valid_range
+/test/probe
 /test/scheduler
 Makefile
 Makefile.in
