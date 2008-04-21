@@ -12,13 +12,13 @@ namespace ioxx
   using std::time_t;
   typedef unsigned int seconds_t;
 
-  class system_time : private boost::noncopyable
+  class timer : private boost::noncopyable
   {
   public:
-    system_time()                       { update(); }
+    timer()                             { update(); }
 
-    time_t const &  as_time_t() const  { return _now.tv_sec; }
-    timeval const & as_timeval() const { return _now; }
+    time_t const &  as_time_t() const   { return _now.tv_sec; }
+    timeval const & as_timeval() const  { return _now; }
 
     void update()
     {
@@ -31,14 +31,17 @@ namespace ioxx
     timeval _now;
   };
 
+  template < class Task      = boost::function<void ()>
+           , class Allocator = std::allocator< std::pair<time_t const, Task> >
+           >
   class scheduler : boost::noncopyable
   {
   public:
-    typedef boost::function<void ()>            task;
-    typedef std::multimap<time_t,task>          task_queue;
-    typedef task_queue::iterator                queue_iterator;
-    typedef task_queue::value_type              queue_entry;
-    typedef std::pair<time_t,queue_iterator>    task_id;
+    typedef Task                                                        task;
+    typedef std::multimap<time_t,task,std::less<time_t>,Allocator>      task_queue;
+    typedef typename task_queue::iterator                               queue_iterator;
+    typedef typename task_queue::value_type                             queue_entry;
+    typedef std::pair<time_t,queue_iterator>                            task_id;
 
     task_id at(time_t to, task const & f)
     {
@@ -46,21 +49,27 @@ namespace ioxx
       return task_id(to, _queue.insert(queue_entry(to, f)));
     }
 
+    void unsafe_cancel(task_id & tid)
+    {
+      BOOST_ASSERT(tid.first != 0);
+      _queue.erase(tid.second);
+      tid.first = static_cast<time_t>(0);
+    }
+
     bool cancel(task_id & tid)
     {
+      BOOST_ASSERT(tid.first != 0);
       queue_iterator i( _queue.begin() );
       if (tid.first > i->first)
       {
-        _queue.erase(tid.second);
-        tid.first = static_cast<time_t>(0);
+        unsafe_cancel(tid);
         return true;
       }
       while (i->first == tid.first)
       {
         if (i == tid.second)
         {
-          _queue.erase(tid.second);
-          tid.first = static_cast<time_t>(0);
+          unsafe_cancel(tid);
           return true;
         }
         else
@@ -71,11 +80,11 @@ namespace ioxx
 
     bool cancel(task_id & tid, time_t now)
     {
+      BOOST_ASSERT(tid.first != 0);
       if (tid.first > now)
       {
         BOOST_ASSERT(_queue.begin()->first <= tid.first);
-        _queue.erase(tid.second);
-        tid.first = static_cast<time_t>(0);
+        unsafe_cancel(tid);
         return true;
       }
       else
@@ -89,17 +98,17 @@ namespace ioxx
 
     seconds_t run(time_t now)
     {
-      queue_iterator i;
-      for (task f; !empty(); f.clear())
+      while (!empty())
       {
-        i = _queue.begin();
+        queue_iterator i( _queue.begin() );
         if (i->first <= now)
         {
-          f.swap(i->second);
+          task f;
+          std::swap(f, i->second);
           try { _queue.erase(i); }
           catch(...)
           {
-            f.swap(i->second);
+            std::swap(f, i->second);
             throw;
           }
           f();
@@ -119,9 +128,9 @@ namespace ioxx
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/auto_unit_test.hpp>
 
-BOOST_AUTO_TEST_CASE( basic_system_time_test )
+BOOST_AUTO_TEST_CASE( basic_timer_test )
 {
-  ioxx::system_time now;
+  ioxx::timer now;
   BOOST_CHECK_EQUAL(now.as_time_t(), std::time(0));
   BOOST_CHECK_EQUAL(now.as_time_t(), now.as_timeval().tv_sec);
 }
@@ -131,15 +140,15 @@ void dummy_function() { ++dummy_was_called; }
 
 BOOST_AUTO_TEST_CASE( basic_scheduler_test )
 {
-  ioxx::system_time now;
-  ioxx::scheduler schedule;
+  ioxx::timer now;
+  ioxx::scheduler<> schedule;
   BOOST_CHECK(schedule.empty());
   BOOST_CHECK_EQUAL(schedule.run(now.as_time_t()), 0u);
   BOOST_CHECK_EQUAL(dummy_was_called, 0u);
   schedule.at(now.as_time_t(), dummy_function);
   schedule.at(now.as_time_t() + 1u, dummy_function);
-  ioxx::scheduler::task_id tid( schedule.at(now.as_time_t() + 5u, dummy_function) );
-  schedule.at(now.as_time_t() + 2u, boost::bind(&ioxx::scheduler::cancel, &schedule, tid));
+  ioxx::scheduler<>::task_id tid( schedule.at(now.as_time_t() + 5u, dummy_function) );
+  schedule.at(now.as_time_t() + 2u, boost::bind(&ioxx::scheduler<>::cancel, &schedule, tid));
   ioxx::seconds_t delay( schedule.run(now.as_time_t()) );
   BOOST_CHECK_EQUAL(delay, 1u);
   BOOST_CHECK_EQUAL(dummy_was_called, 1u);
