@@ -18,6 +18,6 @@
 /ltmain.sh
 /missing
 /test/iovec_is_valid_range
-/test/timeout
+/test/scheduler
 Makefile
 Makefile.in
