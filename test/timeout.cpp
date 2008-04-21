@@ -45,7 +45,6 @@ namespace ioxx
 
     task_id at(time_t to, task const & f)
     {
-      BOOST_ASSERT(f);
       return task_id(to, _queue.insert(queue_entry(to, f)));
     }
 
@@ -103,14 +102,8 @@ namespace ioxx
         queue_iterator i( _queue.begin() );
         if (i->first <= now)
         {
-          task f;
-          std::swap(f, i->second);
-          try { _queue.erase(i); }
-          catch(...)
-          {
-            std::swap(f, i->second);
-            throw;
-          }
+          task f(i->second);
+          _queue.erase(i);
           f();
         }
         else
@@ -140,16 +133,19 @@ void dummy_function() { ++dummy_was_called; }
 
 BOOST_AUTO_TEST_CASE( basic_scheduler_test )
 {
-  ioxx::timer now;
-  ioxx::scheduler<> schedule;
+  using ioxx::timer;
+  using ioxx::seconds_t;
+  typedef ioxx::scheduler<> scheduler;
+  timer now;
+  scheduler schedule;
   BOOST_CHECK(schedule.empty());
   BOOST_CHECK_EQUAL(schedule.run(now.as_time_t()), 0u);
   BOOST_CHECK_EQUAL(dummy_was_called, 0u);
   schedule.at(now.as_time_t(), dummy_function);
   schedule.at(now.as_time_t() + 1u, dummy_function);
-  ioxx::scheduler<>::task_id tid( schedule.at(now.as_time_t() + 5u, dummy_function) );
-  schedule.at(now.as_time_t() + 2u, boost::bind(&ioxx::scheduler<>::cancel, &schedule, tid));
-  ioxx::seconds_t delay( schedule.run(now.as_time_t()) );
+  scheduler::task_id tid( schedule.at(now.as_time_t() + 5u, dummy_function) );
+  schedule.at(now.as_time_t() + 2u, boost::bind(&scheduler::cancel, &schedule, tid));
+  seconds_t delay( schedule.run(now.as_time_t()) );
   BOOST_CHECK_EQUAL(delay, 1u);
   BOOST_CHECK_EQUAL(dummy_was_called, 1u);
   sleep(delay); now.update();
@@ -159,6 +155,45 @@ BOOST_AUTO_TEST_CASE( basic_scheduler_test )
   sleep(delay); now.update();
   delay = schedule.run(now.as_time_t());
   BOOST_CHECK_EQUAL(dummy_was_called, 2u);
+  BOOST_CHECK_EQUAL(delay, 0u);
+  BOOST_CHECK(schedule.empty());
+}
+
+class dummy
+{
+public:
+  dummy(size_t & cnt) : _cnt(&cnt)      { }
+  void operator() () const              { ++(*_cnt); }
+
+private:
+  size_t * _cnt;
+};
+
+BOOST_AUTO_TEST_CASE( dummy_scheduler_test )
+{
+  using ioxx::timer;
+  using ioxx::seconds_t;
+  typedef ioxx::scheduler<dummy> scheduler;
+
+  timer now;
+  scheduler schedule;
+  size_t dummy_call_counter( 0u );
+  BOOST_CHECK(schedule.empty());
+  BOOST_CHECK_EQUAL(schedule.run(now.as_time_t()), 0u);
+  BOOST_CHECK_EQUAL(dummy_call_counter, 0u);
+  schedule.at(now.as_time_t(), dummy(dummy_call_counter));
+  schedule.at(now.as_time_t() + 1u, dummy(dummy_call_counter));
+  scheduler::task_id tid( schedule.at(now.as_time_t() + 5u, dummy(dummy_call_counter)) );
+  seconds_t delay( schedule.run(now.as_time_t()) );
+  BOOST_CHECK_EQUAL(delay, 1u);
+  BOOST_CHECK_EQUAL(dummy_call_counter, 1u);
+  sleep(delay); now.update();
+  delay = schedule.run(now.as_time_t());
+  BOOST_CHECK_EQUAL(delay, 4u);
+  BOOST_CHECK_EQUAL(dummy_call_counter, 2u);
+  schedule.unsafe_cancel(tid);
+  delay = schedule.run(now.as_time_t());
+  BOOST_CHECK_EQUAL(dummy_call_counter, 2u);
   BOOST_CHECK_EQUAL(delay, 0u);
   BOOST_CHECK(schedule.empty());
 }
