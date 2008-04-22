@@ -20,9 +20,9 @@ namespace ioxx
 
     void update()
     {
-      throw_errno_if_minus1_<int>( "system call gettimeofday(2) failed"
-                                 , boost::bind(gettimeofday, &_now, static_cast<struct timezone *>(0))
-                                 );
+      throw_errno_if_minus1_( "system call gettimeofday(2) failed"
+                            , boost::bind(gettimeofday, &_now, static_cast<struct timezone *>(0))
+                            );
     }
 
   private:
