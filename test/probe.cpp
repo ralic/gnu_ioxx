@@ -1,121 +1,208 @@
+#include "ioxx/timer.hpp"
+#include "ioxx/scheduler.hpp"
 #include "ioxx/probe.hpp"
-// #include "ioxx/timeout.hpp"
-// #include "ioxx/type/byte.hpp"
-#include <iostream>
 #include <boost/shared_ptr.hpp>
-#include <boost/array.hpp>
+#include <boost/shared_array.hpp>
+#include <iostream>
 
-#if 0
-using namespace std;
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <fcntl.h>
 
-class echo
+namespace ioxx
 {
-  ioxx::socket_t const          _sin;
-  ioxx::socket_t const          _sout;
-  boost::array<char, 1024>      _buffer;
-  size_t                        _size;
-  size_t                        _gap;
-
-public:
-  typedef boost::shared_ptr<echo> pointer;
-
-  echo(ioxx::socket_t inout)
-  : _sin(inout), _sout(inout), _size(0u), _gap(0u)
+  inline void nonblocking(socket_t s, bool enable = true)
   {
-    cerr << "creating full-duplex echo handler " << this << endl;
-    BOOST_REQUIRE(inout >= 0);
+    BOOST_ASSERT(s >= 0);
+    int const rc( throw_errno_if_minus1<int>("cannot obtain socket flags", boost::bind<int>(&fcntl, s, F_GETFL, 0)) );
+    int const flags( enable ? rc | O_NONBLOCK : rc & ~O_NONBLOCK );
+    if (rc != flags)
+      throw_errno_if_minus1_("cannot set socket flags", boost::bind<int>(&fcntl, s, F_SETFL, flags));
   }
 
-  echo(ioxx::socket_t in, ioxx::socket_t out)
-  : _sin(in), _sout(out), _size(0u), _gap(0u)
-  {
-    cerr << "creating connecting echo handler " << this << endl;
-    BOOST_REQUIRE(in >= 0); BOOST_REQUIRE(out >= 0);
-  }
+  typedef boost::function<void (socket_t, sockaddr const *, socklen_t)> socket_handler;
 
-  ~echo()
+  inline void accept_stream_socket(socket_t ls, socket_handler f)
   {
-    cerr << "destroy echo handler " << this << endl;
-  }
-
-  void shutdown(ioxx::probe & p)
-  {
-    shutdown(p, ioxx::invalid_socket_t());
-  }
-
-private:
-  bool input_blocked(ioxx::socket_t s) const
-  {
-    bool const want_read( s == _sin && _size == 0u );
-    cerr << "socket " << s << ": requests" << (want_read ? "" : " no") << " input" << endl;
-    return want_read;
-  }
-
-  bool output_blocked(ioxx::socket_t s) const
-  {
-    bool const want_write( s == _sout && _size != 0u );
-    cerr << "socket " << s << ": requests" << (want_write ? "" : " no") << " output" << endl;
-    return want_write;
-  }
-
-  void unblock_input(ioxx::socket::probe & p, ioxx::socket_t s)
-  {
-    cerr << "socket " << s << ": is readable" << endl;
-    BOOST_REQUIRE_EQUAL(s, _sin);
-    BOOST_REQUIRE_EQUAL(_size, 0u);
-    int const rc( read(_sin, _buffer.begin(), _buffer.size()) );
-    cerr << "socket " << s << ": read " << rc << " bytes" << endl;
-    BOOST_CHECK(rc >= 0);
-    if (rc <= 0)        echo::shutdown(p, s);
-    else
+    sockaddr  addr;
+    socklen_t len;
+    for (socket_t s( accept(ls, &addr, &len) ); s >= 0; s = accept(ls, &addr, &len))
     {
-      _size = static_cast<size_t>(rc);
-      p.force(_sout);
-    }
-  }
-
-  void unblock_output(ioxx::socket::probe & p, ioxx::socket_t s)
-  {
-    cerr << "socket " << s << ": is writable" << endl;
-    if (s == _sin) return;
-    BOOST_REQUIRE_EQUAL(s, _sout);
-    BOOST_REQUIRE(_size);
-    BOOST_REQUIRE(_gap < _size);
-    int const rc( write(_sout, _buffer.begin() + _gap, _size) );
-    cerr << "socket " << s << ": wrote " << rc << " bytes" << endl;
-    BOOST_CHECK(rc > 0);
-    BOOST_CHECK(static_cast<size_t>(rc) <= _size);
-    if (rc <= 0)        echo::shutdown(p, s);
-    else
-    {
-      _gap  += static_cast<size_t>(rc);
-      _size -= static_cast<size_t>(rc);
-      if (!_size)
+      try
       {
-        _gap = 0u;
-        p.force(_sin);
+        nonblocking(s);
+        f(s, &addr, len);
+      }
+      catch(...)
+      {
+        throw_errno_if_minus1_("cannot close() listening socket", boost::bind(&close, s));
+        throw;
       }
     }
+    if (errno != EWOULDBLOCK && errno != EAGAIN)
+    {
+      boost::system::system_error err(errno, boost::system::errno_ecat, "accept(2)");
+      throw err;
+    }
   }
 
-  void shutdown(ioxx::probe & p, ioxx::socket_t)
+  inline socket_t accept_stream_socket(probe & p, char const * node, char const * service, socket_handler const & f)
   {
-    cerr << "unregister echo handler " << this << endl;
-    p.remove(_sin);
-    p.remove(_sout);
+    boost::shared_ptr<addrinfo> _addr;
+    addrinfo const hint = { AI_NUMERICHOST, 0, SOCK_STREAM, 0, 0u, NULL, NULL, NULL };
+    addrinfo * addr;
+    int const rc( getaddrinfo(node, service, &hint, &addr) );
+    if (rc != 0) throw std::runtime_error( gai_strerror(rc) );
+    _addr.reset(addr, &freeaddrinfo);
+    while (addr && addr->ai_socktype != SOCK_STREAM)
+      addr = addr->ai_next;
+    if (!addr) throw std::runtime_error("address does not map to a stream socket endpoint");
+    socket_t const ls( throw_errno_if_minus1<socket_t>( "socket(2)"
+                                                      , boost::bind(&::socket, addr->ai_family, addr->ai_socktype, addr->ai_protocol)
+                                                      ));
+    try
+    {
+      throw_errno_if_minus1_("bind(2)", boost::bind(&bind, ls, addr->ai_addr, addr->ai_addrlen));
+      throw_errno_if_minus1_("listen(2)", boost::bind(&listen, ls, 16u));
+      nonblocking(ls);
+      p.set(ls, boost::bind(&accept_stream_socket, ls, f), ev_readable);
+    }
+    catch(...)
+    {
+      throw_errno_if_minus1_("cannot close() listening socket", boost::bind(&::close, ls));
+      throw;
+    }
+    return ls;
   }
-};
-#endif
+}
 
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-BOOST_AUTO_TEST_CASE( test_probe )
+using namespace std;
+
+class echo
 {
-  ioxx::probe probe;
+  ioxx::probe *                 _probe;
+  ioxx::socket_t                _sock;
+  size_t                        _capacity;
+  boost::shared_array<char>     _buffer;
+  size_t                        _size;
+  size_t                        _gap;
+
+public:
+  static void accept(ioxx::probe * probe, ioxx::socket_t sock)
+  {
+    BOOST_REQUIRE(probe);
+    probe->set(sock, echo(*probe, sock), ioxx::ev_readable);
+  }
+
+  echo(ioxx::probe & probe, ioxx::socket_t sock, size_t capacity = 1024u)
+  : _probe(&probe), _sock(sock), _capacity(capacity), _buffer(new char[_capacity]), _size(0u), _gap(0u)
+  {
+    BOOST_REQUIRE(_sock >= 0);
+    BOOST_REQUIRE(capacity != 0);
+    cout << "socket " << _sock << ": creating echo handler" << endl;
+  }
+
+  void operator() (ioxx::socket_event ev)
+  {
+    using ioxx::throw_errno_if_minus1;
+    using boost::bind;
+    try
+    {
+      if (ev & ioxx::ev_readable)
+      {
+        cout << "socket " << _sock << ": is readable" << endl;
+        BOOST_REQUIRE_EQUAL(_size, 0u);
+        ssize_t const rc( throw_errno_if_minus1<ssize_t>( "read(2) failure"
+                                                        , bind(&read, _sock, &_buffer[0], _capacity)
+                                                        ));
+        cout << "socket " << _sock << ": read " << rc << " bytes" << endl;
+        BOOST_REQUIRE(rc >= 0u);
+        if (rc == 0) throw runtime_error("reached end of input");
+        _size = static_cast<size_t>(rc);
+        _probe->modify(_sock, ioxx::ev_writable);
+      }
+      if (ev & ioxx::ev_writable)
+      {
+        cout << "socket " << _sock << ": is writable" << endl;
+        BOOST_REQUIRE(_size);
+        BOOST_REQUIRE(_gap + _size <= _capacity);
+        ssize_t const rc( throw_errno_if_minus1<ssize_t>( "write(2) failure"
+                                                        , bind(&write, _sock, &_buffer[_gap], _size)
+                                                        ));
+        cout << "socket " << _sock << ": wrote " << rc << " bytes" << endl;
+        BOOST_REQUIRE(rc > 0);
+        BOOST_REQUIRE(static_cast<size_t>(rc) <= _size);
+        _gap  += static_cast<size_t>(rc);
+        _size -= static_cast<size_t>(rc);
+        if (_size == 0u)
+        {
+          _gap = 0u;
+          _probe->modify(_sock, ioxx::ev_readable);
+        }
+      }
+    }
+    catch(exception const & e)
+    {
+      cout << "socket " << _sock << ": " << e.what() << endl;
+      _probe->unset(_sock);
+      // the following command fails:
+      //   unknown location(0): fatal error in "test_echo_handler":
+      //   std::runtime_error: close(2): Bad file descriptor
+      ioxx::throw_errno_if_minus1_("close(2)", boost::bind(&close, _sock));
+    }
+  }
+};
+
+BOOST_AUTO_TEST_CASE( test_socket_event_operators )
+{
+  using namespace ioxx;
+
+  socket_event ev( ev_readable );
+  BOOST_REQUIRE_EQUAL(ev, ev_readable);
+  BOOST_REQUIRE(ev & ev_readable);
+  BOOST_REQUIRE(!(ev & ev_writable));
+  BOOST_REQUIRE(!(ev & ev_pridata));
+
+  ev |= ev_writable;
+  BOOST_REQUIRE_EQUAL((int)(ev), (int)(ev_readable) | (int)(ev_writable));
+  BOOST_REQUIRE(ev & ev_readable);
+  BOOST_REQUIRE(ev & ev_writable);
+  BOOST_REQUIRE(!(ev & ev_pridata));
+
+  ev = ev_writable | ev_pridata;
+  BOOST_REQUIRE_EQUAL((int)(ev), (int)(ev_pridata) | (int)(ev_writable));
+  BOOST_REQUIRE(ev & ev_pridata);
+  BOOST_REQUIRE(ev & ev_writable);
+  BOOST_REQUIRE(!(ev & ev_readable));
+}
+
+void print_stuff(ioxx::socket_t s, sockaddr const * addr, socklen_t addr_size)
+{
+  cout << "socket " << s << ": accepted connection" << endl;
+  ioxx::throw_errno_if_minus1_("close(2)", boost::bind(&close, s));
+}
+
+BOOST_AUTO_TEST_CASE( test_echo_handler )
+{
+  ioxx::timer       now;
+  ioxx::scheduler<> schedule;
+  ioxx::probe       probe;
+  ioxx::socket_t const ls( ioxx::accept_stream_socket(probe, "127.0.0.1", "8080", boost::bind(&echo::accept, &probe, _1)) );
+  cout << "listening for connections on port 8080" << endl;
+  schedule.at(now.as_time_t() + 5, boost::bind(&ioxx::probe::unset, &probe, ls));
+  while (!probe.empty())
+  {
+    ioxx::seconds_t timeout( schedule.run(now.as_time_t()) );
+    probe.run(timeout);
+    now.update();
+  }
+
 #if 0
-  ioxx::timeout                           timer;
-  BOOST_REQUIRE(probe);
   {
     echo::pointer p( new echo(STDIN_FILENO, STDOUT_FILENO) );
     probe->insert(STDIN_FILENO, p);
