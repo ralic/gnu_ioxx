@@ -14,7 +14,7 @@ namespace ioxx
     Result r;
     for(r = f(); is_failure(r); r = f())
     {
-      if (errno == EINTR && --max_retries > 0u) continue;
+      if (errno == EINTR && max_retries-- != 0u) continue;
       boost::system::system_error err(errno, boost::system::errno_ecat, error_msg);
       throw err;
     }
@@ -38,6 +38,12 @@ namespace ioxx
   inline void throw_errno_if_minus1_(std::string const & error_msg, Action const & f)
   {
     throw_errno_if_minus1<Num>(error_msg, f);
+  }
+
+  template <class Action>
+  inline void throw_errno_if_minus1_(std::string const & error_msg, Action const & f)
+  {
+    throw_errno_if_minus1<int>(error_msg, f);
   }
 
 } // namespace ioxx
