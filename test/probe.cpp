@@ -11,10 +11,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#define TRACE_SOCKET(s, msg) std::cout << "socket " << s << ": " << msg << std::endl
+
 namespace ioxx
 {
   inline void nonblocking(socket_t s, bool enable = true)
   {
+    TRACE_SOCKET(s, (enable ? "enable" : "disable") << " nonblocking mode");
     BOOST_ASSERT(s >= 0);
     int const rc( throw_errno_if_minus1<int>("cannot obtain socket flags", boost::bind<int>(&fcntl, s, F_GETFL, 0)) );
     int const flags( enable ? rc | O_NONBLOCK : rc & ~O_NONBLOCK );
@@ -24,14 +27,16 @@ namespace ioxx
 
   typedef boost::function<void (socket_t, sockaddr const *, socklen_t)> socket_handler;
 
-  inline void accept_stream_socket(socket_t ls, socket_handler f)
+  inline void accept_stream_socket(socket_t const ls, socket_handler f)
   {
+    TRACE_SOCKET(ls, "listen socket has become readable");
     sockaddr  addr;
-    socklen_t len;
-    for (socket_t s( accept(ls, &addr, &len) ); s >= 0; s = accept(ls, &addr, &len))
+    socklen_t len( sizeof(sockaddr) );
+    for (socket_t s( accept(ls, &addr, &len) ); s >= 0; len = sizeof(sockaddr), s = accept(ls, &addr, &len))
     {
       try
       {
+        TRACE_SOCKET(ls, "accepted new socket " << s);
         nonblocking(s);
         f(s, &addr, len);
       }
@@ -46,6 +51,8 @@ namespace ioxx
       boost::system::system_error err(errno, boost::system::errno_ecat, "accept(2)");
       throw err;
     }
+    else
+      TRACE_SOCKET(ls, "no more pending connections");
   }
 
   inline socket_t accept_stream_socket(probe & p, char const * node, char const * service, socket_handler const & f)
@@ -102,13 +109,14 @@ public:
   echo(ioxx::probe & probe, ioxx::socket_t sock, size_t capacity = 1024u)
   : _probe(&probe), _sock(sock), _capacity(capacity), _buffer(new char[_capacity]), _size(0u), _gap(0u)
   {
+    TRACE_SOCKET(_sock, "creating echo handler");
     BOOST_REQUIRE(_sock >= 0);
     BOOST_REQUIRE(capacity != 0);
-    cout << "socket " << _sock << ": creating echo handler" << endl;
   }
 
   void operator() (ioxx::socket_event ev)
   {
+    TRACE_SOCKET(_sock, "socket event " << ev);
     using ioxx::throw_errno_if_minus1;
     using boost::bind;
     try
@@ -148,12 +156,13 @@ public:
     }
     catch(exception const & e)
     {
-      cout << "socket " << _sock << ": " << e.what() << endl;
+      TRACE_SOCKET(_sock, "socket event " << e.what());
+      ioxx::socket_t const s(_sock);
       _probe->unset(_sock);
       // the following command fails:
       //   unknown location(0): fatal error in "test_echo_handler":
       //   std::runtime_error: close(2): Bad file descriptor
-      ioxx::throw_errno_if_minus1_("close(2)", boost::bind(&close, _sock));
+      ioxx::throw_errno_if_minus1_("close(2)", boost::bind(&close, s));
     }
   }
 };
@@ -181,10 +190,11 @@ BOOST_AUTO_TEST_CASE( test_socket_event_operators )
   BOOST_REQUIRE(!(ev & ev_readable));
 }
 
-void print_stuff(ioxx::socket_t s, sockaddr const * addr, socklen_t addr_size)
+void close_socket(ioxx::probe * p, ioxx::socket_t s)
 {
-  cout << "socket " << s << ": accepted connection" << endl;
-  ioxx::throw_errno_if_minus1_("close(2)", boost::bind(&close, s));
+  TRACE_SOCKET(s, "shutting down i/o service");
+  p->unset(s);
+  ioxx::throw_errno_if_minus1_("cannot close() socket", boost::bind(&close, s));
 }
 
 BOOST_AUTO_TEST_CASE( test_echo_handler )
@@ -193,30 +203,12 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   ioxx::scheduler<> schedule;
   ioxx::probe       probe;
   ioxx::socket_t const ls( ioxx::accept_stream_socket(probe, "127.0.0.1", "8080", boost::bind(&echo::accept, &probe, _1)) );
-  cout << "listening for connections on port 8080" << endl;
-  schedule.at(now.as_time_t() + 5, boost::bind(&ioxx::probe::unset, &probe, ls));
-  while (!probe.empty())
+  TRACE_SOCKET(ls, "accepting connections on port 8080");
+  schedule.at(now.as_time_t() + 5, boost::bind(&close_socket, &probe, ls));
+  while (!probe.empty() || !schedule.empty())
   {
+    now.update();
     ioxx::seconds_t timeout( schedule.run(now.as_time_t()) );
     probe.run(timeout);
-    now.update();
   }
-
-#if 0
-  {
-    echo::pointer p( new echo(STDIN_FILENO, STDOUT_FILENO) );
-    probe->insert(STDIN_FILENO, p);
-    probe->insert(STDOUT_FILENO, p);
-    timer.in(5u, boost::bind(&echo::shutdown, p, boost::ref(*probe)));
-  }
-  for(;;)
-  {
-    ioxx::second_t idle_time;
-    timer.deliver(&idle_time);
-    if (!probe->empty())
-      probe->run_once(timer.empty() ? -1 : static_cast<int>(idle_time));
-    else
-      break;
-  }
-#endif
 }
