@@ -1,9 +1,18 @@
 #ifndef IOXX_ERROR_HPP_INCLUDED_2008_04_20
 #define IOXX_ERROR_HPP_INCLUDED_2008_04_20
 
-#include <boost/bind.hpp>
 #include <boost/system/system_error.hpp>
+#include <boost/assert.hpp>
+#include <boost/bind.hpp>
 #include <functional>
+
+#ifndef NDEBUG
+#  include <iostream>
+#  define IOXX_TRACE_MSG(msg) std::cout << msg << std::endl
+#else
+#  define IOXX_TRACE_MSG(msg) static_cast<void>(0)
+#endif
+#define IOXX_TRACE_SOCKET(s,msg) IOXX_TRACE_MSG("socket " << s << ": " << msg)
 
 namespace ioxx
 {
