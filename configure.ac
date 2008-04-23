@@ -31,21 +31,31 @@ AC_LINK_IFELSE([AC_LANG_CALL([], [exit])],
   [AC_MSG_RESULT([yes])],
   [AC_MSG_FAILURE([no])])
 
-AC_MSG_CHECKING([whether this platform supports epoll(7)])
-AC_PREPROC_IFELSE(
-  [#include <sys/epoll.h>
+AC_CACHE_CHECK(
+  [whether this platform supports epoll],
+  [ax_cv_have_epoll],
+  [AC_PREPROC_IFELSE([dnl
+#include <sys/epoll.h>
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION (2,5,45)
 #  error linux kernel version is too old
-#endif],
-  [AC_DEFINE(IOXX_HAVE_EPOLL, 1, [Have epoll(7).]) AC_MSG_RESULT([yes])],
-  [AC_MSG_RESULT([no])])
+#endif], [ax_cv_have_epoll=yes], [ax_cv_have_epoll=no])])
 
-AC_MSG_CHECKING([whether this platform supports select(2)])
-AC_PREPROC_IFELSE(
-  [#include <sys/select.h>],
-  [AC_DEFINE(IOXX_HAVE_SELECT, 1, [Have select(2).]) AC_MSG_RESULT([yes])],
-  [AC_MSG_RESULT([no])])
+if test "$ax_cv_have_epoll" = "yes"; then
+  AC_DEFINE([IOXX_HAVE_EPOLL], 1, [This platform supports epoll(7).])
+fi
+
+AC_CACHE_CHECK(
+  [whether this platform supports select()],
+  [ax_cv_have_select],
+  [AC_PREPROC_IFELSE(
+    [#include <sys/select.h>],
+    [ax_cv_have_select=yes],
+    [ax_cv_have_select=no])])
+
+if test "$ax_cv_have_select" = "yes"; then
+  AC_DEFINE([IOXX_HAVE_SELECT], 1, [This platform supports select(2).])
+fi
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
