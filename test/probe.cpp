@@ -11,13 +11,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define TRACE_SOCKET(s, msg) std::cout << "socket " << s << ": " << msg << std::endl
-
 namespace ioxx
 {
   inline void nonblocking(socket_t s, bool enable = true)
   {
-    TRACE_SOCKET(s, (enable ? "enable" : "disable") << " nonblocking mode");
+    IOXX_TRACE_SOCKET(s, (enable ? "enable" : "disable") << " nonblocking mode");
     BOOST_ASSERT(s >= 0);
     int const rc( throw_errno_if_minus1<int>("cannot obtain socket flags", boost::bind<int>(&fcntl, s, F_GETFL, 0)) );
     int const flags( enable ? rc | O_NONBLOCK : rc & ~O_NONBLOCK );
@@ -27,16 +25,16 @@ namespace ioxx
 
   typedef boost::function<void (socket_t, sockaddr const *, socklen_t)> socket_handler;
 
-  inline void accept_stream_socket(socket_t const ls, socket_handler f)
+  inline void accept_stream_socket(socket_t ls, socket_handler f)
   {
-    TRACE_SOCKET(ls, "listen socket has become readable");
+    IOXX_TRACE_SOCKET(ls, "listen socket has become readable");
     sockaddr  addr;
     socklen_t len( sizeof(sockaddr) );
     for (socket_t s( accept(ls, &addr, &len) ); s >= 0; len = sizeof(sockaddr), s = accept(ls, &addr, &len))
     {
       try
       {
-        TRACE_SOCKET(ls, "accepted new socket " << s);
+        IOXX_TRACE_SOCKET(ls, "accepted new socket " << s);
         nonblocking(s);
         f(s, &addr, len);
       }
@@ -52,7 +50,7 @@ namespace ioxx
       throw err;
     }
     else
-      TRACE_SOCKET(ls, "no more pending connections");
+      IOXX_TRACE_SOCKET(ls, "no more pending connections");
   }
 
   inline socket_t accept_stream_socket(probe & p, char const * node, char const * service, socket_handler const & f)
@@ -109,26 +107,25 @@ public:
   echo(ioxx::probe & probe, ioxx::socket_t sock, size_t capacity = 1024u)
   : _probe(&probe), _sock(sock), _capacity(capacity), _buffer(new char[_capacity]), _size(0u), _gap(0u)
   {
-    TRACE_SOCKET(_sock, "creating echo handler");
+    IOXX_TRACE_SOCKET(_sock, "creating echo handler");
     BOOST_REQUIRE(_sock >= 0);
     BOOST_REQUIRE(capacity != 0);
   }
 
   void operator() (ioxx::socket_event ev)
   {
-    TRACE_SOCKET(_sock, "socket event " << ev);
+    IOXX_TRACE_SOCKET(_sock, "socket event " << ev);
     using ioxx::throw_errno_if_minus1;
     using boost::bind;
     try
     {
       if (ev & ioxx::ev_readable)
       {
-        cout << "socket " << _sock << ": is readable" << endl;
         BOOST_REQUIRE_EQUAL(_size, 0u);
-        ssize_t const rc( throw_errno_if_minus1<ssize_t>( "read(2) failure"
+        ssize_t const rc( throw_errno_if_minus1<ssize_t>( "read(2)"
                                                         , bind(&read, _sock, &_buffer[0], _capacity)
                                                         ));
-        cout << "socket " << _sock << ": read " << rc << " bytes" << endl;
+        IOXX_TRACE_SOCKET(_sock, "read " << rc << " bytes");
         BOOST_REQUIRE(rc >= 0u);
         if (rc == 0) throw runtime_error("reached end of input");
         _size = static_cast<size_t>(rc);
@@ -136,13 +133,12 @@ public:
       }
       if (ev & ioxx::ev_writable)
       {
-        cout << "socket " << _sock << ": is writable" << endl;
         BOOST_REQUIRE(_size);
         BOOST_REQUIRE(_gap + _size <= _capacity);
-        ssize_t const rc( throw_errno_if_minus1<ssize_t>( "write(2) failure"
+        ssize_t const rc( throw_errno_if_minus1<ssize_t>( "write(2)"
                                                         , bind(&write, _sock, &_buffer[_gap], _size)
                                                         ));
-        cout << "socket " << _sock << ": wrote " << rc << " bytes" << endl;
+        IOXX_TRACE_SOCKET(_sock, "wrote " << rc << " bytes");
         BOOST_REQUIRE(rc > 0);
         BOOST_REQUIRE(static_cast<size_t>(rc) <= _size);
         _gap  += static_cast<size_t>(rc);
@@ -156,12 +152,9 @@ public:
     }
     catch(exception const & e)
     {
-      TRACE_SOCKET(_sock, "socket event " << e.what());
+      IOXX_TRACE_SOCKET(_sock, "socket event " << e.what());
       ioxx::socket_t const s(_sock);
-      _probe->unset(_sock);
-      // the following command fails:
-      //   unknown location(0): fatal error in "test_echo_handler":
-      //   std::runtime_error: close(2): Bad file descriptor
+      _probe->unset(_sock);     // suicide destroys _sock member
       ioxx::throw_errno_if_minus1_("close(2)", boost::bind(&close, s));
     }
   }
@@ -192,7 +185,7 @@ BOOST_AUTO_TEST_CASE( test_socket_event_operators )
 
 void close_socket(ioxx::probe * p, ioxx::socket_t s)
 {
-  TRACE_SOCKET(s, "shutting down i/o service");
+  IOXX_TRACE_SOCKET(s, "shutting down i/o service");
   p->unset(s);
   ioxx::throw_errno_if_minus1_("cannot close() socket", boost::bind(&close, s));
 }
@@ -203,12 +196,17 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   ioxx::scheduler<> schedule;
   ioxx::probe       probe;
   ioxx::socket_t const ls( ioxx::accept_stream_socket(probe, "127.0.0.1", "8080", boost::bind(&echo::accept, &probe, _1)) );
-  TRACE_SOCKET(ls, "accepting connections on port 8080");
+  IOXX_TRACE_SOCKET(ls, "accepting connections on port 8080");
   schedule.at(now.as_time_t() + 5, boost::bind(&close_socket, &probe, ls));
-  while (!probe.empty() || !schedule.empty())
+  for (;;)
   {
-    now.update();
     ioxx::seconds_t timeout( schedule.run(now.as_time_t()) );
+    if (schedule.empty())
+    {
+      if (probe.empty())  break;
+      else                timeout = ioxx::probe::max_timeout();
+    }
     probe.run(timeout);
+    now.update();
   }
 }
