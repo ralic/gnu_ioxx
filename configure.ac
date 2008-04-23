@@ -31,8 +31,21 @@ AC_LINK_IFELSE([AC_LANG_CALL([], [exit])],
   [AC_MSG_RESULT([yes])],
   [AC_MSG_FAILURE([no])])
 
-# AC_CHECK_LIB([boost_thread${BOOST_SUFFIX}], [exit])
-# AC_CHECK_LIB([boost_system${BOOST_SUFFIX}], [exit])
+AC_MSG_CHECKING([whether this platform supports epoll(7)])
+AC_PREPROC_IFELSE(
+  [#include <sys/epoll.h>
+#include <linux/version.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION (2,5,45)
+#  error linux kernel version is too old
+#endif],
+  [AC_DEFINE(IOXX_HAVE_EPOLL, 1, [Have epoll(7).]) AC_MSG_RESULT([yes])],
+  [AC_MSG_RESULT([no])])
+
+AC_MSG_CHECKING([whether this platform supports select(2)])
+AC_PREPROC_IFELSE(
+  [#include <sys/select.h>],
+  [AC_DEFINE(IOXX_HAVE_SELECT, 1, [Have select(2).]) AC_MSG_RESULT([yes])],
+  [AC_MSG_RESULT([no])])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
