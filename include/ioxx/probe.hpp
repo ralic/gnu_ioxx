@@ -36,17 +36,6 @@ namespace ioxx
 
   class probe : private boost::noncopyable
   {
-#ifdef IOXX_HAVE_EPOLL
-    static short to_events(socket_event sev)
-    {
-      short ev( 0 );
-      if (sev & ev_readable) ev |= EPOLLIN;
-      if (sev & ev_writable) ev |= EPOLLOUT;
-      if (sev & ev_pridata)  ev |= EPOLLPRI;
-      return ev;
-    }
-#endif
-
   public:
     typedef boost::function<void (socket_event)>        handler;
     typedef std::map<socket_t,handler>                  handler_map;
@@ -194,6 +183,15 @@ namespace ioxx
 
 #if defined(IOXX_HAVE_EPOLL)
     socket_t    _epoll_fd;
+
+    static short to_events(socket_event sev)
+    {
+      short ev( 0 );
+      if (sev & ev_readable) ev |= EPOLLIN;
+      if (sev & ev_writable) ev |= EPOLLOUT;
+      if (sev & ev_pridata)  ev |= EPOLLPRI;
+      return ev;
+    }
 #elif defined(IOXX_HAVE_SELECT)
     fd_set      _read_fds, _write_fds, _except_fds;
 #endif
