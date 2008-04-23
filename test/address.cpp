@@ -52,7 +52,7 @@ public:
                                , NI_NUMERICHOST
                                )
                 );
-    if (rc != 0) throw ioxx::system_error("getnameinfo failed");
+    if (rc != 0) throw ioxx::system_error("getnameinfo(3)");
     return std::make_pair(host, service);
   }
 };
