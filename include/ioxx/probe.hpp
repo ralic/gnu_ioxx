@@ -97,9 +97,7 @@ namespace ioxx
 #if defined(IOXX_HAVE_EPOLL)
       try
       {
-        epoll_event ev;
-        ev.data.fd = s;
-        ev.events  = to_events(request);
+        epoll_event ev( make_event(s, request) );
         throw_errno_if_minus1_( "probe::set()"
                               , boost::bind(&epoll_ctl, _epoll_fd, r.second ? EPOLL_CTL_ADD : EPOLL_CTL_MOD, s, &ev)
                               );
@@ -121,9 +119,7 @@ namespace ioxx
       BOOST_ASSERT(s >= 0);
       if (!_handlers.erase(s)) return;
 #if defined(IOXX_HAVE_EPOLL)
-      epoll_event ev;
-      ev.data.fd = s;
-      ev.events  = 0;
+      epoll_event ev( make_event(s, ev_idle) );
       throw_errno_if_minus1_("probe::unset()", boost::bind(&epoll_ctl, _epoll_fd, EPOLL_CTL_DEL, s, &ev));
 #elif defined(IOXX_HAVE_SELECT)
       reset_events(s, ev_idle);
@@ -144,9 +140,7 @@ namespace ioxx
       BOOST_ASSERT(s >= 0);
       BOOST_ASSERT(_handlers.find(s) != _handlers.end());
 #if defined(IOXX_HAVE_EPOLL)
-      epoll_event ev;
-      ev.data.fd = s;
-      ev.events  = to_events(request);
+      epoll_event ev( make_event(s, request) );
       throw_errno_if_minus1_("probe::modify()", boost::bind(&epoll_ctl, _epoll_fd, EPOLL_CTL_MOD, s, &ev));
 #elif defined(IOXX_HAVE_SELECT)
       reset_events(s, request);
@@ -187,12 +181,14 @@ namespace ioxx
         select(0, NULL, NULL, NULL, &tv);
         return;
       }
-      IOXX_TRACE_MSG("nfds       = " << (_handlers.empty() ? 0 : _handlers.rbegin()->first));
+      socket_t const nfds( _handlers.rbegin()->first + 1 );
+      fd_set read_fds(_read_fds), write_fds(_write_fds), except_fds(_except_fds);
+      IOXX_TRACE_MSG("nfds       = " << nfds);
       IOXX_TRACE_MSG("read_fds   = " << _read_fds);
       IOXX_TRACE_MSG("write_fds  = " << _write_fds);
       IOXX_TRACE_MSG("except_fds = " << _except_fds);
-      fd_set read_fds(_read_fds), write_fds(_write_fds), except_fds(_except_fds);
-      int rc( select(_handlers.rbegin()->first + 1, &read_fds, &write_fds, &except_fds, &tv) );
+      BOOST_ASSERT(nfds > 0);
+      int rc( select(nfds, &read_fds, &write_fds, &except_fds, &tv) );
       if (rc < 0)
       {
         if (errno == EINTR) return;
@@ -203,14 +199,15 @@ namespace ioxx
       IOXX_TRACE_MSG("read_fds   = " << read_fds);
       IOXX_TRACE_MSG("write_fds  = " << write_fds);
       IOXX_TRACE_MSG("except_fds = " << except_fds);
-      for (iterator i( _handlers.begin() ); rc != 0; ++i)
+      for (socket_t s( 0 ); s != nfds && rc != 0; ++s)
       {
         BOOST_ASSERT(rc >= 0);
-        BOOST_ASSERT(i != _handlers.end());
+        iterator const i( _handlers.find(s) );
+        if (i == _handlers.end()) continue;
         socket_event sev( ev_idle );
-        if (FD_ISSET(i->first, &read_fds))   { --rc; sev |= ev_readable; }
-        if (FD_ISSET(i->first, &write_fds))  { --rc; sev |= ev_writable; }
-        if (FD_ISSET(i->first, &except_fds)) { --rc; sev |= ev_pridata; }
+        if (FD_ISSET(s, &read_fds))   { --rc; sev |= ev_readable; }
+        if (FD_ISSET(s, &write_fds))  { --rc; sev |= ev_writable; }
+        if (FD_ISSET(s, &except_fds)) { --rc; sev |= ev_pridata; }
         if (sev != ev_idle)
           i->second(sev);         // this is dangerous in case of suicides
       }
@@ -223,12 +220,14 @@ namespace ioxx
 #if defined(IOXX_HAVE_EPOLL)
     socket_t    _epoll_fd;
 
-    static short to_events(socket_event sev)
+    static epoll_event make_event(socket_t s, socket_event sev)
     {
-      short ev( 0 );
-      if (sev & ev_readable) ev |= EPOLLIN;
-      if (sev & ev_writable) ev |= EPOLLOUT;
-      if (sev & ev_pridata)  ev |= EPOLLPRI;
+      BOOST_ASSERT(s >= 0);
+      epoll_event ev;
+      ev.data.fd = s;
+      if (sev & ev_readable) ev.events |= EPOLLIN;
+      if (sev & ev_writable) ev.events |= EPOLLOUT;
+      if (sev & ev_pridata)  ev.events |= EPOLLPRI;
       return ev;
     }
 #elif defined(IOXX_HAVE_SELECT)
@@ -238,9 +237,9 @@ namespace ioxx
     {
       BOOST_ASSERT(s >= 0);
       BOOST_ASSERT(s <= FD_SETSIZE);
-      if (sev & ev_readable) { IOXX_TRACE_SOCKET(s, "set read");  FD_SET(s, &_read_fds); }   else { IOXX_TRACE_SOCKET(s, "clr read");  FD_CLR(s, &_read_fds); }
-      if (sev & ev_writable) { IOXX_TRACE_SOCKET(s, "set write"); FD_SET(s, &_write_fds); }  else { IOXX_TRACE_SOCKET(s, "clr write"); FD_CLR(s, &_write_fds); }
-      if (sev & ev_pridata)  { IOXX_TRACE_SOCKET(s, "set pri");   FD_SET(s, &_except_fds); } else { IOXX_TRACE_SOCKET(s, "clr pri");   FD_CLR(s, &_except_fds); }
+      if (sev & ev_readable) { FD_SET(s, &_read_fds); }   else { FD_CLR(s, &_read_fds); }
+      if (sev & ev_writable) { FD_SET(s, &_write_fds); }  else { FD_CLR(s, &_write_fds); }
+      if (sev & ev_pridata)  { FD_SET(s, &_except_fds); } else { FD_CLR(s, &_except_fds); }
     }
 #endif
   };
