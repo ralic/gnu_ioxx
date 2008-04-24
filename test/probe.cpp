@@ -83,10 +83,46 @@ namespace ioxx
   }
 }
 
+///// Tests ///////////////////////////////////////////////////////////////////
+
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-using namespace std;
+BOOST_AUTO_TEST_CASE( test_socket_event_operators )
+{
+  using namespace ioxx;
+
+  socket_event ev( ev_readable );
+  BOOST_REQUIRE_EQUAL(ev, ev_readable);
+  BOOST_REQUIRE(ev & ev_readable);
+  BOOST_REQUIRE(!(ev & ev_writable));
+  BOOST_REQUIRE(!(ev & ev_pridata));
+
+  ev |= ev_writable;
+  BOOST_REQUIRE_EQUAL((int)(ev), (int)(ev_readable) | (int)(ev_writable));
+  BOOST_REQUIRE(ev & ev_readable);
+  BOOST_REQUIRE(ev & ev_writable);
+  BOOST_REQUIRE(!(ev & ev_pridata));
+
+  ev = ev_writable | ev_pridata;
+  BOOST_REQUIRE_EQUAL((int)(ev), (int)(ev_pridata) | (int)(ev_writable));
+  BOOST_REQUIRE(ev & ev_pridata);
+  BOOST_REQUIRE(ev & ev_writable);
+  BOOST_REQUIRE(!(ev & ev_readable));
+}
+
+BOOST_AUTO_TEST_CASE( test_that_probe_can_be_used_as_sleep )
+{
+  ioxx::timer           now;
+  ioxx::probe           probe;
+  ioxx::time_t const    startup( now.as_time_t() );
+  probe.run( 1u );
+  now.update();
+  ioxx::time_t const    done( now.as_time_t() );
+  int const             runtime( done - startup );
+  BOOST_REQUIRE(probe.empty());
+  BOOST_REQUIRE_PREDICATE(std::greater_equal<int>(), (runtime)(1));
+}
 
 class echo
 {
@@ -127,7 +163,7 @@ public:
                                                         ));
         IOXX_TRACE_SOCKET(_sock, "read " << rc << " bytes");
         BOOST_REQUIRE(rc >= 0u);
-        if (rc == 0) throw runtime_error("reached end of input");
+        if (rc == 0) throw std::runtime_error("reached end of input");
         _size = static_cast<size_t>(rc);
         _probe->modify(_sock, ioxx::ev_writable);
       }
@@ -150,7 +186,7 @@ public:
         }
       }
     }
-    catch(exception const & e)
+    catch(std::exception const & e)
     {
       IOXX_TRACE_SOCKET(_sock, "socket event " << e.what());
       ioxx::socket_t const s(_sock);
@@ -159,29 +195,6 @@ public:
     }
   }
 };
-
-BOOST_AUTO_TEST_CASE( test_socket_event_operators )
-{
-  using namespace ioxx;
-
-  socket_event ev( ev_readable );
-  BOOST_REQUIRE_EQUAL(ev, ev_readable);
-  BOOST_REQUIRE(ev & ev_readable);
-  BOOST_REQUIRE(!(ev & ev_writable));
-  BOOST_REQUIRE(!(ev & ev_pridata));
-
-  ev |= ev_writable;
-  BOOST_REQUIRE_EQUAL((int)(ev), (int)(ev_readable) | (int)(ev_writable));
-  BOOST_REQUIRE(ev & ev_readable);
-  BOOST_REQUIRE(ev & ev_writable);
-  BOOST_REQUIRE(!(ev & ev_pridata));
-
-  ev = ev_writable | ev_pridata;
-  BOOST_REQUIRE_EQUAL((int)(ev), (int)(ev_pridata) | (int)(ev_writable));
-  BOOST_REQUIRE(ev & ev_pridata);
-  BOOST_REQUIRE(ev & ev_writable);
-  BOOST_REQUIRE(!(ev & ev_readable));
-}
 
 void close_socket(ioxx::probe * p, ioxx::socket_t s)
 {
