@@ -2,7 +2,7 @@
 #define IOXX_PROBE_SELECT_IMPL_HPP_INCLUDED_2008_04_20
 
 #include "socket.hpp"
-#include "socket_event.hpp"
+#include "socket-event.hpp"
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <limits>

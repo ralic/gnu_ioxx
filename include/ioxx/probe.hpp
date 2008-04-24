@@ -2,17 +2,17 @@
 #define IOXX_PROBE_HPP_INCLUDED_2008_04_20
 
 #include "socket.hpp"
-#include "socket_event.hpp"
+#include "socket-event.hpp"
 #include <boost/function/function1.hpp>
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <map>
 
 #if defined(IOXX_HAVE_EPOLL)
-#  include "probe_epoll_impl.hpp"
+#  include "probe-epoll-impl.hpp"
 namespace ioxx { typedef probe_epoll_implementation default_probe_implementation; }
 #elif defined(IOXX_HAVE_SELECT)
-#  include "probe_select_impl.hpp"
+#  include "probe-select-impl.hpp"
 namespace ioxx { typedef probe_select_implementation default_probe_implementation; }
 #else
 #  error "No I/O probe implementation available for this platform."
