@@ -40,7 +40,7 @@ namespace ioxx
       }
       catch(...)
       {
-        throw_errno_if_minus1("cannot close() listening socket", boost::bind(&close, s));
+        close(s, "close stream socket");
         throw;
       }
     }
@@ -76,7 +76,7 @@ namespace ioxx
     }
     catch(...)
     {
-      throw_errno_if_minus1("cannot close() listening socket", boost::bind(&::close, ls));
+      close(ls, "close listening socket");
       throw;
     }
     return ls;
@@ -191,7 +191,7 @@ public:
       IOXX_TRACE_SOCKET(_sock, "socket event " << e.what());
       ioxx::socket_t const s(_sock);
       _probe->unset(_sock);     // suicide destroys _sock member
-      ioxx::throw_errno_if_minus1("close(2)", boost::bind(&close, s));
+      ioxx::close(s, "close echo stream");
     }
   }
 };
