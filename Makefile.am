@@ -5,7 +5,7 @@ SUBDIRS			= src test
 # dist_pkgdata_DATA       = README
 CLEANFILES              = $(DIST_ARCHIVES)
 MAINTAINERCLEANFILES    = missing install-sh configure Makefile.in aclocal.m4
-MAINTAINERCLEANFILES   += config.guess config.sub ltmain.sh
+MAINTAINERCLEANFILES   += config.guess config.sub ltmain.sh depcomp
 
 aclocaldir              = $(datadir)/aclocal
 dist_aclocal_DATA       = $(M4SOURCE)
