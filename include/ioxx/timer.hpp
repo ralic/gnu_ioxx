@@ -20,7 +20,7 @@ namespace ioxx
 
     void update()
     {
-      throw_errno_if_minus1_("gettimeofday(2)", boost::bind(gettimeofday, &_now, static_cast<struct timezone *>(0)));
+      throw_errno_if_minus1("gettimeofday(2)", boost::bind(gettimeofday, &_now, static_cast<struct timezone *>(0)));
     }
 
   private:
