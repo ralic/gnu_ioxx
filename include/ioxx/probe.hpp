@@ -3,19 +3,11 @@
 
 #include "error.hpp"
 #include <boost/noncopyable.hpp>
-#include <boost/function.hpp>
+#include <boost/function/function1.hpp>
 #include <boost/assert.hpp>
 #include <map>
 #include <algorithm>
 #include <limits>
-
-#if defined(IOXX_HAVE_EPOLL)
-#  include <sys/epoll.h>
-#elif defined(IOXX_HAVE_SELECT)
-#  include <sys/select.h>
-#else
-#  error "No I/O probe implementation available for this platform."
-#endif
 
 namespace ioxx
 {
@@ -42,19 +34,34 @@ namespace ioxx
     if (sev & ev_pridata)  os << "Pridat";
     return os;
   }
+}
 
+#if defined(IOXX_HAVE_EPOLL)
+#  include <sys/epoll.h>
+#elif defined(IOXX_HAVE_SELECT)
+#  include <sys/select.h>
+#else
+#  error "No I/O probe implementation available for this platform."
+#endif
+
+namespace ioxx
+{
   inline std::ostream & operator<< (std::ostream & os, fd_set const & fds)
   {
     for (int i( 0 ); i <= 32 /* FD_SETSIZE */; ++i)
       os << (FD_ISSET(i, &fds) ? '1' : '0');
     return os;
   }
+
+  template < class Handler   = boost::function1<void, socket_event>
+           , class Allocator = std::allocator< std::pair<socket_t const, Handler> >
+           >
   class probe : private boost::noncopyable
   {
   public:
-    typedef boost::function<void (socket_event)>        handler;
-    typedef std::map<socket_t,handler>                  handler_map;
-    typedef handler_map::iterator                       iterator;
+    typedef Handler                                                     handler;
+    typedef std::map<socket_t,handler,std::less<socket_t>,Allocator>    handler_map;
+    typedef typename handler_map::iterator                              iterator;
 
     static seconds_t max_timeout()
     {
@@ -71,7 +78,7 @@ namespace ioxx
     {
 #if defined(IOXX_HAVE_EPOLL)
       size_hint = std::min(size_hint, static_cast<unsigned int>(std::numeric_limits<int>::max()));
-      _epoll_fd = throw_errno_if_minus1<socket_t>("epoll_create(2)", boost::bind(&epoll_create, static_cast<int>(size_hint)));
+      _epoll_fd = throw_errno_if_minus1("epoll_create(2)", boost::bind(&epoll_create, static_cast<int>(size_hint)));
 #elif defined(IOXX_HAVE_SELECT)
       FD_ZERO(&_read_fds);
       FD_ZERO(&_write_fds);
@@ -82,7 +89,7 @@ namespace ioxx
     ~probe()
     {
 #if defined(IOXX_HAVE_EPOLL)
-      throw_errno_if_minus1_("close() epoll socket", boost::bind(&close, _epoll_fd));
+      throw_errno_if_minus1("close() epoll socket", boost::bind(&close, _epoll_fd));
 #elif defined(IOXX_HAVE_SELECT)
       /* */
 #endif
@@ -98,9 +105,9 @@ namespace ioxx
       try
       {
         epoll_event ev( make_event(s, request) );
-        throw_errno_if_minus1_( "probe::set()"
-                              , boost::bind(&epoll_ctl, _epoll_fd, r.second ? EPOLL_CTL_ADD : EPOLL_CTL_MOD, s, &ev)
-                              );
+        throw_errno_if_minus1( "probe::set()"
+                             , boost::bind(&epoll_ctl, _epoll_fd, r.second ? EPOLL_CTL_ADD : EPOLL_CTL_MOD, s, &ev)
+                             );
       }
       catch(...)
       {
@@ -120,7 +127,7 @@ namespace ioxx
       if (!_handlers.erase(s)) return;
 #if defined(IOXX_HAVE_EPOLL)
       epoll_event ev( make_event(s, ev_idle) );
-      throw_errno_if_minus1_("probe::unset()", boost::bind(&epoll_ctl, _epoll_fd, EPOLL_CTL_DEL, s, &ev));
+      throw_errno_if_minus1("probe::unset()", boost::bind(&epoll_ctl, _epoll_fd, EPOLL_CTL_DEL, s, &ev));
 #elif defined(IOXX_HAVE_SELECT)
       reset_events(s, ev_idle);
 #endif
@@ -141,7 +148,7 @@ namespace ioxx
       BOOST_ASSERT(_handlers.find(s) != _handlers.end());
 #if defined(IOXX_HAVE_EPOLL)
       epoll_event ev( make_event(s, request) );
-      throw_errno_if_minus1_("probe::modify()", boost::bind(&epoll_ctl, _epoll_fd, EPOLL_CTL_MOD, s, &ev));
+      throw_errno_if_minus1("probe::modify()", boost::bind(&epoll_ctl, _epoll_fd, EPOLL_CTL_MOD, s, &ev));
 #elif defined(IOXX_HAVE_SELECT)
       reset_events(s, request);
 #endif
