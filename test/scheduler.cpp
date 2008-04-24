@@ -4,13 +4,6 @@
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/auto_unit_test.hpp>
 
-BOOST_AUTO_TEST_CASE( basic_timer_test )
-{
-  ioxx::timer now;
-  BOOST_REQUIRE_EQUAL(now.as_time_t(), std::time(0));
-  BOOST_REQUIRE_EQUAL(now.as_time_t(), now.as_timeval().tv_sec);
-}
-
 static size_t dummy_was_called = 0u;
 void dummy_function() { ++dummy_was_called; }
 
