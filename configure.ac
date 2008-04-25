@@ -57,6 +57,18 @@ if test "$ax_cv_have_select" = "yes"; then
   AC_DEFINE([IOXX_HAVE_SELECT], 1, [This platform supports select(2).])
 fi
 
+AC_CACHE_CHECK(
+  [whether this platform supports poll()],
+  [ax_cv_have_poll],
+  [AC_PREPROC_IFELSE(
+    [#include <sys/poll.h>],
+    [ax_cv_have_poll=yes],
+    [ax_cv_have_poll=no])])
+
+if test "$ax_cv_have_poll" = "yes"; then
+  AC_DEFINE([IOXX_HAVE_POLL], 1, [This platform supports poll(2).])
+fi
+
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([test/Makefile])

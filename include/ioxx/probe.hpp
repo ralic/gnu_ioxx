@@ -11,6 +11,9 @@
 #if defined(IOXX_HAVE_EPOLL)
 #  include "probe-epoll-impl.hpp"
 namespace ioxx { typedef probe_epoll_implementation default_probe_implementation; }
+#elif defined(IOXX_HAVE_POLL)
+#  include "probe-poll-impl.hpp"
+namespace ioxx { typedef probe_poll_implementation default_probe_implementation; }
 #elif defined(IOXX_HAVE_SELECT)
 #  include "probe-select-impl.hpp"
 namespace ioxx { typedef probe_select_implementation default_probe_implementation; }
