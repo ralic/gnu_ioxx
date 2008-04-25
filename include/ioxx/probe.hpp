@@ -13,7 +13,7 @@
 namespace ioxx { typedef probe_epoll_implementation default_probe_implementation; }
 #elif defined(IOXX_HAVE_POLL)
 #  include "probe-poll-impl.hpp"
-namespace ioxx { typedef probe_poll_implementation default_probe_implementation; }
+namespace ioxx { typedef probe_poll_implementation<> default_probe_implementation; }
 #elif defined(IOXX_HAVE_SELECT)
 #  include "probe-select-impl.hpp"
 namespace ioxx { typedef probe_select_implementation default_probe_implementation; }
@@ -29,9 +29,11 @@ namespace ioxx
            >
   class probe : private boost::noncopyable
   {
+    typedef std::map<socket_t,Handler,std::less<socket_t>,Allocator>    handler_map;
+    typedef typename handler_map::iterator                              iterator;
+
   public:
-    typedef Handler                                                     handler;
-    typedef std::map<socket_t,handler,std::less<socket_t>,Allocator>    handler_map;
+    typedef Handler handler;
 
     static seconds_t max_timeout() { return Implementation::max_timeout(); }
 
@@ -41,7 +43,7 @@ namespace ioxx
     {
       IOXX_TRACE_SOCKET(s, "add to probe for events " << request);
       BOOST_ASSERT(s >= 0);
-      std::pair<typename handler_map::iterator,bool> const r( _handlers.insert(std::make_pair(s, f)) );
+      std::pair<iterator,bool> const r( _handlers.insert(std::make_pair(s, f)) );
       if (!r.second) std::swap(r.first->second, f);
       try
       {
@@ -104,7 +106,7 @@ namespace ioxx
         IOXX_TRACE_SOCKET(s, "deliver events " << sev);
         BOOST_ASSERT(s >= 0);
         BOOST_ASSERT(sev != ev_idle);
-        typename handler_map::iterator const i( _handlers.find(s) );
+        iterator const i( _handlers.find(s) );
         if (i == _handlers.end()) continue;
         had_events = true;
         i->second(sev);         // this is dangerous in case of suicides

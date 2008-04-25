@@ -12,12 +12,17 @@
 
 namespace ioxx
 {
+  template < class VectorAllocator = std::allocator<pollfd>
+           , class MapAllocator    = std::allocator< std::pair<socket_t const, typename std::vector<pollfd,VectorAllocator>::size_type> >
+           >
   class probe_poll_implementation : private boost::noncopyable
   {
-  public:
-    typedef std::vector<pollfd>                         pfd_array;
-    typedef std::map<socket_t,pfd_array::size_type>     index_map;
+    typedef std::vector<pollfd,VectorAllocator>                                 pfd_array;
+    typedef typename pfd_array::size_type                                       size_type;
+    typedef std::map<socket_t,size_type,std::less<socket_t>,MapAllocator>       index_map;
+    typedef typename index_map::iterator                                        iterator;
 
+  public:
     probe_poll_implementation(unsigned int /* size_hint */) : _events(0u), _current(0u)
     {
     }
@@ -25,7 +30,7 @@ namespace ioxx
     void set(socket_t s, socket_event request)
     {
       BOOST_ASSERT(s >= 0);
-      std::pair<index_map::iterator,bool> const r( _indices.insert(std::make_pair(s, _pfd.size())) );
+      std::pair<iterator,bool> const r( _indices.insert(std::make_pair(s, _pfd.size())) );
       if (r.second)
       {                         // new entry
         try
@@ -56,14 +61,14 @@ namespace ioxx
     void unset(socket_t s)
     {
       BOOST_ASSERT(s >= 0);
-      index_map::iterator const p( _indices.find(s) );
+      iterator const p( _indices.find(s) );
       if (p == _indices.end()) return;
       BOOST_ASSERT(_pfd.size());
-      pfd_array::size_type i( p->second );
-      pfd_array::size_type last( _pfd.size() - 1u);
+      size_type i( p->second );
+      size_type last( _pfd.size() - 1u);
       if (i != last)
       {
-        index_map::iterator const plast( _indices.find(_pfd[last].fd) );
+        iterator const plast( _indices.find(_pfd[last].fd) );
         BOOST_ASSERT(plast != _indices.end()); // must exist
         BOOST_ASSERT(plast->second == last);
         plast->second = i;
@@ -111,15 +116,15 @@ namespace ioxx
         boost::system::system_error err(errno, boost::system::errno_ecat, "poll(2)");
         throw err;
       }
-      _events  = static_cast<pfd_array::size_type>(rc);
+      _events  = static_cast<size_type>(rc);
       _current = 0u;
     }
 
   private:
-    pfd_array            _pfd;
-    index_map            _indices;
-    pfd_array::size_type _events;
-    pfd_array::size_type _current;
+    pfd_array _pfd;
+    index_map _indices;
+    size_type _events;
+    size_type _current;
   };
 
 } // namespace ioxx
