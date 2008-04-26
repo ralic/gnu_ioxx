@@ -4,7 +4,7 @@ TESTS =                         \
   iovec_is_valid_range          \
   scheduler			\
   probe				\
-  demux_epoll
+  demux
 
 check_PROGRAMS = ${TESTS}
 
@@ -17,7 +17,7 @@ scheduler_CPPFLAGS = $(BOOST_CPPFLAGS) $(AM_CPPFLAGS)
 probe_SOURCES = probe.cpp
 probe_CPPFLAGS = $(BOOST_CPPFLAGS) $(AM_CPPFLAGS)
 
-demux_epoll_SOURCES = demux-epoll.cpp
-demux_epoll_CPPFLAGS = $(BOOST_CPPFLAGS) $(AM_CPPFLAGS)
+demux_SOURCES = demux.cpp
+demux_CPPFLAGS = $(BOOST_CPPFLAGS) $(AM_CPPFLAGS)
 
 MAINTAINERCLEANFILES = Makefile.in
