@@ -3,6 +3,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/auto_unit_test.hpp>
+#include <functional>
 
 static size_t dummy_was_called = 0u;
 void dummy_function() { ++dummy_was_called; }
@@ -27,7 +28,7 @@ BOOST_AUTO_TEST_CASE( basic_scheduler_test )
   sleep(delay); now.update();
   delay = schedule.run(now.as_time_t());
   BOOST_REQUIRE_EQUAL(dummy_was_called, 2u);
-  BOOST_REQUIRE_EQUAL(delay, 1u);
+  BOOST_REQUIRE_PREDICATE(std::less_equal<int>(), (delay)(1u));
   sleep(delay); now.update();
   delay = schedule.run(now.as_time_t());
   BOOST_REQUIRE_EQUAL(dummy_was_called, 2u);
