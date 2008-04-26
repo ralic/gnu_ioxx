@@ -31,6 +31,12 @@ namespace ioxx
     return r;
   }
 
+  template <class Predicate, class Action>
+  inline typename Action::result_type throw_errno_if(Predicate const & is_failure, std::string const & error_msg, Action const & f)
+  {
+    return throw_errno_if<typename Action::result_type>(is_failure, error_msg, f);
+  }
+
   template <class Num, class Action>
   inline Num throw_errno_if_minus1(std::string const & error_msg, Action const & f)
   {
