@@ -2,30 +2,19 @@
 #include "ioxx/scheduler.hpp"
 #include "ioxx/probe.hpp"
 #include <boost/shared_ptr.hpp>
-#include <boost/shared_array.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/array.hpp>
 #include <boost/function.hpp>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <unistd.h>
-#include <fcntl.h>
 
 namespace ioxx
 {
-  inline void nonblocking(socket_t s, bool enable = true)
-  {
-    IOXX_TRACE_SOCKET(s, (enable ? "enable" : "disable") << " nonblocking mode");
-    BOOST_ASSERT(s >= 0);
-    int const rc( throw_errno_if_minus1("cannot obtain socket flags", boost::bind<int>(&fcntl, s, F_GETFL, 0)) );
-    int const flags( enable ? rc | O_NONBLOCK : rc & ~O_NONBLOCK );
-    if (rc != flags)
-      throw_errno_if_minus1("cannot set socket flags", boost::bind<int>(&fcntl, s, F_SETFL, flags));
-  }
-
   typedef boost::function<void (socket_t, sockaddr const *, socklen_t)> socket_handler;
 
-  inline void accept_stream_socket(socket_t ls, socket_handler f)
+  inline void accept_socket(socket_t ls, socket_handler f)
   {
     IOXX_TRACE_SOCKET(ls, "listen socket has become readable");
     sockaddr  addr;
@@ -53,8 +42,16 @@ namespace ioxx
       IOXX_TRACE_SOCKET(ls, "no more pending connections");
   }
 
-  inline socket_t accept_stream_socket(probe<> & p, char const * node, char const * service, socket_handler const & f)
+  template <class Demuxer, class Handler, class Allocator>
+  inline
+  typename probe<Demuxer,Handler,Allocator>::socket *
+  accept_stream_socket( probe<Demuxer,Handler,Allocator> & p
+                      , char const * node, char const * service
+                      , socket_handler const & f
+                      )
   {
+    typedef probe<Demuxer,Handler,Allocator>    probe;
+    typedef typename probe::socket              socket;
     boost::shared_ptr<addrinfo> _addr;
     addrinfo const hint = { AI_NUMERICHOST, 0, SOCK_STREAM, 0, 0u, NULL, NULL, NULL };
     addrinfo * addr;
@@ -72,14 +69,13 @@ namespace ioxx
       throw_errno_if_minus1("bind(2)", boost::bind(&bind, ls, addr->ai_addr, addr->ai_addrlen));
       throw_errno_if_minus1("listen(2)", boost::bind(&listen, ls, 16u));
       nonblocking(ls);
-      p.set(ls, boost::bind(&accept_stream_socket, ls, f), ev_readable);
+      return new socket(p, ls, boost::bind(&accept_socket, ls, f), socket::readable);
     }
     catch(...)
     {
       close(ls, "close listening socket");
       throw;
     }
-    return ls;
   }
 }
 
@@ -88,129 +84,82 @@ namespace ioxx
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-BOOST_AUTO_TEST_CASE( test_socket_event_operators )
-{
-  using namespace ioxx;
-
-  socket_event ev( ev_readable );
-  BOOST_REQUIRE_EQUAL(ev, ev_readable);
-  BOOST_REQUIRE(ev & ev_readable);
-  BOOST_REQUIRE(!(ev & ev_writable));
-  BOOST_REQUIRE(!(ev & ev_pridata));
-
-  ev |= ev_writable;
-  BOOST_REQUIRE_EQUAL((int)(ev), (int)(ev_readable) | (int)(ev_writable));
-  BOOST_REQUIRE(ev & ev_readable);
-  BOOST_REQUIRE(ev & ev_writable);
-  BOOST_REQUIRE(!(ev & ev_pridata));
-
-  ev = ev_writable | ev_pridata;
-  BOOST_REQUIRE_EQUAL((int)(ev), (int)(ev_pridata) | (int)(ev_writable));
-  BOOST_REQUIRE(ev & ev_pridata);
-  BOOST_REQUIRE(ev & ev_writable);
-  BOOST_REQUIRE(!(ev & ev_readable));
-}
-
-BOOST_AUTO_TEST_CASE( test_that_probe_can_be_used_as_sleep )
-{
-  ioxx::timer           now;
-  ioxx::probe<>         probe;
-  ioxx::time_t const    startup( now.as_time_t() );
-  probe.run( 1u );
-  now.update();
-  ioxx::time_t const    done( now.as_time_t() );
-  int const             runtime( done - startup );
-  BOOST_REQUIRE(probe.empty());
-  BOOST_REQUIRE_PREDICATE(std::greater_equal<int>(), (runtime)(1));
-}
-
 class echo
 {
-  ioxx::probe<> *               _probe;
-  ioxx::socket_t                _sock;
-  size_t                        _capacity;
-  boost::shared_array<char>     _buffer;
-  size_t                        _size;
-  size_t                        _gap;
+  typedef ioxx::probe<>         probe;
+  typedef probe::socket         socket;
+  typedef socket::event_set     event_set;
 
-public:
-  static void accept(ioxx::probe<> * probe, ioxx::socket_t sock)
+  struct context
   {
-    BOOST_REQUIRE(probe);
-    probe->set(sock, echo(*probe, sock), ioxx::ev_readable);
-  }
+    boost::scoped_ptr<socket>   _sock;
+    boost::array<char,1024>     _buf;
+    size_t                      _len;
+    size_t                      _gap;
 
-  echo(ioxx::probe<> & probe, ioxx::socket_t sock, size_t capacity = 1024u)
-  : _probe(&probe), _sock(sock), _capacity(capacity), _buffer(new char[_capacity]), _size(0u), _gap(0u)
-  {
-    IOXX_TRACE_SOCKET(_sock, "creating echo handler");
-    BOOST_REQUIRE(_sock >= 0);
-    BOOST_REQUIRE(capacity != 0);
-  }
+    context() : _len(0u), _gap(0u) { BOOST_REQUIRE(_buf.size()); }
 
-  void operator() (ioxx::socket_event ev)
-  {
-    IOXX_TRACE_SOCKET(_sock, "socket event " << ev);
-    using ioxx::throw_errno_if_minus1;
-    using boost::bind;
-    try
+    void run(event_set ev)
     {
-      if (ev & ioxx::ev_readable)
+      using ioxx::throw_errno_if_minus1;
+      using boost::bind;
+      try
       {
-        BOOST_REQUIRE_EQUAL(_size, 0u);
-        ssize_t const rc( throw_errno_if_minus1( "read(2)"
-                                               , bind(&read, _sock, &_buffer[0], _capacity)
-                                               ));
-        IOXX_TRACE_SOCKET(_sock, "read " << rc << " bytes");
-        BOOST_REQUIRE(rc >= 0u);
-        if (rc == 0) throw std::runtime_error("reached end of input");
-        _size = static_cast<size_t>(rc);
-        _probe->modify(_sock, ioxx::ev_writable);
-      }
-      if (ev & ioxx::ev_writable)
-      {
-        BOOST_REQUIRE(_size);
-        BOOST_REQUIRE(_gap + _size <= _capacity);
-        ssize_t const rc( throw_errno_if_minus1<ssize_t>( "write(2)"
-                                                        , bind(&write, _sock, &_buffer[_gap], _size)
-                                                        ));
-        IOXX_TRACE_SOCKET(_sock, "wrote " << rc << " bytes");
-        BOOST_REQUIRE(rc > 0);
-        BOOST_REQUIRE(static_cast<size_t>(rc) <= _size);
-        _gap  += static_cast<size_t>(rc);
-        _size -= static_cast<size_t>(rc);
-        if (_size == 0u)
+        IOXX_TRACE_SOCKET(_sock->as_socket_t(), "socket event " << ev);
+        if (ev & socket::readable)
         {
-          _gap = 0u;
-          _probe->modify(_sock, ioxx::ev_readable);
+          BOOST_REQUIRE_EQUAL(_len, 0u);
+          char * const data_end( ioxx::read(_sock->as_socket_t(), _buf.begin(), _buf.end()) );
+          if (!data_end) throw std::runtime_error("reached end of input");
+          BOOST_ASSERT(_buf.begin() < data_end);
+          _len = static_cast<size_t>(data_end - _buf.begin());
+          _sock->request(socket::writable);
+        }
+        if (ev & socket::writable)
+        {
+          BOOST_REQUIRE(_len);
+          BOOST_REQUIRE(_gap + _len <= _buf.size());
+          char const * const new_begin( ioxx::write(_sock->as_socket_t(), &_buf[_gap], &_buf[_gap + _len]) );
+          BOOST_REQUIRE(new_begin);
+          BOOST_REQUIRE(_buf.begin() < new_begin);
+          size_t const n(new_begin - _buf.begin());
+          _gap  += n;
+          _len -= n;
+          if (_len == 0u)
+          {
+            _gap = 0u;
+            _sock->request(socket::readable);
+          }
         }
       }
+      catch(std::exception const & e)
+      {
+        IOXX_TRACE_SOCKET(_sock->as_socket_t(), "socket event " << e.what());
+        _sock.reset();
+      }
     }
-    catch(std::exception const & e)
-    {
-      IOXX_TRACE_SOCKET(_sock, "socket event " << e.what());
-      ioxx::socket_t const s(_sock);
-      _probe->unset(_sock);     // suicide destroys _sock member
-      ioxx::close(s, "close echo stream");
-    }
+  };
+
+public:
+  static void accept(probe * p, socket::id s)
+  {
+    BOOST_REQUIRE(p);
+    boost::shared_ptr<context> ctx;
+    ctx.reset( new context );
+    socket * sock( new socket(*p, s, boost::bind(&context::run, ctx, _1), socket::readable) );
+    ctx->_sock.reset(sock);
   }
 };
-
-void close_socket(ioxx::probe<> * p, ioxx::socket_t s)
-{
-  IOXX_TRACE_SOCKET(s, "shutting down i/o service");
-  p->unset(s);
-  ioxx::throw_errno_if_minus1("cannot close() socket", boost::bind(&close, s));
-}
 
 BOOST_AUTO_TEST_CASE( test_echo_handler )
 {
   ioxx::timer       now;
   ioxx::scheduler<> schedule;
   ioxx::probe<>     probe;
-  ioxx::socket_t const ls( ioxx::accept_stream_socket(probe, "127.0.0.1", "8080", boost::bind(&echo::accept, &probe, _1)) );
+  boost::scoped_ptr<ioxx::probe<>::socket> ls;
+  ls.reset(ioxx::accept_stream_socket(probe, "127.0.0.1", "8080", boost::bind(&echo::accept, &probe, _1)));
   IOXX_TRACE_SOCKET(ls, "accepting connections on port 8080");
-  schedule.at(now.as_time_t() + 5, boost::bind(&close_socket, &probe, ls));
+  schedule.at(now.as_time_t() + 5, boost::bind(&boost::scoped_ptr<ioxx::probe<>::socket> ::reset, &ls, static_cast<ioxx::probe<>::socket *>(0)));
   for (;;)
   {
     ioxx::seconds_t timeout( schedule.run(now.as_time_t()) );
