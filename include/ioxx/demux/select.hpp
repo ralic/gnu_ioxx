@@ -29,7 +29,7 @@ namespace ioxx { namespace demux
       friend inline event_set & operator&= (event_set & lhs, event_set rhs) { return lhs = (event_set)((int)(lhs) & (int)(rhs)); }
       friend inline event_set   operator&  (event_set   lhs, event_set rhs) { return lhs &= rhs; }
 
-      socket(select & demux, native_socket_t sock, event_set ev) : ioxx::socket(sock), _demux(demux)
+      socket(select & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _demux(demux)
       {
         BOOST_ASSERT(*this);
         BOOST_ASSERT(sock <= FD_SETSIZE);
