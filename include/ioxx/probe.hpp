@@ -9,26 +9,24 @@ namespace ioxx
 {
   template < class Demuxer   = default_demux
            , class Handler   = boost::function1<void, typename Demuxer::socket::event_set>
-           , class Allocator = std::allocator< std::pair<typename Demuxer::socket::id const, Handler> >
+           , class Allocator = std::allocator< std::pair<native_socket_t const, Handler> >
            >
   class probe : public Demuxer
   {
   public:
-    typedef Handler                                                     handler;
-    typedef Demuxer                                                     demux;
-    typedef typename demux::socket::id                                  socket_id;
-    typedef typename demux::socket::event_set                           event_set;
+    typedef Demuxer                                                                     demux;
+    typedef Handler                                                                     handler;
+    typedef typename demux::socket::event_set                                           event_set;
 
-    typedef std::map<socket_id,Handler,std::less<socket_id>,Allocator>  handler_map;
-    typedef typename handler_map::iterator                              iterator;
+    typedef std::map<native_socket_t,Handler,std::less<native_socket_t>,Allocator>      handler_map;
+    typedef typename handler_map::iterator                                              iterator;
 
     class socket : public demux::socket
     {
     public:
       typedef typename demux::socket::event_set event_set;
-      typedef typename demux::socket::id        id;
 
-      socket(probe & p, id sock, handler const & f, event_set ev = demux::socket::no_events)
+      socket(probe & p, native_socket_t sock, handler const & f, event_set ev = demux::socket::no_events)
       : demux::socket(p, sock, ev), _probe(p)
       {
         BOOST_ASSERT(sock >= 0);
@@ -76,7 +74,7 @@ namespace ioxx
     bool deliver_events()
     {
       bool had_events( false );
-      socket_id s;
+      native_socket_t s;
       event_set ev;
       while (pop_event(s, ev))
       {

@@ -14,11 +14,9 @@ namespace ioxx { namespace demux
   class select : private boost::noncopyable
   {
   public:
-    class socket : private boost::noncopyable
+    class socket : public ioxx::socket
     {
     public:
-      typedef socket_t id;
-
       enum event_set
         { no_events = 0
         , readable  = 1 << 0
@@ -31,10 +29,10 @@ namespace ioxx { namespace demux
       friend inline event_set & operator&= (event_set & lhs, event_set rhs) { return lhs = (event_set)((int)(lhs) & (int)(rhs)); }
       friend inline event_set   operator&  (event_set   lhs, event_set rhs) { return lhs &= rhs; }
 
-      socket(select & demux, id sock, event_set ev = no_events) : _demux(demux), _sock(sock)
+      socket(select & demux, native_socket_t sock, event_set ev) : ioxx::socket(sock), _demux(demux)
       {
-        BOOST_ASSERT(_sock >= 0);
-        BOOST_ASSERT(_sock <= FD_SETSIZE);
+        BOOST_ASSERT(*this);
+        BOOST_ASSERT(sock <= FD_SETSIZE);
         request(ev);
       }
 
@@ -45,14 +43,16 @@ namespace ioxx { namespace demux
 
       void request(event_set ev)
       {
-        if (ev & readable) { FD_SET(_sock, &_demux._req_read_fds); }   else { FD_CLR(_sock, &_demux._req_read_fds); }
-        if (ev & writable) { FD_SET(_sock, &_demux._req_write_fds); }  else { FD_CLR(_sock, &_demux._req_write_fds); }
-        if (ev & pridata)  { FD_SET(_sock, &_demux._req_except_fds); } else { FD_CLR(_sock, &_demux._req_except_fds); }
+        BOOST_ASSERT(*this);
+        native_socket_t const s( as_native_socket_t() );
+        if (ev & readable) { FD_SET(s, &_demux._req_read_fds); }   else { FD_CLR(s, &_demux._req_read_fds); }
+        if (ev & writable) { FD_SET(s, &_demux._req_write_fds); }  else { FD_CLR(s, &_demux._req_write_fds); }
+        if (ev & pridata)  { FD_SET(s, &_demux._req_except_fds); } else { FD_CLR(s, &_demux._req_except_fds); }
         if (ev != no_events)
         {
-          _demux._max_fd = std::max(_demux._max_fd, _sock);
+          _demux._max_fd = std::max(_demux._max_fd, s);
         }
-        else if (_sock == _demux._max_fd)
+        else if (s == _demux._max_fd)
         {
           while(_demux._max_fd >= 0)
           {
@@ -67,14 +67,16 @@ namespace ioxx { namespace demux
           IOXX_TRACE_MSG("select: new _max_fd is " << _demux._max_fd);
         }
         else
-          BOOST_ASSERT(_sock < _demux._max_fd);
+          BOOST_ASSERT(s < _demux._max_fd);
       }
 
-      socket_t as_socket_t() const { return _sock; }
+    private:           // those methods from ioxx::socket don't work for us yet
+      void            swap(socket & other);
+      void            reset(native_socket_t s);
+      native_socket_t release();
 
     private:
-      select &  _demux;
-      id const  _sock;
+      select & _demux;
     };
 
     static seconds_t max_timeout()
@@ -91,7 +93,7 @@ namespace ioxx { namespace demux
 
     bool empty() const { return _n_events == 0u; }
 
-    bool pop_event(socket::id & sock, socket::event_set & ev)
+    bool pop_event(native_socket_t & sock, socket::event_set & ev)
     {
       while (_n_events)
       {
@@ -134,11 +136,11 @@ namespace ioxx { namespace demux
     }
 
   private:
-    fd_set      _req_read_fds, _req_write_fds, _req_except_fds;
-    fd_set      _recv_read_fds, _recv_write_fds, _recv_except_fds;
-    socket::id  _max_fd;
-    socket::id  _current;
-    size_t      _n_events;
+    fd_set              _req_read_fds, _req_write_fds, _req_except_fds;
+    fd_set              _recv_read_fds, _recv_write_fds, _recv_except_fds;
+    native_socket_t     _max_fd;
+    native_socket_t     _current;
+    size_t              _n_events;
   };
 
 }} // namespace ioxx::demux

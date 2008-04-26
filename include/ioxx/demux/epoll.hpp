@@ -14,11 +14,9 @@ namespace ioxx { namespace demux
   class epoll : private boost::noncopyable
   {
   public:
-    class socket : private boost::noncopyable
+    class socket : public ioxx::socket
     {
     public:
-      typedef socket_t id;
-
       enum event_set
         { no_events = 0
         , readable  = EPOLLIN
@@ -31,36 +29,38 @@ namespace ioxx { namespace demux
       friend inline event_set & operator&= (event_set & lhs, event_set rhs) { return lhs = (event_set)((int)(lhs) & (int)(rhs)); }
       friend inline event_set   operator&  (event_set   lhs, event_set rhs) { return lhs &= rhs; }
 
-      socket(epoll & demux, id sock, event_set ev = no_events) : _demux(demux), _sock(sock)
+      socket(epoll & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _demux(demux)
       {
-        BOOST_ASSERT(_sock >= 0);
+        BOOST_ASSERT(*this);
         epoll_event e;
-        e.data.fd = _sock;
+        e.data.fd = as_native_socket_t();
         e.events  = ev;
-        throw_errno_if_minus1("add socket into epoll", boost::bind(&epoll_ctl, _demux._epoll_fd, EPOLL_CTL_ADD, _sock, &e));
+        throw_errno_if_minus1("add socket into epoll", boost::bind(&epoll_ctl, _demux._epoll_fd, EPOLL_CTL_ADD, as_native_socket_t(), &e));
       }
 
       ~socket()
       {
         epoll_event e;
-        e.data.fd = _sock;
+        e.data.fd = as_native_socket_t();
         e.events  = 0;
-        throw_errno_if_minus1("del socket from epoll", boost::bind(&epoll_ctl, _demux._epoll_fd, EPOLL_CTL_DEL, _sock, &e));
+        throw_errno_if_minus1("del socket from epoll", boost::bind(&epoll_ctl, _demux._epoll_fd, EPOLL_CTL_DEL, as_native_socket_t(), &e));
       }
 
       void request(event_set ev)
       {
         epoll_event e;
-        e.data.fd = _sock;
+        e.data.fd = as_native_socket_t();
         e.events  = ev;
-        throw_errno_if_minus1("modify socket in epoll", boost::bind(&epoll_ctl, _demux._epoll_fd, EPOLL_CTL_MOD, _sock, &e));
+        throw_errno_if_minus1("modify socket in epoll", boost::bind(&epoll_ctl, _demux._epoll_fd, EPOLL_CTL_MOD, as_native_socket_t(), &e));
       }
 
-      socket_t as_socket_t() const { return _sock; }
+    private:           // those methods from ioxx::socket don't work for us yet
+      void            swap(socket & other);
+      void            reset(native_socket_t s);
+      native_socket_t release();
 
     private:
-      epoll &   _demux;
-      id const  _sock;
+      epoll & _demux;
     };
 
     static seconds_t max_timeout()
@@ -81,7 +81,7 @@ namespace ioxx { namespace demux
 
     bool empty() const { return _n_events == 0u; }
 
-    bool pop_event(socket::id & sock, socket::event_set & ev)
+    bool pop_event(native_socket_t & sock, socket::event_set & ev)
     {
       IOXX_TRACE_MSG("epoll::pop_event() has " << _n_events << " events to deliver");
       if (!_n_events) return false;
@@ -112,10 +112,10 @@ namespace ioxx { namespace demux
     }
 
   private:
-    socket::id  _epoll_fd;
-    epoll_event _events[128];
-    size_t      _n_events;
-    size_t      _current;
+    native_socket_t     _epoll_fd;
+    epoll_event         _events[128];
+    size_t              _n_events;
+    size_t              _current;
   };
 
 }} // namespace ioxx::demux

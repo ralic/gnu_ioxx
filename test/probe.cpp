@@ -12,26 +12,19 @@
 
 namespace ioxx
 {
-  typedef boost::function<void (socket_t, sockaddr const *, socklen_t)> socket_handler;
+  typedef boost::function<void (native_socket_t, sockaddr const *, socklen_t)> socket_handler;
 
-  inline void accept_socket(socket_t ls, socket_handler f)
+  inline void accept_socket(native_socket_t ls, socket_handler f)
   {
     IOXX_TRACE_SOCKET(ls, "listen socket has become readable");
     sockaddr  addr;
     socklen_t len( sizeof(sockaddr) );
-    for (socket_t s( accept(ls, &addr, &len) ); s >= 0; len = sizeof(sockaddr), s = accept(ls, &addr, &len))
+    for (socket s( accept(ls, &addr, &len) ); s; len = sizeof(sockaddr), s.reset(accept(ls, &addr, &len)))
     {
-      try
-      {
-        IOXX_TRACE_SOCKET(ls, "accepted new socket " << s);
-        nonblocking(s);
-        f(s, &addr, len);
-      }
-      catch(...)
-      {
-        close(s, "close stream socket");
-        throw;
-      }
+      IOXX_TRACE_SOCKET(ls, "accepted new socket " << s);
+      s.set_nonblocking();
+      f(s.as_native_socket_t(), &addr, len);
+      s.release();
     }
     if (errno != EWOULDBLOCK && errno != EAGAIN)
     {
@@ -51,7 +44,7 @@ namespace ioxx
                       )
   {
     typedef probe<Demuxer,Handler,Allocator>    probe;
-    typedef typename probe::socket              socket;
+    typedef typename probe::socket              probe_socket;
     boost::shared_ptr<addrinfo> _addr;
     addrinfo const hint = { AI_NUMERICHOST, 0, SOCK_STREAM, 0, 0u, NULL, NULL, NULL };
     addrinfo * addr;
@@ -61,21 +54,15 @@ namespace ioxx
     while (addr && addr->ai_socktype != SOCK_STREAM)
       addr = addr->ai_next;
     if (!addr) throw std::runtime_error("address does not map to a stream socket endpoint");
-    socket_t const ls( throw_errno_if_minus1( "socket(2)"
-                                            , boost::bind(&::socket, addr->ai_family, addr->ai_socktype, addr->ai_protocol)
-                                            ));
-    try
-    {
-      throw_errno_if_minus1("bind(2)", boost::bind(&bind, ls, addr->ai_addr, addr->ai_addrlen));
-      throw_errno_if_minus1("listen(2)", boost::bind(&listen, ls, 16u));
-      nonblocking(ls);
-      return new socket(p, ls, boost::bind(&accept_socket, ls, f), socket::readable);
-    }
-    catch(...)
-    {
-      close(ls, "close listening socket");
-      throw;
-    }
+    socket ls( throw_errno_if_minus1( "socket(2)"
+                                    , boost::bind(&::socket, addr->ai_family, addr->ai_socktype, addr->ai_protocol)
+                                    ));
+    throw_errno_if_minus1("bind(2)", boost::bind(&bind, ls.as_native_socket_t(), addr->ai_addr, addr->ai_addrlen));
+    throw_errno_if_minus1("listen(2)", boost::bind(&listen, ls.as_native_socket_t(), 16u));
+    ls.set_nonblocking();
+    probe_socket * ps( new probe_socket(p, ls.as_native_socket_t(), boost::bind(&accept_socket, ls.as_native_socket_t(), f), probe_socket::readable) );
+    ls.release();
+    return ps;
   }
 }
 
@@ -105,11 +92,11 @@ class echo
       using boost::bind;
       try
       {
-        IOXX_TRACE_SOCKET(_sock->as_socket_t(), "socket event " << ev);
+        IOXX_TRACE_SOCKET(*_sock, "socket event " << ev);
         if (ev & socket::readable)
         {
           BOOST_REQUIRE_EQUAL(_len, 0u);
-          char * const data_end( ioxx::read(_sock->as_socket_t(), _buf.begin(), _buf.end()) );
+          char * const data_end( _sock->read(_buf.begin(), _buf.end()) );
           if (!data_end) throw std::runtime_error("reached end of input");
           BOOST_ASSERT(_buf.begin() < data_end);
           _len = static_cast<size_t>(data_end - _buf.begin());
@@ -119,7 +106,7 @@ class echo
         {
           BOOST_REQUIRE(_len);
           BOOST_REQUIRE(_gap + _len <= _buf.size());
-          char const * const new_begin( ioxx::write(_sock->as_socket_t(), &_buf[_gap], &_buf[_gap + _len]) );
+          char const * const new_begin( _sock->write(&_buf[_gap], &_buf[_gap + _len]) );
           BOOST_REQUIRE(new_begin);
           BOOST_REQUIRE(_buf.begin() < new_begin);
           size_t const n(new_begin - _buf.begin());
@@ -134,14 +121,14 @@ class echo
       }
       catch(std::exception const & e)
       {
-        IOXX_TRACE_SOCKET(_sock->as_socket_t(), "socket event " << e.what());
+        IOXX_TRACE_SOCKET(*_sock, "socket event " << e.what());
         _sock.reset();
       }
     }
   };
 
 public:
-  static void accept(probe * p, socket::id s)
+  static void accept(probe * p, ioxx::native_socket_t s)
   {
     BOOST_REQUIRE(p);
     boost::shared_ptr<context> ctx;
