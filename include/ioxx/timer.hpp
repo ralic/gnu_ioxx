@@ -9,6 +9,7 @@
 namespace ioxx
 {
   using std::time_t;
+  typedef unsigned int seconds_t;
 
   class timer : private boost::noncopyable
   {
