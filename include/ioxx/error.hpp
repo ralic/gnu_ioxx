@@ -50,6 +50,14 @@ namespace ioxx
     return throw_errno_if<Num>(boost::bind<Num>(std::equal_to<Num>(), static_cast<Num>(-1), _1), error_msg, f);
   }
 
+  struct not_ewould_block : public std::unary_function<ssize_t, bool>
+  {
+    bool operator() (ssize_t rc) const
+    {
+      return rc < 0 && errno != EWOULDBLOCK && errno != EAGAIN;
+    }
+  };
+
 } // namespace ioxx
 
 #endif // IOXX_ERROR_HPP_INCLUDED_2008_04_20
