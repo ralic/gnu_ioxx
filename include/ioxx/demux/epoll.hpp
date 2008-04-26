@@ -1,7 +1,7 @@
 #ifndef IOXX_DEMUX_EPOLL_HPP_INCLUDED_2008_04_20
 #define IOXX_DEMUX_EPOLL_HPP_INCLUDED_2008_04_20
 
-#include "ioxx/error.hpp"
+#include "ioxx/socket.hpp"
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <limits>
@@ -17,7 +17,7 @@ namespace ioxx { namespace demux
     class socket : private boost::noncopyable
     {
     public:
-      typedef int id;
+      typedef socket_t id;
 
       enum event_set
         { no_events = 0
@@ -55,6 +55,8 @@ namespace ioxx { namespace demux
         e.events  = ev;
         throw_errno_if_minus1("modify socket in epoll", boost::bind(&epoll_ctl, _demux._epoll_fd, EPOLL_CTL_MOD, _sock, &e));
       }
+
+      socket_t as_socket_t() const { return _sock; }
 
     private:
       epoll &   _demux;

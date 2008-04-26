@@ -1,7 +1,7 @@
 #ifndef IOXX_DEMUX_SELECT_HPP_INCLUDED_2008_04_20
 #define IOXX_DEMUX_SELECT_HPP_INCLUDED_2008_04_20
 
-#include "ioxx/error.hpp"
+#include "ioxx/socket.hpp"
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <limits>
@@ -17,7 +17,7 @@ namespace ioxx { namespace demux
     class socket : private boost::noncopyable
     {
     public:
-      typedef int id;
+      typedef socket_t id;
 
       enum event_set
         { no_events = 0
@@ -69,6 +69,8 @@ namespace ioxx { namespace demux
         else
           BOOST_ASSERT(_sock < _demux._max_fd);
       }
+
+      socket_t as_socket_t() const { return _sock; }
 
     private:
       select &  _demux;
