@@ -14,21 +14,4 @@ namespace ioxx { typedef demux::select default_demux; }
 #  error "No I/O de-multiplexer available for this platform."
 #endif
 
-namespace ioxx { namespace demux
-{
-  template <class T>
-  struct demux_concept
-  {
-    void constraints()
-    {
-    }
-  };
-
-  class demux_archetype
-  {
-  public:
-  };
-
-}} // namespace ioxx::demux
-
 #endif // IOXX_DEMUX_HPP_INCLUDED_2008_04_20
