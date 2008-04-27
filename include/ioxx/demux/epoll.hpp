@@ -29,13 +29,13 @@ namespace ioxx { namespace demux
       friend inline event_set & operator&= (event_set & lhs, event_set rhs) { return lhs = (event_set)((int)(lhs) & (int)(rhs)); }
       friend inline event_set   operator&  (event_set   lhs, event_set rhs) { return lhs &= rhs; }
 
-      socket(epoll & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _demux(demux)
+      socket(epoll & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _epoll(demux)
       {
         BOOST_ASSERT(*this);
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = ev;
-        throw_errno_if_minus1("add socket into epoll", boost::bind(&epoll_ctl, _demux._epoll_fd, EPOLL_CTL_ADD, as_native_socket_t(), &e));
+        throw_errno_if_minus1("add socket into epoll", boost::bind(&epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_ADD, as_native_socket_t(), &e));
       }
 
       ~socket()
@@ -43,7 +43,7 @@ namespace ioxx { namespace demux
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = 0;
-        throw_errno_if_minus1("del socket from epoll", boost::bind(&epoll_ctl, _demux._epoll_fd, EPOLL_CTL_DEL, as_native_socket_t(), &e));
+        throw_errno_if_minus1("del socket from epoll", boost::bind(&epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_DEL, as_native_socket_t(), &e));
       }
 
       void request(event_set ev)
@@ -51,16 +51,19 @@ namespace ioxx { namespace demux
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = ev;
-        throw_errno_if_minus1("modify socket in epoll", boost::bind(&epoll_ctl, _demux._epoll_fd, EPOLL_CTL_MOD, as_native_socket_t(), &e));
+        throw_errno_if_minus1("modify socket in epoll", boost::bind(&epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_MOD, as_native_socket_t(), &e));
       }
 
-    private:           // those methods from ioxx::socket don't work for us yet
+    private:         // those methods from ioxx::socket don't work for us yet
       void            swap(socket & other);
       void            reset(native_socket_t s);
       native_socket_t release();
 
+    protected:
+      epoll & context() { return _epoll; }
+
     private:
-      epoll & _demux;
+      epoll & _epoll;
     };
 
     static seconds_t max_timeout()

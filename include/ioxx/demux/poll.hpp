@@ -40,21 +40,21 @@ namespace ioxx { namespace demux
       friend inline event_set & operator&= (event_set & lhs, event_set rhs) { return lhs = (event_set)((int)(lhs) & (int)(rhs)); }
       friend inline event_set   operator&  (event_set   lhs, event_set rhs) { return lhs &= rhs; }
 
-      socket(poll & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _demux(demux)
+      socket(poll & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _poll(demux)
       {
         BOOST_ASSERT(*this);
-        std::pair<iterator,bool> const r( _demux._indices.insert(std::make_pair(sock, _demux._pfd.size())) );
+        std::pair<iterator,bool> const r( _poll._indices.insert(std::make_pair(sock, _poll._pfd.size())) );
         _iter = r.first;
         BOOST_ASSERT(r.second);
         try
         {
           pollfd const pfd = { sock, 0, 0};
-          _demux._pfd.push_back(pfd);
+          _poll._pfd.push_back(pfd);
           request(ev);
         }
         catch(...)
         {
-          _demux._indices.erase(_iter);
+          _poll._indices.erase(_iter);
           throw;
         }
       }
@@ -62,26 +62,26 @@ namespace ioxx { namespace demux
       ~socket()
       {
         check_consistency();
-        BOOST_ASSERT(_demux._pfd.size());
+        BOOST_ASSERT(_poll._pfd.size());
         size_type const i( _iter->second );
-        size_type const last( _demux._pfd.size() - 1u );
+        size_type const last( _poll._pfd.size() - 1u );
         if (i != last)
         {
           BOOST_ASSERT(i < last);
-          iterator const plast( _demux._indices.find(_demux._pfd[last].fd) );
-          BOOST_ASSERT(plast != _demux._indices.end()); // must exist
+          iterator const plast( _poll._indices.find(_poll._pfd[last].fd) );
+          BOOST_ASSERT(plast != _poll._indices.end()); // must exist
           BOOST_ASSERT(plast->second == last);
           plast->second = i;
-          _demux._pfd[i] = _demux._pfd[last];
+          _poll._pfd[i] = _poll._pfd[last];
         }
-        _demux._indices.erase(_iter); /// \todo An exception here leads to inconsistent containers.
-        _demux._pfd.resize(last);
+        _poll._indices.erase(_iter); /// \todo An exception here leads to inconsistent containers.
+        _poll._pfd.resize(last);
       }
 
       void request(event_set ev)
       {
         check_consistency();
-        _demux._pfd[_iter->second].events = ev;
+        _poll._pfd[_iter->second].events = ev;
       }
 
     private:           // those methods from ioxx::socket don't work for us yet
@@ -89,17 +89,20 @@ namespace ioxx { namespace demux
       void            reset(native_socket_t s);
       native_socket_t release();
 
+    protected:
+      poll & context() { return _poll; }
+
     private:
-      poll &   _demux;
+      poll &   _poll;
       iterator _iter;
 
       void check_consistency()
       {
         BOOST_ASSERT(*this);
-        BOOST_ASSERT(_iter != _demux._indices.end());
+        BOOST_ASSERT(_iter != _poll._indices.end());
         BOOST_ASSERT(_iter->first == as_native_socket_t());
-        BOOST_ASSERT(_iter->second < _demux._pfd.size());
-        BOOST_ASSERT(_demux._pfd[_iter->second].fd == as_native_socket_t());
+        BOOST_ASSERT(_iter->second < _poll._pfd.size());
+        BOOST_ASSERT(_poll._pfd[_iter->second].fd == as_native_socket_t());
       }
     };
 

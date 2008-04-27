@@ -29,7 +29,7 @@ namespace ioxx { namespace demux
       friend inline event_set & operator&= (event_set & lhs, event_set rhs) { return lhs = (event_set)((int)(lhs) & (int)(rhs)); }
       friend inline event_set   operator&  (event_set   lhs, event_set rhs) { return lhs &= rhs; }
 
-      socket(select & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _demux(demux)
+      socket(select & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _select(demux)
       {
         BOOST_ASSERT(*this);
         BOOST_ASSERT(sock <= FD_SETSIZE);
@@ -45,29 +45,29 @@ namespace ioxx { namespace demux
       {
         BOOST_ASSERT(*this);
         native_socket_t const s( as_native_socket_t() );
-        if (ev & readable) { FD_SET(s, &_demux._req_read_fds); }   else { FD_CLR(s, &_demux._req_read_fds); }
-        if (ev & writable) { FD_SET(s, &_demux._req_write_fds); }  else { FD_CLR(s, &_demux._req_write_fds); }
-        if (ev & pridata)  { FD_SET(s, &_demux._req_except_fds); } else { FD_CLR(s, &_demux._req_except_fds); }
+        if (ev & readable) { FD_SET(s, &_select._req_read_fds); }   else { FD_CLR(s, &_select._req_read_fds); }
+        if (ev & writable) { FD_SET(s, &_select._req_write_fds); }  else { FD_CLR(s, &_select._req_write_fds); }
+        if (ev & pridata)  { FD_SET(s, &_select._req_except_fds); } else { FD_CLR(s, &_select._req_except_fds); }
         if (ev != no_events)
         {
-          _demux._max_fd = std::max(_demux._max_fd, s);
+          _select._max_fd = std::max(_select._max_fd, s);
         }
-        else if (s == _demux._max_fd)
+        else if (s == _select._max_fd)
         {
-          while(_demux._max_fd >= 0)
+          while(_select._max_fd >= 0)
           {
-            if (  FD_ISSET(_demux._max_fd, &_demux._req_read_fds)
-               || FD_ISSET(_demux._max_fd, &_demux._req_write_fds)
-               || FD_ISSET(_demux._max_fd, &_demux._req_except_fds)
+            if (  FD_ISSET(_select._max_fd, &_select._req_read_fds)
+               || FD_ISSET(_select._max_fd, &_select._req_write_fds)
+               || FD_ISSET(_select._max_fd, &_select._req_except_fds)
                )
               break;
             else
-              --_demux._max_fd;
+              --_select._max_fd;
           }
-          IOXX_TRACE_MSG("select: new _max_fd is " << _demux._max_fd);
+          IOXX_TRACE_MSG("select: new _max_fd is " << _select._max_fd);
         }
         else
-          BOOST_ASSERT(s < _demux._max_fd);
+          BOOST_ASSERT(s < _select._max_fd);
       }
 
     private:           // those methods from ioxx::socket don't work for us yet
@@ -75,8 +75,11 @@ namespace ioxx { namespace demux
       void            reset(native_socket_t s);
       native_socket_t release();
 
+    protected:
+      select & context() { return _select; }
+
     private:
-      select & _demux;
+      select & _select;
     };
 
     static seconds_t max_timeout()
