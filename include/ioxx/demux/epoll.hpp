@@ -31,7 +31,7 @@ namespace ioxx { namespace demux
 
       socket(epoll & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _epoll(demux)
       {
-        BOOST_ASSERT(*this);
+        BOOST_ASSERT(sock >= 0);
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = ev;
@@ -53,11 +53,6 @@ namespace ioxx { namespace demux
         e.events  = ev;
         throw_errno_if_minus1("modify socket in epoll", boost::bind(&epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_MOD, as_native_socket_t(), &e));
       }
-
-    private:         // those methods from ioxx::socket don't work for us yet
-      void            swap(socket & other);
-      void            reset(native_socket_t s);
-      native_socket_t release();
 
     protected:
       epoll & context() { return _epoll; }

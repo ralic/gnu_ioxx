@@ -31,7 +31,7 @@ namespace ioxx { namespace demux
 
       socket(select & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _select(demux)
       {
-        BOOST_ASSERT(*this);
+        BOOST_ASSERT(sock >= 0);
         BOOST_ASSERT(sock <= FD_SETSIZE);
         request(ev);
       }
@@ -43,7 +43,6 @@ namespace ioxx { namespace demux
 
       void request(event_set ev)
       {
-        BOOST_ASSERT(*this);
         native_socket_t const s( as_native_socket_t() );
         if (ev & readable) { FD_SET(s, &_select._req_read_fds); }   else { FD_CLR(s, &_select._req_read_fds); }
         if (ev & writable) { FD_SET(s, &_select._req_write_fds); }  else { FD_CLR(s, &_select._req_write_fds); }
@@ -69,11 +68,6 @@ namespace ioxx { namespace demux
         else
           BOOST_ASSERT(s < _select._max_fd);
       }
-
-    private:           // those methods from ioxx::socket don't work for us yet
-      void            swap(socket & other);
-      void            reset(native_socket_t s);
-      native_socket_t release();
 
     protected:
       select & context() { return _select; }

@@ -18,7 +18,6 @@ struct demux_concept
     using namespace boost;
     function_requires< DefaultConstructibleConcept<demux> >();
     function_requires< DefaultConstructibleConcept<event_set> >();
-    function_requires< ConvertibleConcept<socket, bool> >();
 
     ioxx::native_socket_t sock;
 
@@ -36,7 +35,7 @@ struct demux_concept
     b = dmx.pop_event(sock, ev1);
     dmx.wait(static_cast<ioxx::seconds_t>(0));
 
-    socket /* s1(dmx), */ s2(dmx, sock), s3(dmx, sock, ev1);
+    socket s2(dmx, sock), s3(dmx, sock, ev1);
     s2.request(ev1);
     ioxx::socket & s4( s3 );
     ignore_unused_variable_warning(s4);
@@ -53,9 +52,8 @@ struct demux_archetype
     static event_set const writable  = 1 << 1;
     static event_set const pridata   = 1 << 2;
 
-    /* socket(demux_archetype &) { } */
-    socket(demux_archetype &, ioxx::native_socket_t) { }
-    socket(demux_archetype &, ioxx::native_socket_t, event_set) { }
+    socket(demux_archetype &, ioxx::native_socket_t s) : ioxx::socket(s) { }
+    socket(demux_archetype &, ioxx::native_socket_t s, event_set) : ioxx::socket(s) { }
 
     void request(event_set) { }
   };

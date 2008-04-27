@@ -2,12 +2,17 @@
 
 * Design
 
-** TODO Should there be such a thing as an invalid =ioxx::socket=?
+** DONE Should there be such a thing as an invalid =ioxx::socket=?
 
    The design could enforce that a =socket= is always valid, i.e. there would
    be no default constructor and no =release()= method. Is that desirable? Or
    is the additional flexibility of a stateful =socket= implementing =reset()=,
    =swap()=, and =release()= all over the place?
+
+   [2008-04-27 Sun]: The answer is *no*. A =socket= is always valid; any
+   attempt to construct an invalid socket throws an exception. A stateful
+   socket can be readily emulated by using a socket pointer, i.e. a
+   scoped_ptr<socket> or shared_ptr<socket>.
 
 ** TODO Will ioxx have a link library?
 
@@ -35,12 +40,14 @@
    library. A simple replacement class for =system_error= might make things a
    lot easier.
 
-** TODO Demuxer sockets support no =release()=, =swap()=, or =reset()=.
+** DONE Demuxer sockets support no =release()=, =swap()=, or =reset()=.
 
    The methods are publicly available through inheritance, but at attempt to
    actually use them will break things.
 
    Related to [[*Should there be such a thing as an invalid =ioxx::socket=?]].
+
+   [2008-04-27 Sun]: It won't have to.
 
 
 * Documentation

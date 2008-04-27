@@ -17,14 +17,18 @@ namespace ioxx
   inline void accept_socket(native_socket_t ls, socket_handler f)
   {
     IOXX_TRACE_SOCKET(ls, "listen socket has become readable");
-    sockaddr  addr;
-    socklen_t len( sizeof(sockaddr) );
-    for (socket s( accept(ls, &addr, &len) ); s; len = sizeof(sockaddr), s.reset(accept(ls, &addr, &len)))
+    native_socket_t     s;
+    sockaddr            addr;
+    socklen_t           len;
+    for (;;)
     {
-      IOXX_TRACE_SOCKET(ls, "accepted new socket " << s);
-      s.set_nonblocking();
-      f(s.as_native_socket_t(), &addr, len);
-      s.release();
+      len = sizeof(sockaddr);
+      s   = accept(ls, &addr, &len);
+      if (s < 0) break;
+      socket sock(s);           // acts as scope guard in case of exceptions
+      sock.set_nonblocking();
+      f(s, &addr, len);
+      sock.close_on_destruction(false);
     }
     if (errno != EWOULDBLOCK && errno != EAGAIN)
     {
@@ -61,7 +65,7 @@ namespace ioxx
     throw_errno_if_minus1("listen(2)", boost::bind(&listen, ls.as_native_socket_t(), 16u));
     ls.set_nonblocking();
     probe_socket * ps( new probe_socket(p, ls.as_native_socket_t(), boost::bind(&accept_socket, ls.as_native_socket_t(), f), probe_socket::readable) );
-    ls.release();
+    ls.close_on_destruction(false);
     return ps;
   }
 }
@@ -77,64 +81,64 @@ class echo
   typedef probe::socket         socket;
   typedef socket::event_set     event_set;
 
-  struct context
+  boost::scoped_ptr<socket>     _sock;
+  boost::array<char,1024>       _buf;
+  size_t                        _len;
+  size_t                        _gap;
+
+  echo() : _len(0u), _gap(0u)
   {
-    boost::scoped_ptr<socket>   _sock;
-    boost::array<char,1024>     _buf;
-    size_t                      _len;
-    size_t                      _gap;
+    BOOST_REQUIRE(_buf.size());
+  }
 
-    context() : _len(0u), _gap(0u) { BOOST_REQUIRE(_buf.size()); }
-
-    void run(event_set ev)
+  void run(event_set ev)
+  {
+    using ioxx::throw_errno_if_minus1;
+    using boost::bind;
+    try
     {
-      using ioxx::throw_errno_if_minus1;
-      using boost::bind;
-      try
+      IOXX_TRACE_SOCKET(*_sock, "socket event " << ev);
+      if (ev & socket::readable)
       {
-        IOXX_TRACE_SOCKET(*_sock, "socket event " << ev);
-        if (ev & socket::readable)
-        {
-          BOOST_REQUIRE_EQUAL(_len, 0u);
-          char * const data_end( _sock->read(_buf.begin(), _buf.end()) );
-          if (!data_end) throw std::runtime_error("reached end of input");
-          BOOST_ASSERT(_buf.begin() < data_end);
-          _len = static_cast<size_t>(data_end - _buf.begin());
-          _sock->request(socket::writable);
-        }
-        if (ev & socket::writable)
-        {
-          BOOST_REQUIRE(_len);
-          BOOST_REQUIRE(_gap + _len <= _buf.size());
-          char const * const new_begin( _sock->write(&_buf[_gap], &_buf[_gap + _len]) );
-          BOOST_REQUIRE(new_begin);
-          BOOST_REQUIRE(_buf.begin() < new_begin);
-          size_t const n(new_begin - _buf.begin());
-          _gap  += n;
-          _len -= n;
-          if (_len == 0u)
-          {
-            _gap = 0u;
-            _sock->request(socket::readable);
-          }
-        }
+        BOOST_REQUIRE_EQUAL(_len, 0u);
+        char * const data_end( _sock->read(_buf.begin(), _buf.end()) );
+        if (!data_end) throw std::runtime_error("reached end of input");
+        BOOST_ASSERT(_buf.begin() < data_end);
+        _len = static_cast<size_t>(data_end - _buf.begin());
+        _sock->request(socket::writable);
       }
-      catch(std::exception const & e)
+      if (ev & socket::writable)
       {
-        IOXX_TRACE_SOCKET(*_sock, "socket event " << e.what());
-        _sock.reset();
+        BOOST_REQUIRE(_len);
+        BOOST_REQUIRE(_gap + _len <= _buf.size());
+        char const * const new_begin( _sock->write(&_buf[_gap], &_buf[_gap + _len]) );
+        BOOST_REQUIRE(new_begin);
+        BOOST_REQUIRE(_buf.begin() < new_begin);
+        size_t const n(new_begin - _buf.begin());
+        _gap  += n;
+        _len -= n;
+        if (_len == 0u)
+        {
+          _gap = 0u;
+          _sock->request(socket::readable);
+        }
       }
     }
-  };
+    catch(std::exception const & e)
+    {
+      IOXX_TRACE_SOCKET(*_sock, "socket event: " << e.what());
+      _sock.reset();
+    }
+  }
 
 public:
   static void accept(probe * p, ioxx::native_socket_t s)
   {
     BOOST_REQUIRE(p);
-    boost::shared_ptr<context> ctx;
-    ctx.reset( new context );
-    socket * sock( new socket(*p, s, boost::bind(&context::run, ctx, _1), socket::readable) );
-    ctx->_sock.reset(sock);
+    boost::shared_ptr<echo> f;
+    f.reset( new echo );
+    socket * sock( new socket(*p, s, boost::bind(&echo::run, f, _1), socket::readable) );
+    f->_sock.reset(sock);
   }
 };
 

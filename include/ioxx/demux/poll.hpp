@@ -42,7 +42,7 @@ namespace ioxx { namespace demux
 
       socket(poll & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _poll(demux)
       {
-        BOOST_ASSERT(*this);
+        BOOST_ASSERT(sock >= 0);
         std::pair<iterator,bool> const r( _poll._indices.insert(std::make_pair(sock, _poll._pfd.size())) );
         _iter = r.first;
         BOOST_ASSERT(r.second);
@@ -84,11 +84,6 @@ namespace ioxx { namespace demux
         _poll._pfd[_iter->second].events = ev;
       }
 
-    private:           // those methods from ioxx::socket don't work for us yet
-      void            swap(socket & other);
-      void            reset(native_socket_t s);
-      native_socket_t release();
-
     protected:
       poll & context() { return _poll; }
 
@@ -98,7 +93,7 @@ namespace ioxx { namespace demux
 
       void check_consistency()
       {
-        BOOST_ASSERT(*this);
+        BOOST_ASSERT(as_native_socket_t() >= 0);
         BOOST_ASSERT(_iter != _poll._indices.end());
         BOOST_ASSERT(_iter->first == as_native_socket_t());
         BOOST_ASSERT(_iter->second < _poll._pfd.size());
