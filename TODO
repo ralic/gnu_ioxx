@@ -21,6 +21,7 @@
    library just fine; including all those system headers everywhere is plain
    unnecessary.
 
+
 * Known Bugs and Portability Problems
 
 ** TODO Specialization for =size(iovec const &)= doesn't compile with ICC 9.11.
@@ -54,6 +55,17 @@
    destruction. A common use case for scheduled tasks, however, are timeouts,
    and those tasks will exist only for a certain scope, namely the time the
    application is waiting for the i/o operation to complete.
+
+** TODO =dispatch::run()= is insufficient
+
+   The function calls =deliver_events()= directly after waiting. This means
+   that the active handlers will run with a -- potentially -- screwed up notion
+   of 'now' because the user had no chance to update the system timer. There
+   are two ways out of this:
+
+   - Split =wait()= out of =run()=, like it is in =demux=.
+   - Pass a reference to =timer= so that our loop can call =update()=.
+
 
 * Documentation
 
