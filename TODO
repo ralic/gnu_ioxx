@@ -21,7 +21,6 @@
    library just fine; including all those system headers everywhere is plain
    unnecessary.
 
-
 * Known Bugs and Portability Problems
 
 ** TODO Specialization for =size(iovec const &)= doesn't compile with ICC 9.11.
@@ -49,6 +48,12 @@
 
    [2008-04-27 Sun]: It won't have to.
 
+** TODO Add a scoped task class to =Scheduler= that mirrors =demux::socket=.
+
+   The standard =task_id= is not scoped, i.e. the task is not cancelled on
+   destruction. A common use case for scheduled tasks, however, are timeouts,
+   and those tasks will exist only for a certain scope, namely the time the
+   application is waiting for the i/o operation to complete.
 
 * Documentation
 
