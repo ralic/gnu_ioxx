@@ -1,5 +1,5 @@
-#ifndef IOXX_PROBE_HPP_INCLUDED_2008_04_20
-#define IOXX_PROBE_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
+#define IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
 
 #include "demux.hpp"
 #include <boost/function/function1.hpp>
@@ -11,7 +11,7 @@ namespace ioxx
            , class Handler   = boost::function1<void, typename Demuxer::socket::event_set>
            , class Allocator = std::allocator< std::pair<native_socket_t const, Handler> >
            >
-  class probe : public Demuxer
+  class dispatch : public Demuxer
   {
   public:
     typedef Demuxer                                                                     demux;
@@ -26,7 +26,7 @@ namespace ioxx
     public:
       typedef typename demux::socket::event_set event_set;
 
-      socket(probe & p, native_socket_t sock, handler const & f, event_set ev = demux::socket::no_events)
+      socket(dispatch & p, native_socket_t sock, handler const & f, event_set ev = demux::socket::no_events)
       : demux::socket(p, sock, ev)
       {
         BOOST_ASSERT(sock >= 0);
@@ -52,19 +52,19 @@ namespace ioxx
       }
 
     protected:
-      probe & context() { return static_cast<probe &>(demux::socket::context()); }
+      dispatch & context() { return static_cast<dispatch &>(demux::socket::context()); }
 
     private:
       iterator  _iter;
     };
 
-    explicit probe(unsigned int size_hint = 512u) : demux(size_hint) { }
+    explicit dispatch(unsigned int size_hint = 512u) : demux(size_hint) { }
 
     bool empty() const { return _handlers.empty(); }
 
     void run(seconds_t timeout)
     {
-      IOXX_TRACE_MSG("probe " << _handlers.size() << " sockets for i/o, time out after " << timeout << " seconds");
+      IOXX_TRACE_MSG("dispatch " << _handlers.size() << " sockets for i/o, time out after " << timeout << " seconds");
       if (deliver_events()) return;
       demux::wait(timeout);
       deliver_events();
@@ -94,4 +94,4 @@ namespace ioxx
 
 } // namespace ioxx
 
-#endif // IOXX_PROBE_HPP_INCLUDED_2008_04_20
+#endif // IOXX_DISPATCH_HPP_INCLUDED_2008_04_20

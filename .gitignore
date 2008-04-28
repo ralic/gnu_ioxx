@@ -19,8 +19,8 @@
 /ltmain.sh
 /missing
 /test/demux
+/test/dispatch
 /test/iovec_is_valid_range
-/test/probe
 /test/scheduler
 Makefile
 Makefile.in

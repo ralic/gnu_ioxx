@@ -1,6 +1,6 @@
 #include "ioxx/timer.hpp"
 #include "ioxx/scheduler.hpp"
-#include "ioxx/probe.hpp"
+#include "ioxx/dispatch.hpp"
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/array.hpp>
@@ -23,32 +23,26 @@ namespace ioxx
     for (;;)
     {
       len = sizeof(sockaddr);
-      s   = accept(ls, &addr, &len);
+      s   = throw_errno_if(not_ewould_block(), "accept(2)", boost::bind(&::accept,ls, &addr, &len));
       if (s < 0) break;
       socket sock(s);           // acts as scope guard in case of exceptions
       sock.set_nonblocking();
       f(s, &addr, len);
       sock.close_on_destruction(false);
     }
-    if (errno != EWOULDBLOCK && errno != EAGAIN)
-    {
-      boost::system::system_error err(errno, boost::system::errno_ecat, "accept(2)");
-      throw err;
-    }
-    else
-      IOXX_TRACE_SOCKET(ls, "no more pending connections");
+    IOXX_TRACE_SOCKET(ls, "no more pending connections");
   }
 
   template <class Demuxer, class Handler, class Allocator>
   inline
-  typename probe<Demuxer,Handler,Allocator>::socket *
-  accept_stream_socket( probe<Demuxer,Handler,Allocator> & p
+  typename dispatch<Demuxer,Handler,Allocator>::socket *
+  accept_stream_socket( dispatch<Demuxer,Handler,Allocator> & p
                       , char const * node, char const * service
                       , socket_handler const & f
                       )
   {
-    typedef probe<Demuxer,Handler,Allocator>    probe;
-    typedef typename probe::socket              probe_socket;
+    typedef dispatch<Demuxer,Handler,Allocator> dispatch;
+    typedef typename dispatch::socket           dispatch_socket;
     boost::shared_ptr<addrinfo> _addr;
     addrinfo const hint = { AI_NUMERICHOST, 0, SOCK_STREAM, 0, 0u, NULL, NULL, NULL };
     addrinfo * addr;
@@ -64,7 +58,7 @@ namespace ioxx
     throw_errno_if_minus1("bind(2)", boost::bind(&bind, ls.as_native_socket_t(), addr->ai_addr, addr->ai_addrlen));
     throw_errno_if_minus1("listen(2)", boost::bind(&listen, ls.as_native_socket_t(), 16u));
     ls.set_nonblocking();
-    probe_socket * ps( new probe_socket(p, ls.as_native_socket_t(), boost::bind(&accept_socket, ls.as_native_socket_t(), f), probe_socket::readable) );
+    dispatch_socket * ps( new dispatch_socket(p, ls.as_native_socket_t(), boost::bind(&accept_socket, ls.as_native_socket_t(), f), dispatch_socket::readable) );
     ls.close_on_destruction(false);
     return ps;
   }
@@ -77,8 +71,8 @@ namespace ioxx
 
 class echo
 {
-  typedef ioxx::probe<>         probe;
-  typedef probe::socket         socket;
+  typedef ioxx::dispatch<>      dispatch;
+  typedef dispatch::socket      socket;
   typedef socket::event_set     event_set;
 
   boost::scoped_ptr<socket>     _sock;
@@ -132,7 +126,9 @@ class echo
   }
 
 public:
-  static void accept(probe * p, ioxx::native_socket_t s)
+  ~echo() { IOXX_TRACE_MSG("destroy echo handler"); }
+
+  static void accept(dispatch * p, ioxx::native_socket_t s)
   {
     BOOST_REQUIRE(p);
     boost::shared_ptr<echo> f;
@@ -146,20 +142,20 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
 {
   ioxx::timer       now;
   ioxx::scheduler<> schedule;
-  ioxx::probe<>     probe;
-  boost::scoped_ptr<ioxx::probe<>::socket> ls;
-  ls.reset(ioxx::accept_stream_socket(probe, "127.0.0.1", "8080", boost::bind(&echo::accept, &probe, _1)));
+  ioxx::dispatch<>  dispatch;
+  boost::scoped_ptr<ioxx::dispatch<>::socket> ls;
+  ls.reset(ioxx::accept_stream_socket(dispatch, "127.0.0.1", "8080", boost::bind(&echo::accept, &dispatch, _1)));
   IOXX_TRACE_SOCKET(ls, "accepting connections on port 8080");
-  schedule.at(now.as_time_t() + 5, boost::bind(&boost::scoped_ptr<ioxx::probe<>::socket> ::reset, &ls, static_cast<ioxx::probe<>::socket *>(0)));
+  schedule.at(now.as_time_t() + 5, boost::bind(&boost::scoped_ptr<ioxx::dispatch<>::socket> ::reset, &ls, static_cast<ioxx::dispatch<>::socket *>(0)));
   for (;;)
   {
     ioxx::seconds_t timeout( schedule.run(now.as_time_t()) );
     if (schedule.empty())
     {
-      if (probe.empty())  break;
-      else                timeout = probe.max_timeout();
+      if (dispatch.empty())  break;
+      else                   timeout = dispatch.max_timeout();
     }
-    probe.run(timeout);
+    dispatch.run(timeout);
     now.update();
   }
 }
