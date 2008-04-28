@@ -2,6 +2,7 @@
 #define IOXX_SCHEDULER_HPP_INCLUDED_2008_04_20
 
 #include <boost/function/function0.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/compatibility/cpp_c_headers/ctime>
 #include <boost/assert.hpp>
 #include <map>
@@ -37,7 +38,7 @@ namespace ioxx
 
     bool cancel(task_id & tid)
     {
-      BOOST_ASSERT(tid.first != 0);
+      if (tid.first == 0) return false;
       queue_iterator i( _queue.begin() );
       if (tid.first > i->first)
       {
@@ -59,7 +60,6 @@ namespace ioxx
 
     bool cancel(task_id & tid, time_t now)
     {
-      BOOST_ASSERT(tid.first != 0);
       if (tid.first > now)
       {
         BOOST_ASSERT(_queue.begin()->first <= tid.first);

@@ -1,3 +1,5 @@
+# ~/test/Makefile.am
+
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
 TESTS =                         \
@@ -5,7 +7,8 @@ TESTS =                         \
   scheduler			\
   socket			\
   demux				\
-  dispatch
+  dispatch			\
+  resolver
 
 check_PROGRAMS = ${TESTS}
 
@@ -23,5 +26,9 @@ dispatch_CPPFLAGS = $(BOOST_CPPFLAGS) $(AM_CPPFLAGS)
 
 demux_SOURCES = demux.cpp
 demux_CPPFLAGS = $(BOOST_CPPFLAGS) $(AM_CPPFLAGS)
+
+resolver_SOURCES = resolver.cpp
+resolver_CPPFLAGS = $(BOOST_CPPFLAGS) $(AM_CPPFLAGS)
+resolver_LDFLAGS = -ladns
 
 MAINTAINERCLEANFILES = Makefile.in

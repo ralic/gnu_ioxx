@@ -1,14 +1,21 @@
-# ~/Makefile.am -- build and install the ioxx libraries
+# ~/Makefile.am -- build and install the ioxx library
 
-SUBDIRS			= src test
+ACLOCAL_AMFLAGS = -I build-aux
 
-# dist_pkgdata_DATA       = README
-CLEANFILES              = $(DIST_ARCHIVES)
-MAINTAINERCLEANFILES    = missing install-sh configure Makefile.in aclocal.m4
-MAINTAINERCLEANFILES   += config.guess config.sub ltmain.sh depcomp
+SUBDIRS = include src test
 
-aclocaldir              = $(datadir)/aclocal
-dist_aclocal_DATA       = $(M4SOURCE)
+CLEANFILES = $(DIST_ARCHIVES)
 
-htmldir                 = $(pkgdatadir)/html
-dist_html_DATA          = $(HTMLDOC)
+distclean-local:
+	-rm -rf autom4te.cache
+
+MAINTAINERCLEANFILES = \
+  Makefile.in \
+  aclocal.m4 \
+  build-aux/config.guess \
+  build-aux/config.sub \
+  build-aux/depcomp \
+  build-aux/install-sh \
+  build-aux/ltmain.sh \
+  build-aux/missing \
+  configure
