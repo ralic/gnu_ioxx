@@ -1,6 +1,8 @@
 #ifndef IOXX_DEMUX_HPP_INCLUDED_2008_04_20
 #define IOXX_DEMUX_HPP_INCLUDED_2008_04_20
 
+#include "config.hpp"
+
 #if defined(IOXX_HAVE_EPOLL)
 #  include "demux/epoll.hpp"
 namespace ioxx { typedef demux::epoll default_demux; }
