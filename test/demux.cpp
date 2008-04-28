@@ -155,4 +155,3 @@ BOOST_AUTO_TEST_CASE( test_select_demux )
   test_demux<ioxx::demux::select>();
 }
 #endif
-
