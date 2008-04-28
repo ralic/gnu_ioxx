@@ -7,6 +7,8 @@
 
 namespace ioxx
 {
+  typedef unsigned int seconds_t;
+
   template < class Demuxer   = default_demux
            , class Handler   = boost::function1<void, typename Demuxer::socket::event_set>
            , class Allocator = std::allocator< std::pair<native_socket_t const, Handler> >
