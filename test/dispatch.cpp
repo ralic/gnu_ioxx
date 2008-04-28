@@ -141,16 +141,16 @@ public:
 BOOST_AUTO_TEST_CASE( test_echo_handler )
 {
   ioxx::timer       now;
-  ioxx::scheduler<> schedule;
+  ioxx::scheduler<> scheduler;
   ioxx::dispatch<>  dispatch;
   boost::scoped_ptr<ioxx::dispatch<>::socket> ls;
   ls.reset(ioxx::accept_stream_socket(dispatch, "127.0.0.1", "8080", boost::bind(&echo::accept, &dispatch, _1)));
   IOXX_TRACE_SOCKET(ls, "accepting connections on port 8080");
-  schedule.at(now.as_time_t() + 5, boost::bind(&boost::scoped_ptr<ioxx::dispatch<>::socket> ::reset, &ls, static_cast<ioxx::dispatch<>::socket *>(0)));
+  scheduler.at(now.as_time_t() + 5, boost::bind(&boost::scoped_ptr<ioxx::dispatch<>::socket> ::reset, &ls, static_cast<ioxx::dispatch<>::socket *>(0)));
   for (;;)
   {
-    ioxx::seconds_t timeout( schedule.run(now.as_time_t()) );
-    if (schedule.empty())
+    ioxx::seconds_t timeout( scheduler.run(now.as_time_t()) );
+    if (scheduler.empty())
     {
       if (dispatch.empty())  break;
       else                   timeout = dispatch.max_timeout();
