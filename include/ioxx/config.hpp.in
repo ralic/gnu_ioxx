@@ -1,46 +1,5 @@
-/* include/ioxx/config.hpp.in.  Generated from configure.ac by autoheader.  */
-
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
-
-/* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
-
-/* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
-
-/* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
-
-/* Define to 1 if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
-
-/* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
-
-/* Define to 1 if you have the <string.h> header file. */
-#undef HAVE_STRING_H
-
-/* Define to 1 if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
-
-/* Define to 1 if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
-
-/* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
-
-/* This host has ADNS installed. ioxx_have_adns=yes */
-#undef IOXX_HAVE_ADNS
-
-/* This platform supports epoll(7). ioxx_have_epoll=yes */
-#undef IOXX_HAVE_EPOLL
-
-/* This platform supports poll(2). ioxx_have_poll=yes */
-#undef IOXX_HAVE_POLL
-
-/* This platform supports select(2). ioxx_have_select=yes */
-#undef IOXX_HAVE_SELECT
+#ifndef IOXX_CONFIG_HPP_INCLUDED_2008_04_20
+#define IOXX_CONFIG_HPP_INCLUDED_2008_04_20
 
 /* Bit-encoded version information. */
 #undef IOXX_VERSION_CODE
@@ -48,20 +7,45 @@
 /* Human-readable version information. */
 #undef IOXX_VERSION_STRING
 
-/* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
+/* This platform supports epoll(7). */
+#undef IOXX_HAVE_EPOLL
 
-/* Define to the full name of this package. */
-#undef PACKAGE_NAME
+/* This platform supports poll(2). */
+#undef IOXX_HAVE_POLL
 
-/* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
+/* This platform supports select(2). */
+#undef IOXX_HAVE_SELECT
 
-/* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
+/* This platform supports adns(2). */
+#undef IOXX_HAVE_ADNS
 
-/* Define to the version of this package. */
-#undef PACKAGE_VERSION
+#ifdef _MSC_VER
+#  if defined(IOXX_BUILDING_DLL)
+#    define IOXX_DLL_EXPORT     __declspec(dllexport)
+#  else
+#    define IOXX_DLL_EXPORT     __declspec(dllimport)
+#  endif
+#  define IOXX_DLL_LOCAL
+#else
+#  if defined(__GNUC__) && !defined(__ICC)
+#    define IOXX_DLL_EXPORT     __attribute__ ((visibility("default")))
+#    define IOXX_DLL_LOCAL      __attribute__ ((visibility("hidden")))
+#  else
+#    define IOXX_DLL_EXPORT
+#    define IOXX_DLL_LOCAL
+#  endif
+#endif
 
-/* Define to 1 if you have the ANSI C header files. */
-#undef STDC_HEADERS
+#ifdef __GNUC__
+#  define IOXX_NORETURN_DECL    __attribute__ ((noreturn))
+#else
+#  define IOXX_NORETURN_DECL
+#endif
+
+#ifdef NDEBUG
+#  define IOXX_NOTHROW_DECL
+#else
+#  define IOXX_NOTHROW_DECL     throw()
+#endif
+
+#endif // IOXX_CONFIG_HPP_INCLUDED_2008_04_20
