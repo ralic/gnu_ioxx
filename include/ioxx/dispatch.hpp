@@ -7,8 +7,14 @@
 
 namespace ioxx
 {
+  /** \brief Unsigned type for representing seconds.
+   *
+   */
   typedef unsigned int seconds_t;
 
+  /** \brief A simple time-event dispatcher.
+   *
+   */
   template < class Demuxer   = default_demux
            , class Handler   = boost::function1<void, typename Demuxer::socket::event_set>
            , class Allocator = std::allocator< std::pair<native_socket_t const, Handler> >

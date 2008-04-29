@@ -12,6 +12,9 @@ namespace ioxx { namespace demux
 {
   typedef unsigned int seconds_t;
 
+  /** \brief I/O demultiplexer implementation based on \c epoll(7).
+   *
+   */
   class epoll : private boost::noncopyable
   {
   public:

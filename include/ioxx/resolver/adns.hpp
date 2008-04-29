@@ -31,6 +31,9 @@ namespace ioxx { namespace resolver
   inline adns_queryflags & operator&= (adns_queryflags & lhs, adns_queryflags rhs) { return lhs = (adns_queryflags)((int)(lhs) & (int)(rhs)); }
   inline adns_queryflags   operator&  (adns_queryflags   lhs, adns_queryflags rhs) { return lhs &= rhs; }
 
+  /** \brief Asynchronous DNS resolver implementation based an GNU ADNS.
+   *
+   */
   template < class Scheduler = scheduler<>
            , class Dispatch  = dispatch<>
            >

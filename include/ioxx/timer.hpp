@@ -8,8 +8,14 @@
 
 namespace ioxx
 {
-  using std::time_t;
+  typedef std::time_t time_t;
+
   typedef unsigned int seconds_t;
+
+  /** \brief Type for representing time stamps with microsecond accuracy.
+   *
+   */
+  typedef ::timeval timeval;
 
   class timer : private boost::noncopyable
   {
