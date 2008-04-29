@@ -131,6 +131,10 @@ AX_CONFIG_FEATURE(
 
 AC_SUBST([IOXX_HAVE_ADNS], [$ioxx_have_adns])
 
+dnl ----- doxygen -----
+
+AC_CHECK_PROGS([DOXYGEN], [doxygen], [:])
+
 dnl ----- write results -----
 
 AC_CONFIG_HEADERS([build-aux/config.h])
