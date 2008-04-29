@@ -59,36 +59,44 @@ namespace ioxx { namespace resolver
 
     ~adns()
     {
+      BOOST_ASSERT(_state);
       _scheduler.cancel(_timeout, _now.tv_sec);
       adns_finish(_state);
     }
 
     void query_a(char const * owner, a_handler const & h)
     {
+      IOXX_TRACE_MSG("adns requests A record for " << owner);
       BOOST_ASSERT(h);
       submit(owner, adns_r_a, 0, boost::bind(handleA, _1, h));
     }
 
     void query_a_no_cname(char const * owner, a_handler const & h)
     {
+      IOXX_TRACE_MSG("adns requests A record for " << owner << " (no cname)");
       BOOST_ASSERT(h);
       submit(owner, adns_r_a, 0 | adns_qf_cname_forbid, boost::bind(handleA, _1, h));
     }
 
     void query_mx(char const * owner, mx_handler const & h)
     {
+      IOXX_TRACE_MSG("adns requests MX record for " << owner);
       BOOST_ASSERT(h);
       submit(owner, adns_r_mx, 0, boost::bind(handleMX, _1, h));
     }
 
     void query_ptr(char const * owner, ptr_handler const & h)
     {
+      IOXX_TRACE_MSG("adns requests PTR record for " << owner);
       BOOST_ASSERT(h);
       submit(owner, adns_r_ptr, 0, boost::bind(handlePTR, _1, h));
     }
 
     void update()
     {
+      IOXX_TRACE_MSG(   "adns::update() has " << _qset.size() << " open queries and "
+                    << _registered_sockets.size() << " registered sockets");
+      _scheduler.cancel(_timeout, _now.tv_sec);
       if (_qset.empty()) return _registered_sockets.clear();
 
       // Determine the file descriptors we have to probe for.
@@ -111,12 +119,13 @@ namespace ioxx { namespace resolver
 
       // Set new timeout.
 
-      _scheduler.cancel(_timeout, _now.tv_sec);
-      timeout /= 1000;
-      if (timeout == 0)
-        adns_processtimeouts(_state, &_now);
+      if (timeout == 0) adns_processtimeouts(_state, &_now);
       else if (timeout > 0)
-        _timeout = _scheduler.at(_now.tv_sec + timeout, boost::bind(&adns_processtimeouts, _state, &_now));
+      {
+        seconds_t to( timeout / 1000 );
+        if (timeout % 1000) ++to;
+        _timeout = _scheduler.at(_now.tv_sec + to, boost::bind(&adns_processtimeouts, _state, &_now));
+      }
 
       // Re-register the descriptors in dispatch.
 
@@ -177,16 +186,25 @@ namespace ioxx { namespace resolver
 
     typedef dispatch::socket                            socket;
     typedef boost::shared_ptr<socket>                   shared_socket;
-    typedef std::set<shared_socket>                     socket_set;
+    struct less
+    {
+      bool operator() (pollfd const & lhs, pollfd const & rhs) const { return lhs.fd < rhs.fd; }
+      bool operator() (shared_socket const & lhs, shared_socket const & rhs) const
+      {
+        return lhs->as_native_socket_t() < rhs->as_native_socket_t();
+      }
+    };
+    typedef std::set<shared_socket,less>                socket_set;
     socket_set          _registered_sockets;
     std::vector<pollfd> _pfds;
 
     void check_consistency() const
     {
-#ifdef NDEBUG
+#ifndef NDEBUG
       adns_forallqueries_begin(_state);
       for (adns_query qid; /**/; /**/)
       {
+        IOXX_TRACE_MSG("check that ADNS query " << qid << " has a registered handler");
         qid = adns_forallqueries_next(_state, 0);
         if (qid == 0) break;
         adns_checkconsistency(_state, qid);
@@ -238,14 +256,16 @@ namespace ioxx { namespace resolver
         adns_query      qid(0);
         adns_answer *   a(0);
         int const       rc( adns_check(_state, &qid, &a, 0) );
+        IOXX_TRACE_MSG("adns_check() returned " << rc);
         switch (rc)
         {
           case EINTR:   continue;
-          case ESRCH:   BOOST_ASSERT(_qset.empty());  return _registered_sockets.clear();
-          case EAGAIN:  BOOST_ASSERT(!_qset.empty()); return update();
+          case ESRCH:   BOOST_ASSERT(_qset.empty());  return;
+          case EAGAIN:  BOOST_ASSERT(!_qset.empty()); return;
           case 0:       break;
           default:      throw boost::system::system_error(rc, boost::system::errno_ecat, "adns_check()");
         }
+        IOXX_TRACE_MSG("deliver ADNS query " << qid);
         BOOST_ASSERT(a);
         ans.reset(a, &::free);
         query_set::iterator const i( _qset.find(qid) );
@@ -357,11 +377,6 @@ namespace ioxx { namespace resolver
       boost::system::system_error err(rc, boost::system::errno_ecat, ctx);
       throw err;
     }
-
-    struct less
-    {
-      bool operator() (pollfd const & lhs, pollfd const & rhs) const { return lhs.fd < rhs.fd; }
-    };
   };
 
 }} // namespace ioxx::resolver
