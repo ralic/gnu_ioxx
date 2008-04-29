@@ -3,7 +3,9 @@
 
 #include "config.hpp"
 
-#if defined(IOXX_HAVE_EPOLL)
+#if defined(IOXX_BUILDING_DOCUMENTATION)
+namespace ioxx { typedef implementation_defined default_demux; }
+#elif defined(IOXX_HAVE_EPOLL)
 #  include "demux/epoll.hpp"
 namespace ioxx { typedef demux::epoll default_demux; }
 #elif defined(IOXX_HAVE_POLL)
