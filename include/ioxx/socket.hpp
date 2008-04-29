@@ -24,9 +24,9 @@ namespace ioxx
 
     ~socket()
     {
-      if (!_close_on_destruction) return;
-      IOXX_TRACE_SOCKET(_sock, "destruct " << this) ;
-      throw_errno_if_minus1("close(2)", boost::bind(&::close, _sock));
+      IOXX_TRACE_SOCKET(_sock, (_close_on_destruction ? "close and " : "") << "destruct " << this) ;
+      if (_close_on_destruction)
+        throw_errno_if_minus1("close(2)", boost::bind(&::close, _sock));
     }
 
     void close_on_destruction(bool enable = true)
