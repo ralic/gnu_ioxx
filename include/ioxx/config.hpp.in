@@ -1,23 +1,20 @@
-#ifndef IOXX_CONFIG_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_CONFIG_HPP_INCLUDED_2008_04_20               // -*- mode: c++; -*-
 #define IOXX_CONFIG_HPP_INCLUDED_2008_04_20
 
-/* Bit-encoded version information. */
-#undef IOXX_VERSION_CODE
-
 /* Human-readable version information. */
-#undef IOXX_VERSION_STRING
+#define IOXX_VERSION_STRING "@PACKAGE_VERSION@"
 
 /* This platform supports epoll(7). */
-#undef IOXX_HAVE_EPOLL
+#define IOXX_HAVE_EPOLL @IOXX_HAVE_EPOLL@
 
 /* This platform supports poll(2). */
-#undef IOXX_HAVE_POLL
+#define IOXX_HAVE_POLL @IOXX_HAVE_POLL@
 
 /* This platform supports select(2). */
-#undef IOXX_HAVE_SELECT
+#define IOXX_HAVE_SELECT @IOXX_HAVE_SELECT@
 
 /* This platform supports adns(2). */
-#undef IOXX_HAVE_ADNS
+#define IOXX_HAVE_ADNS @IOXX_HAVE_ADNS@
 
 #ifdef _MSC_VER
 #  if defined(IOXX_BUILDING_DLL)

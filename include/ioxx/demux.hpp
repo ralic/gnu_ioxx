@@ -5,13 +5,13 @@
 
 #if defined(IOXX_BUILDING_DOCUMENTATION)
 namespace ioxx { typedef implementation_defined default_demux; }
-#elif defined(IOXX_HAVE_EPOLL)
+#elif defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL
 #  include "demux/epoll.hpp"
 namespace ioxx { typedef demux::epoll default_demux; }
-#elif defined(IOXX_HAVE_POLL)
+#elif defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
 #  include "demux/poll.hpp"
 namespace ioxx { typedef demux::poll<> default_demux; }
-#elif defined(IOXX_HAVE_SELECT)
+#elif defined(IOXX_HAVE_SELECT) && IOXX_HAVE_SELECT
 #  include "demux/select.hpp"
 namespace ioxx { typedef demux::select default_demux; }
 #else
