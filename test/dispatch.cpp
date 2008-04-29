@@ -149,13 +149,14 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   scheduler.at(now.as_time_t() + 5, boost::bind(&boost::scoped_ptr<ioxx::dispatch<>::socket> ::reset, &ls, static_cast<ioxx::dispatch<>::socket *>(0)));
   for (;;)
   {
+    dispatch.run();
     ioxx::seconds_t timeout( scheduler.run(now.as_time_t()) );
     if (scheduler.empty())
     {
       if (dispatch.empty())  break;
       else                   timeout = dispatch.max_timeout();
     }
-    dispatch.run(timeout);
+    dispatch.wait(timeout);
     now.update();
   }
 }

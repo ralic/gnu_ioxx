@@ -26,6 +26,11 @@ namespace ioxx { namespace resolver
   inline adns_initflags & operator&= (adns_initflags & lhs, adns_initflags rhs) { return lhs = (adns_initflags)((int)(lhs) & (int)(rhs)); }
   inline adns_initflags   operator&  (adns_initflags   lhs, adns_initflags rhs) { return lhs &= rhs; }
 
+  inline adns_queryflags & operator|= (adns_queryflags & lhs, adns_queryflags rhs) { return lhs = (adns_queryflags)((int)(lhs) | (int)(rhs)); }
+  inline adns_queryflags   operator|  (adns_queryflags   lhs, adns_queryflags rhs) { return lhs |= rhs; }
+  inline adns_queryflags & operator&= (adns_queryflags & lhs, adns_queryflags rhs) { return lhs = (adns_queryflags)((int)(lhs) & (int)(rhs)); }
+  inline adns_queryflags   operator&  (adns_queryflags   lhs, adns_queryflags rhs) { return lhs &= rhs; }
+
   class adns : private boost::noncopyable
   {
   public:
@@ -68,36 +73,64 @@ namespace ioxx { namespace resolver
     {
       IOXX_TRACE_MSG("adns requests A record for " << owner);
       BOOST_ASSERT(h);
-      submit(owner, adns_r_a, 0, boost::bind(handleA, _1, h));
+      submit(owner, adns_r_a, adns_queryflags(0), boost::bind(handleA, _1, h));
     }
 
     void query_a_no_cname(char const * owner, a_handler const & h)
     {
       IOXX_TRACE_MSG("adns requests A record for " << owner << " (no cname)");
       BOOST_ASSERT(h);
-      submit(owner, adns_r_a, 0 | adns_qf_cname_forbid, boost::bind(handleA, _1, h));
+      submit(owner, adns_r_a, adns_qf_cname_forbid, boost::bind(handleA, _1, h));
     }
 
     void query_mx(char const * owner, mx_handler const & h)
     {
       IOXX_TRACE_MSG("adns requests MX record for " << owner);
       BOOST_ASSERT(h);
-      submit(owner, adns_r_mx, 0, boost::bind(handleMX, _1, h));
+      submit(owner, adns_r_mx, adns_queryflags(0), boost::bind(handleMX, _1, h));
     }
 
     void query_ptr(char const * owner, ptr_handler const & h)
     {
       IOXX_TRACE_MSG("adns requests PTR record for " << owner);
       BOOST_ASSERT(h);
-      submit(owner, adns_r_ptr, 0, boost::bind(handlePTR, _1, h));
+      submit(owner, adns_r_ptr, adns_queryflags(0), boost::bind(handlePTR, _1, h));
     }
 
-    void update()
+    void run()
     {
-      IOXX_TRACE_MSG(   "adns::update() has " << _qset.size() << " open queries and "
+      IOXX_TRACE_MSG(   "adns::run() has " << _queries.size() << " open queries and "
                     << _registered_sockets.size() << " registered sockets");
+      check_consistency();
       _scheduler.cancel(_timeout, _now.tv_sec);
-      if (_qset.empty()) return _registered_sockets.clear();
+      if (_queries.empty()) return _registered_sockets.clear();
+
+      // Deliver outstanding responses.
+
+      for (;;)
+      {
+        answer          ans;
+        callback        f;
+        adns_query      qid(0);
+        adns_answer *   a(0);
+        int const       rc( adns_check(_state, &qid, &a, 0) );
+        IOXX_TRACE_MSG("adns_check() returned " << rc);
+        if (rc == EINTR)        continue;
+        else if (rc == ESRCH)   { BOOST_ASSERT(_queries.empty()); return _registered_sockets.clear(); }
+        else if (rc == EAGAIN)  { BOOST_ASSERT(!_queries.empty()); break; }
+        else if (rc != 0)       throw boost::system::system_error(rc, boost::system::errno_ecat, "adns_check()");
+        BOOST_ASSERT(rc == 0);
+        BOOST_ASSERT(a);
+        ans.reset(a, &::free);
+        IOXX_TRACE_MSG("deliver ADNS query " << qid);
+        query_set::iterator const i( _queries.find(qid) );
+        BOOST_ASSERT(i != _queries.end());
+        std::swap(f, i->second);
+        _queries.erase(i);
+        f(ans);
+      }
+      BOOST_ASSERT(!_queries.empty());
+      check_consistency();
 
       // Determine the file descriptors we have to probe for.
 
@@ -182,7 +215,7 @@ namespace ioxx { namespace resolver
     typedef boost::shared_ptr<adns_answer const>        answer;
     typedef boost::function1<void, answer>              callback;
     typedef std::map<adns_query,callback>               query_set;
-    query_set           _qset;
+    query_set           _queries;
 
     typedef dispatch::socket                            socket;
     typedef boost::shared_ptr<socket>                   shared_socket;
@@ -208,18 +241,16 @@ namespace ioxx { namespace resolver
         qid = adns_forallqueries_next(_state, 0);
         if (qid == 0) break;
         adns_checkconsistency(_state, qid);
-        BOOST_ASSERT(_qset.find(qid) != _qset.end());
+        BOOST_ASSERT(_queries.find(qid) != _queries.end());
       }
 #endif
     }
 
-    void submit(char const * owner, adns_rrtype rrtype, int flags, callback const & f)
+    void submit(char const * owner, adns_rrtype rrtype, adns_queryflags flags, callback const & f)
     {
       adns_query qid;
-      throw_rc_if_not_zero( adns_submit(_state, owner, rrtype, static_cast<adns_queryflags>(flags), static_cast<FILE*>(0), &qid)
-                          , "submit DNS query"
-                          );
-      _qset[qid] = f;
+      throw_rc_if_not_zero(adns_submit(_state, owner, rrtype, flags, static_cast<FILE*>(0), &qid), "adns_submit()");
+      _queries[qid] = f;
       check_consistency();
     }
 
@@ -246,34 +277,6 @@ namespace ioxx { namespace resolver
       if (ev & socket::readable) throw_rc_if_not_zero(adns_processreadable(_state, fd, &_now), "adns_processreadable");
       if (ev & socket::writable) throw_rc_if_not_zero(adns_processwriteable(_state, fd, &_now), "adns_processwriteable");
       if (ev & socket::pridata)  throw_rc_if_not_zero(adns_processexceptional(_state, fd, &_now), "adns_processexceptional");
-
-      IOXX_TRACE_MSG("deliver adns events");
-      check_consistency();
-      for (;;)
-      {
-        answer          ans;
-        callback        f;
-        adns_query      qid(0);
-        adns_answer *   a(0);
-        int const       rc( adns_check(_state, &qid, &a, 0) );
-        IOXX_TRACE_MSG("adns_check() returned " << rc);
-        switch (rc)
-        {
-          case EINTR:   continue;
-          case ESRCH:   BOOST_ASSERT(_qset.empty());  return;
-          case EAGAIN:  BOOST_ASSERT(!_qset.empty()); return;
-          case 0:       break;
-          default:      throw boost::system::system_error(rc, boost::system::errno_ecat, "adns_check()");
-        }
-        IOXX_TRACE_MSG("deliver ADNS query " << qid);
-        BOOST_ASSERT(a);
-        ans.reset(a, &::free);
-        query_set::iterator const i( _qset.find(qid) );
-        BOOST_ASSERT(i != _qset.end());
-        std::swap(f, i->second);
-        _qset.erase(i);
-        f(ans);
-      }
       check_consistency();
     }
 

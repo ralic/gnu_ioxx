@@ -53,14 +53,15 @@ BOOST_AUTO_TEST_CASE( test_adns_resolver )
   resolver.query_a("ecrc.de", print());
   for (;;)
   {
-    resolver.update();
+    dispatch.run();
+    resolver.run();
     ioxx::seconds_t timeout( scheduler.run(now.as_time_t()) );
     if (scheduler.empty())
     {
       if (dispatch.empty())  break;
       else                   timeout = dispatch.max_timeout();
     }
-    dispatch.run(timeout);
+    dispatch.wait(timeout);
     now.update();
   }
 }
