@@ -12,6 +12,7 @@ AC_CONFIG_MACRO_DIR([build-aux])
 
 AC_DEFINE([IOXX_VERSION_CODE],   [ioxx_version_code],     [Bit-encoded version information.])
 AC_DEFINE([IOXX_VERSION_STRING], ["ioxx_version_string"], [Human-readable version information.])
+AC_SUBST([IOXX_VERSION_STRING], [$PACKAGE_VERSION])
 
 AC_LANG([C++])
 AC_PROG_LIBTOOL
@@ -118,4 +119,6 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([include/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([test/Makefile])
+AC_CONFIG_FILES([doc/Makefile])
+AC_CONFIG_FILES([doc/Doxyfile])
 AC_OUTPUT
