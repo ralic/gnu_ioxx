@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I build-aux
 
-SUBDIRS = include src test
+SUBDIRS = include src test doc
 
 CLEANFILES = $(DIST_ARCHIVES)
 
@@ -13,9 +13,12 @@ MAINTAINERCLEANFILES = \
   Makefile.in \
   aclocal.m4 \
   build-aux/config.guess \
+  build-aux/config.h.in \
+  build-aux/config.h.in~ \
   build-aux/config.sub \
   build-aux/depcomp \
   build-aux/install-sh \
   build-aux/ltmain.sh \
   build-aux/missing \
+  build-aux/stamp-h1 \
   configure
