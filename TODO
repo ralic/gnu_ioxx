@@ -66,6 +66,11 @@
    - Split =wait()= out of =run()=, like it is in =demux=.
    - Pass a reference to =timer= so that our loop can call =update()=.
 
+** TODO Demux and dispatcher sockets need constructors for weak ownership.
+
+   The demuxers don't forward the dont-close-on-destruction constructor. The
+   concept check test should proably enforce that.
+
 
 * Documentation
 
