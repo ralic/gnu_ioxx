@@ -4,14 +4,17 @@
 *.o
 */.deps/*
 */.libs/*
+/INSTALL
 /aclocal.m4
 /autom4te.cache/*
 /build-aux/config.guess
+/build-aux/config.h*
 /build-aux/config.sub
 /build-aux/depcomp
 /build-aux/install-sh
 /build-aux/ltmain.sh
 /build-aux/missing
+/build-aux/stamp-h1
 /config.cache
 /config.log
 /config.status
@@ -19,8 +22,6 @@
 /doc/Doxyfile
 /doc/html/*
 /include/ioxx/config.hpp
-/include/ioxx/config.hpp.in~
-/include/ioxx/stamp-h1
 /libtool
 /ltmain.sh
 /missing

@@ -54,7 +54,6 @@ AC_LINK_IFELSE([AC_LANG_CALL([], [exit])],
   [AC_MSG_FAILURE([no])])
 
 dnl ----- check for epoll -----
-AX_CONFIG_FEATURE_VERBOSE
 
 AC_CACHE_CHECK(
   [whether this platform supports epoll],
@@ -143,3 +142,14 @@ AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([doc/Makefile])
 AC_CONFIG_FILES([doc/Doxyfile])
 AC_OUTPUT
+
+dnl Responsibility shifts to the user after this point.
+
+echo ""
+echo "Optional features are configured as follows:"
+echo ""
+echo "${ECHO_N}" "    epoll(7) support ........... "; if test "${ioxx_have_epoll}"; then echo "yes"; else echo "no"; fi
+echo "${ECHO_N}" "    poll(2) support ............ "; if test "${ioxx_have_poll}"; then echo "yes"; else echo "no"; fi
+echo "${ECHO_N}" "    select(2) support .......... "; if test "${ioxx_have_select}"; then echo "yes"; else echo "no"; fi
+echo "${ECHO_N}" "    ADNS support ............... "; if test "${ioxx_have_adns}"; then echo "yes"; else echo "no"; fi
+echo ""

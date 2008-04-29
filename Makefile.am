@@ -10,6 +10,7 @@ distclean-local:
 	-rm -rf autom4te.cache
 
 MAINTAINERCLEANFILES = \
+  INSTALL \
   Makefile.in \
   aclocal.m4 \
   build-aux/config.guess \
