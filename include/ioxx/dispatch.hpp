@@ -13,7 +13,7 @@ namespace ioxx
            , class Handler   = boost::function1<void, typename Demuxer::socket::event_set>
            , class Allocator = std::allocator< std::pair<native_socket_t const, Handler> >
            >
-  class dispatch : public Demuxer
+  class dispatch : protected Demuxer
   {
   public:
     typedef Demuxer                                                                     demux;
@@ -60,24 +60,14 @@ namespace ioxx
       iterator  _iter;
     };
 
+    static seconds_t max_timeout() { return demux::max_timeout(); }
+
     explicit dispatch(unsigned int size_hint = 512u) : demux(size_hint) { }
 
     bool empty() const { return _handlers.empty(); }
 
-    void run(seconds_t timeout)
+    void run()
     {
-      IOXX_TRACE_MSG("dispatch " << _handlers.size() << " sockets for i/o, time out after " << timeout << " seconds");
-      if (deliver_events()) return;
-      demux::wait(timeout);
-      deliver_events();
-    }
-
-  private:
-    handler_map    _handlers;
-
-    bool deliver_events()
-    {
-      bool had_events( false );
       native_socket_t s;
       event_set ev;
       while (pop_event(s, ev))
@@ -86,12 +76,19 @@ namespace ioxx
         BOOST_ASSERT(s >= 0);
         BOOST_ASSERT(ev != socket::no_events);
         iterator const i( _handlers.find(s) );
-        if (i == _handlers.end()) continue;
-        had_events = true;
+        if (i == _handlers.end())
+        {
+          IOXX_TRACE_SOCKET(s, "ignore events; handler for this socket does no longer exist");
+          continue;
+        }
         i->second(ev);         // this is dangerous in case of suicides
       }
-      return had_events;
     }
+
+    void wait(seconds_t timeout) { demux::wait(timeout); }
+
+  private:
+    handler_map    _handlers;
   };
 
 } // namespace ioxx

@@ -56,7 +56,7 @@
    and those tasks will exist only for a certain scope, namely the time the
    application is waiting for the i/o operation to complete.
 
-** TODO =dispatch::run()= is insufficient
+** DONE =dispatch::run()= is insufficient
 
    The function calls =deliver_events()= directly after waiting. This means
    that the active handlers will run with a -- potentially -- screwed up notion
