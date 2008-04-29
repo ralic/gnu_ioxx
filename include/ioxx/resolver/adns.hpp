@@ -31,11 +31,14 @@ namespace ioxx { namespace resolver
   inline adns_queryflags & operator&= (adns_queryflags & lhs, adns_queryflags rhs) { return lhs = (adns_queryflags)((int)(lhs) & (int)(rhs)); }
   inline adns_queryflags   operator&  (adns_queryflags   lhs, adns_queryflags rhs) { return lhs &= rhs; }
 
+  template < class Scheduler = scheduler<>
+           , class Dispatch  = dispatch<>
+           >
   class adns : private boost::noncopyable
   {
   public:
-    typedef scheduler<>                                 scheduler;
-    typedef dispatch<>                                  dispatch;
+    typedef Scheduler                                   scheduler;
+    typedef Dispatch                                    dispatch;
 
     typedef std::string                                 hostname;
     typedef std::vector<hostname>                       hostname_list;
@@ -165,8 +168,8 @@ namespace ioxx { namespace resolver
       std::sort(&_pfds[0], &_pfds[nfds], less());
       pollfd const * req( &_pfds[0] );
       pollfd const * req_end( &_pfds[nfds] );
-      socket_set::iterator reg( _registered_sockets.begin() );
-      socket_set::iterator reg_end( _registered_sockets.end() );
+      typename socket_set::iterator reg( _registered_sockets.begin() );
+      typename socket_set::iterator reg_end( _registered_sockets.end() );
       for (;;)
       {
         if (req == req_end)
@@ -210,14 +213,16 @@ namespace ioxx { namespace resolver
     dispatch &          _dispatch;
     adns_state          _state;
     timeval const &     _now;
-    scheduler::task_id  _timeout;
+
+    typedef typename Scheduler::task_id                 task_id;
+    task_id             _timeout;
 
     typedef boost::shared_ptr<adns_answer const>        answer;
     typedef boost::function1<void, answer>              callback;
     typedef std::map<adns_query,callback>               query_set;
     query_set           _queries;
 
-    typedef dispatch::socket                            socket;
+    typedef typename dispatch::socket                   socket;
     typedef boost::shared_ptr<socket>                   shared_socket;
     struct less
     {
@@ -260,18 +265,18 @@ namespace ioxx { namespace resolver
       BOOST_ASSERT(pfd.fd >= 0);
       BOOST_ASSERT(pfd.events != 0);
       shared_socket s;
-      socket::event_set const ev( pfd.events & POLLIN  ? socket::readable : socket::no_events
-                                | pfd.events & POLLOUT ? socket::writable : socket::no_events
-                                | pfd.events & POLLPRI ? socket::pridata  : socket::no_events
-                                );
+      typename socket::event_set const ev( pfd.events & POLLIN  ? socket::readable : socket::no_events
+                                         | pfd.events & POLLOUT ? socket::writable : socket::no_events
+                                         | pfd.events & POLLPRI ? socket::pridata  : socket::no_events
+                                         );
       BOOST_ASSERT(ev != socket::no_events);
       s.reset(new socket(_dispatch, pfd.fd, boost::bind(&adns::process_fd, this, pfd.fd, _1), ev));
       s->close_on_destruction(false);
-      std::pair<socket_set::iterator, bool> const r( _registered_sockets.insert(s) );
+      std::pair<typename socket_set::iterator, bool> const r( _registered_sockets.insert(s) );
       BOOST_ASSERT(r.second);
     }
 
-    void process_fd(native_socket_t fd, socket::event_set ev)
+    void process_fd(native_socket_t fd, typename socket::event_set ev)
     {
       IOXX_TRACE_SOCKET(fd, "process adns events " << ev);
       if (ev & socket::readable) throw_rc_if_not_zero(adns_processreadable(_state, fd, &_now), "adns_processreadable");

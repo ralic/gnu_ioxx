@@ -5,7 +5,7 @@
 
 #if defined(IOXX_HAVE_ADNS)
 #  include "resolver/adns.hpp"
-namespace ioxx { typedef resolver::adns default_resolver; }
+namespace ioxx { typedef resolver::adns<> default_resolver; }
 #else
 #  error "No asynchronous DNS resolver available."
 #endif
