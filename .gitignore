@@ -22,6 +22,7 @@
 /doc/Doxyfile
 /doc/html/*
 /include/ioxx/config.hpp
+/ioxx-0.*.tar.gz
 /libtool
 /ltmain.sh
 /missing
