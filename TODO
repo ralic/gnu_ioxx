@@ -71,6 +71,11 @@
    The demuxers don't forward the dont-close-on-destruction constructor. The
    concept check test should proably enforce that.
 
+** TODO All our classes must accept an allocators object at construction.
+
+   Having a template parameter is nice, but it must be possible to pass a
+   concrete instance.
+
 
 * Documentation
 
