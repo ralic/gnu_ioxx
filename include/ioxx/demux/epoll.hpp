@@ -5,6 +5,7 @@
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <limits>
+#include <iosfwd>
 #include <sys/epoll.h>
 
 namespace ioxx { namespace demux
@@ -28,6 +29,14 @@ namespace ioxx { namespace demux
       friend inline event_set   operator|  (event_set   lhs, event_set rhs) { return lhs |= rhs; }
       friend inline event_set & operator&= (event_set & lhs, event_set rhs) { return lhs = (event_set)((int)(lhs) & (int)(rhs)); }
       friend inline event_set   operator&  (event_set   lhs, event_set rhs) { return lhs &= rhs; }
+      friend inline std::ostream & operator<< (std::ostream & os, event_set ev)
+      {
+        if (ev == no_events) os << "None";
+        if (ev & readable)   os << "Read";
+        if (ev & writable)   os << "Write";
+        if (ev & pridata)    os << "Pridata";
+        return os;
+      }
 
       socket(epoll & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _epoll(demux)
       {
