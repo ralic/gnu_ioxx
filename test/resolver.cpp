@@ -9,7 +9,7 @@ struct print
 {
   void operator() (std::string const * str) const
   {
-    std::cout << (str ? str->c_str() : "error") << std::endl;
+    std::cout << (str ? *str : "NULL") << std::endl;
   }
 
   void operator() (std::vector<std::string> const * vec) const
@@ -21,7 +21,7 @@ struct print
       std::cout << "]" << std::endl;
     }
     else
-      std::cout << "error" << std::endl;
+      std::cout << "NULL" << std::endl;
   }
 
   void operator() (std::vector< std::pair< std::string,std::vector<std::string> > > const * vec) const
@@ -37,7 +37,7 @@ struct print
       }
     }
     else
-      std::cout << "error" << std::endl;
+      std::cout << "NULL" << std::endl;
   }
 };
 
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE( test_adns_resolver )
   ioxx::resolver::adns resolver(scheduler, dispatch, now.as_timeval());
 
   resolver.query_mx("cryp.to", print());
-  resolver.query_ptr("127.0.0.1", print());
+  resolver.query_ptr("1.0.0.127.in-addr.arpa", print());
   resolver.query_a("ecrc.de", print());
   for (;;)
   {
