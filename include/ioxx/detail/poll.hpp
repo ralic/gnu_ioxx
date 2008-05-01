@@ -1,16 +1,28 @@
-#ifndef IOXX_DEMUX_POLL_HPP_INCLUDED_2008_04_20
-#define IOXX_DEMUX_POLL_HPP_INCLUDED_2008_04_20
+/*
+ * Copyright (c) 2008 Peter Simons <simons@cryp.to>
+ *
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors be held liable for any damages arising from the
+ * use of this software.
+ *
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.
+ */
 
-#include "ioxx/socket.hpp"
+#ifndef IOXX_DETAIL_POLL_HPP_INCLUDED_2008_04_20
+#define IOXX_DETAIL_POLL_HPP_INCLUDED_2008_04_20
+
+#include "socket.hpp"
 #include <boost/noncopyable.hpp>
 #include <vector>
 #include <map>
 #include <algorithm>
 #include <limits>
 #include <iosfwd>
-#include <sys/poll.h>
+#include <poll.h>
 
-namespace ioxx { namespace demux
+namespace ioxx { namespace detail
 {
   typedef unsigned int seconds_t;
 
@@ -26,7 +38,7 @@ namespace ioxx { namespace demux
     typedef std::map<native_socket_t,size_type,std::less<native_socket_t>,MapAllocator> index_map;
     typedef typename index_map::iterator                                                iterator;
 
-    class socket : public ioxx::socket
+    class socket : public detail::socket
     {
     public:
       enum event_set
@@ -49,7 +61,7 @@ namespace ioxx { namespace demux
         return os;
       }
 
-      socket(poll & demux, native_socket_t sock, event_set ev = no_events) : ioxx::socket(sock), _poll(demux)
+      socket(poll & demux, native_socket_t sock, event_set ev = no_events) : detail::socket(sock), _poll(demux)
       {
         BOOST_ASSERT(sock >= 0);
         std::pair<iterator,bool> const r( _poll._indices.insert(std::make_pair(sock, _poll._pfd.size())) );
@@ -146,7 +158,7 @@ namespace ioxx { namespace demux
       if (rc < 0)
       {
         if (errno == EINTR) return;
-        boost::system::system_error err(errno, boost::system::errno_ecat, "poll(2)");
+        system_error err(errno, "poll(2)");
         throw err;
       }
       _n_events  = static_cast<size_type>(rc);
@@ -160,6 +172,6 @@ namespace ioxx { namespace demux
     size_type _current;
   };
 
-}} // namespace ioxx::demux
+}} // namespace ioxx::detail
 
-#endif // IOXX_DEMUX_POLL_HPP_INCLUDED_2008_04_20
+#endif // IOXX_DETAIL_POLL_HPP_INCLUDED_2008_04_20

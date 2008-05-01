@@ -64,7 +64,7 @@
    are two ways out of this:
 
    - Split =wait()= out of =run()=, like it is in =demux=.
-   - Pass a reference to =timer= so that our loop can call =update()=.
+   - Pass a reference to =time= so that our loop can call =update()=.
 
 ** TODO Demux and dispatcher sockets need constructors for weak ownership.
 
@@ -75,6 +75,16 @@
 
    Having a template parameter is nice, but it must be possible to pass a
    concrete instance.
+
+** TODO The =AX_WITH_PROG= macro has some screwed up documentation.
+
+   [2008-04-30 Wed]: [[gnus:nnml:mail.archive#8089][Asked Francesco.]]
+
+** TODO Try linking =adns_init()= without =-ladns= first.
+
+   The user may want to specify an entirely different library in =$LIBS=. If
+   that is the case, then linking =-ladns= might break a link that would have
+   succeeded otherwise.
 
 
 * Documentation

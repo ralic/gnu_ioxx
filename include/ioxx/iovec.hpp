@@ -1,5 +1,17 @@
-#ifndef IOXX_TYPE_IOVEC_HPP_INCLUDED_2008_04_20
-#define IOXX_TYPE_IOVEC_HPP_INCLUDED_2008_04_20
+/*
+ * Copyright (c) 2008 Peter Simons <simons@cryp.to>
+ *
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors be held liable for any damages arising from the
+ * use of this software.
+ *
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.
+ */
+
+#ifndef IOXX_IOVEC_HPP_INCLUDED_2008_04_20
+#define IOXX_IOVEC_HPP_INCLUDED_2008_04_20
 
 #include <boost/range.hpp>
 #include <boost/assert.hpp>
@@ -9,19 +21,24 @@
 
 namespace ioxx
 {
+  /**
+   * The native type used for scatter/gather I/O.
+   */
   typedef ::iovec iovec;
-  typedef std::size_t size_t;
-  typedef std::ptrdiff_t ptrdiff_t;
 
-  /// \brief Set ioxx::iovec to the given byte range.
+  /**
+   * Set an iovec to the given byte range.
+   */
   inline void reset(iovec & iov, char * b, char * e)
   {
     BOOST_ASSERT(b <= e);
     iov.iov_base = b;
-    iov.iov_len = static_cast<size_t>(e - b);
+    iov.iov_len = static_cast<std::size_t>(e - b);
   }
 
-  /// \brief Construct ioxx::iovec using an iterator range.
+  /**
+   * Construct ioxx::iovec using an iterator range.
+   */
   inline iovec make_iovec(char * b, char * e)
   {
     iovec v;
@@ -82,4 +99,4 @@ namespace boost
   }
 }
 
-#endif // IOXX_TYPE_IOVEC_HPP_INCLUDED_2008_04_20
+#endif // IOXX_IOVEC_HPP_INCLUDED_2008_04_20

@@ -1,5 +1,5 @@
-#include <ioxx/timer.hpp>
-#include <ioxx/scheduler.hpp>
+#include <ioxx/time.hpp>
+#include <ioxx/schedule.hpp>
 
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/auto_unit_test.hpp>
@@ -8,12 +8,12 @@
 static size_t dummy_was_called = 0u;
 void dummy_function() { ++dummy_was_called; }
 
-BOOST_AUTO_TEST_CASE( basic_scheduler_test )
+BOOST_AUTO_TEST_CASE( basic_schedule_test )
 {
-  using ioxx::timer;
+  using ioxx::time;
   using ioxx::seconds_t;
-  typedef ioxx::scheduler<> scheduler;
-  timer now;
+  typedef ioxx::schedule<> scheduler;
+  time now;
   scheduler schedule;
   BOOST_REQUIRE(schedule.empty());
   BOOST_REQUIRE_EQUAL(schedule.run(now.as_time_t()), 0u);
@@ -46,13 +46,13 @@ private:
   size_t * _cnt;
 };
 
-BOOST_AUTO_TEST_CASE( dummy_scheduler_test )
+BOOST_AUTO_TEST_CASE( dummy_schedule_test )
 {
-  using ioxx::timer;
+  using ioxx::time;
   using ioxx::seconds_t;
-  typedef ioxx::scheduler<dummy> scheduler;
+  typedef ioxx::schedule<dummy> scheduler;
 
-  timer now;
+  time now;
   scheduler schedule;
   size_t dummy_call_counter( 0u );
   BOOST_REQUIRE(schedule.empty());

@@ -1,4 +1,4 @@
-#include "ioxx/timer.hpp"
+#include "ioxx/time.hpp"
 #include "ioxx/demux.hpp"
 #include <functional>
 
@@ -37,23 +37,23 @@ struct demux_concept
 
     socket s2(dmx, sock), s3(dmx, sock, ev1);
     s2.request(ev1);
-    ioxx::socket & s4( s3 );
+    ioxx::detail::socket & s4( s3 );
     ignore_unused_variable_warning(s4);
   }
 };
 
 struct demux_archetype
 {
-  struct socket : public ioxx::socket
+  struct socket : public ioxx::detail::socket
   {
-    typedef int event_set;
+    typedef short event_set;
     static event_set const no_events = 0;
     static event_set const readable  = 1 << 0;
     static event_set const writable  = 1 << 1;
     static event_set const pridata   = 1 << 2;
 
-    socket(demux_archetype &, ioxx::native_socket_t s) : ioxx::socket(s) { }
-    socket(demux_archetype &, ioxx::native_socket_t s, event_set) : ioxx::socket(s) { }
+    socket(demux_archetype &, ioxx::native_socket_t s) : ioxx::detail::socket(s) { }
+    socket(demux_archetype &, ioxx::native_socket_t s, event_set) : ioxx::detail::socket(s) { }
 
     void request(event_set) { }
   };
@@ -106,7 +106,7 @@ void use_standard_event_set_operators()
 template <class Demux>
 void use_demuxer_for_sleeping()
 {
-  ioxx::timer now;
+  ioxx::time now;
   ioxx::time_t const pre_sleep( now.as_time_t() );
   Demux demux;
   BOOST_REQUIRE(demux.empty());
@@ -129,29 +129,29 @@ BOOST_AUTO_TEST_CASE( test_demux_archetype )
   test_demux<demux_archetype>();
 }
 
-#if defined(IOXX_HAVE_EPOLL)
-#  include "ioxx/demux/epoll.hpp"
+#if defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL
+#  include "ioxx/detail/epoll.hpp"
 
 BOOST_AUTO_TEST_CASE( test_epoll_demux )
 {
-  test_demux<ioxx::demux::epoll>();
+  test_demux<ioxx::detail::epoll>();
 }
 #endif
 
-#if defined(IOXX_HAVE_POLL)
-#  include "ioxx/demux/poll.hpp"
+#if defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
+#  include "ioxx/detail/poll.hpp"
 
 BOOST_AUTO_TEST_CASE( test_poll_demux )
 {
-  test_demux< ioxx::demux::poll<> >();
+  test_demux< ioxx::detail::poll<> >();
 }
 #endif
 
-#if defined(IOXX_HAVE_SELECT)
-#  include "ioxx/demux/select.hpp"
+#if defined(IOXX_HAVE_SELECT) && IOXX_HAVE_SELECT
+#  include "ioxx/detail/select.hpp"
 
 BOOST_AUTO_TEST_CASE( test_select_demux )
 {
-  test_demux<ioxx::demux::select>();
+  test_demux<ioxx::detail::select>();
 }
 #endif

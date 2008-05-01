@@ -1,10 +1,21 @@
-#ifndef IOXX_RESOLVER_ADNS_HPP_INCLUDED_2008_04_20
-#define IOXX_RESOLVER_ADNS_HPP_INCLUDED_2008_04_20
+/*
+ * Copyright (c) 2008 Peter Simons <simons@cryp.to>
+ *
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors be held liable for any damages arising from the
+ * use of this software.
+ *
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.
+ */
 
-#include "ioxx/scheduler.hpp"
+#ifndef IOXX_DETAIL_ADNS_HPP_INCLUDED_2008_04_20
+#define IOXX_DETAIL_ADNS_HPP_INCLUDED_2008_04_20
+
+#include "ioxx/schedule.hpp"
 #include "ioxx/dispatch.hpp"
 #include <boost/shared_ptr.hpp>
-#include <boost/scoped_array.hpp>
 #include <vector>
 #include <map>
 #include <set>
@@ -19,7 +30,7 @@
 #  error "ADNS requires poll() support; select() isn't implemented yet."
 #endif
 
-namespace ioxx { namespace resolver
+namespace ioxx { namespace detail
 {
   inline adns_initflags & operator|= (adns_initflags & lhs, adns_initflags rhs) { return lhs = (adns_initflags)((int)(lhs) | (int)(rhs)); }
   inline adns_initflags   operator|  (adns_initflags   lhs, adns_initflags rhs) { return lhs |= rhs; }
@@ -31,16 +42,16 @@ namespace ioxx { namespace resolver
   inline adns_queryflags & operator&= (adns_queryflags & lhs, adns_queryflags rhs) { return lhs = (adns_queryflags)((int)(lhs) & (int)(rhs)); }
   inline adns_queryflags   operator&  (adns_queryflags   lhs, adns_queryflags rhs) { return lhs &= rhs; }
 
-  /** \brief Asynchronous DNS resolver implementation based an GNU ADNS.
-   *
+  /**
+   * Asynchronous DNS resolver implementation based an GNU ADNS.
    */
-  template < class Scheduler = scheduler<>
+  template < class Schedule  = schedule<>
            , class Dispatch  = dispatch<>
            >
   class adns : private boost::noncopyable
   {
   public:
-    typedef Scheduler                                   scheduler;
+    typedef Schedule                                    schedule;
     typedef Dispatch                                    dispatch;
 
     typedef std::string                                 hostname;
@@ -57,8 +68,8 @@ namespace ioxx { namespace resolver
     typedef boost::function1<void, hostname *>          ptr_handler;
 
   public:
-    adns(scheduler & sched, dispatch & disp, timeval const & now)
-    : _scheduler(sched), _dispatch(disp), _now(now), _pfds(ADNS_POLLFDS_RECOMMENDED)
+    adns(schedule & sched, dispatch & disp, timeval const & now)
+    : _schedule(sched), _dispatch(disp), _now(now), _pfds(ADNS_POLLFDS_RECOMMENDED)
     {
       adns_initflags flags( adns_if_noautosys | adns_if_nosigpipe );
 #ifndef NDEBUG
@@ -71,7 +82,7 @@ namespace ioxx { namespace resolver
     ~adns()
     {
       BOOST_ASSERT(_state);
-      _scheduler.cancel(_timeout, _now.tv_sec);
+      _schedule.cancel(_timeout, _now.tv_sec);
       adns_finish(_state);
     }
 
@@ -108,7 +119,7 @@ namespace ioxx { namespace resolver
       IOXX_TRACE_MSG(   "adns::run() has " << _queries.size() << " open queries and "
                     << _registered_sockets.size() << " registered sockets");
       check_consistency();
-      _scheduler.cancel(_timeout, _now.tv_sec);
+      _schedule.cancel(_timeout, _now.tv_sec);
       if (_queries.empty()) return _registered_sockets.clear();
 
       // Deliver outstanding responses.
@@ -124,7 +135,7 @@ namespace ioxx { namespace resolver
         if (rc == EINTR)        continue;
         else if (rc == ESRCH)   { BOOST_ASSERT(_queries.empty()); return _registered_sockets.clear(); }
         else if (rc == EAGAIN)  { BOOST_ASSERT(!_queries.empty()); break; }
-        else if (rc != 0)       throw boost::system::system_error(rc, boost::system::errno_ecat, "adns_check()");
+        else if (rc != 0)       { system_error err(rc, "adns_check()"); throw err; }
         BOOST_ASSERT(rc == 0);
         BOOST_ASSERT(a);
         ans.reset(a, &::free);
@@ -148,9 +159,9 @@ namespace ioxx { namespace resolver
         rc = adns_beforepoll(_state, &_pfds[0], &nfds, &timeout, &_now);
         switch(rc)
         {
-          case ERANGE:        BOOST_ASSERT(nfds > 0); _pfds.resize(nfds); break;
-          case 0:             break;
-          default:            throw boost::system::system_error(rc, boost::system::errno_ecat, "adns_beforepoll()");
+          case ERANGE:  BOOST_ASSERT(nfds > 0); _pfds.resize(nfds); break;
+          case 0:       break;
+          default:      { system_error err(rc, "adns_beforepoll()"); throw err; }
         }
       }
       BOOST_ASSERT(nfds >= 0);
@@ -163,7 +174,7 @@ namespace ioxx { namespace resolver
       {
         seconds_t to( timeout / 1000 );
         if (timeout % 1000) ++to;
-        _timeout = _scheduler.at(_now.tv_sec + to, boost::bind(&adns_processtimeouts, _state, &_now));
+        _timeout = _schedule.at(_now.tv_sec + to, boost::bind(&adns_processtimeouts, _state, &_now));
       }
 
       // Re-register the descriptors in dispatch.
@@ -212,12 +223,12 @@ namespace ioxx { namespace resolver
     }
 
   private:
-    scheduler &         _scheduler;
+    schedule &          _schedule;
     dispatch &          _dispatch;
     adns_state          _state;
     timeval const &     _now;
 
-    typedef typename Scheduler::task_id                 task_id;
+    typedef typename schedule::task_id                  task_id;
     task_id             _timeout;
 
     typedef boost::shared_ptr<adns_answer const>        answer;
@@ -385,11 +396,11 @@ namespace ioxx { namespace resolver
     static void throw_rc_if_not_zero(int rc, std::string const & ctx)
     {
       if (rc == 0) return;
-      boost::system::system_error err(rc, boost::system::errno_ecat, ctx);
+      system_error err(rc, ctx);
       throw err;
     }
   };
 
-}} // namespace ioxx::resolver
+}} // namespace ioxx::detail
 
-#endif // IOXX_RESOLVER_ADNS_HPP_INCLUDED_2008_04_20
+#endif // IOXX_DETAIL_ADNS_HPP_INCLUDED_2008_04_20

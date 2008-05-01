@@ -1,5 +1,17 @@
-#ifndef IOXX_SCHEDULER_HPP_INCLUDED_2008_04_20
-#define IOXX_SCHEDULER_HPP_INCLUDED_2008_04_20
+/*
+ * Copyright (c) 2008 Peter Simons <simons@cryp.to>
+ *
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors be held liable for any damages arising from the
+ * use of this software.
+ *
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.
+ */
+
+#ifndef IOXX_SCHEDULE_HPP_INCLUDED_2008_04_20
+#define IOXX_SCHEDULE_HPP_INCLUDED_2008_04_20
 
 #include <boost/function/function0.hpp>
 #include <boost/noncopyable.hpp>
@@ -15,7 +27,7 @@ namespace ioxx
   template < class Task      = boost::function0<void>
            , class Allocator = std::allocator< std::pair<time_t const, Task> >
            >
-  class scheduler : boost::noncopyable
+  class schedule : boost::noncopyable
   {
   public:
     typedef Task                                                        task;
@@ -98,4 +110,4 @@ namespace ioxx
 
 } // namespace ioxx
 
-#endif // IOXX_SCHEDULER_HPP_INCLUDED_2008_04_20
+#endif // IOXX_SCHEDULE_HPP_INCLUDED_2008_04_20

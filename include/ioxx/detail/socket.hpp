@@ -1,15 +1,27 @@
-#ifndef IOXX_SOCKET_HPP_INCLUDED_2008_04_20
-#define IOXX_SOCKET_HPP_INCLUDED_2008_04_20
+/*
+ * Copyright (c) 2008 Peter Simons <simons@cryp.to>
+ *
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors be held liable for any damages arising from the
+ * use of this software.
+ *
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.
+ */
 
+#ifndef IOXX_DETAIL_SOCKET_HPP_INCLUDED_2008_04_20
+#define IOXX_DETAIL_SOCKET_HPP_INCLUDED_2008_04_20
+
+#include "config.hpp"
 #include "error.hpp"
+#include <boost/noncopyable.hpp>
 #include <iosfwd>
 #include <unistd.h>
 #include <fcntl.h>
 
-namespace ioxx
+namespace ioxx { namespace detail
 {
-  typedef int native_socket_t;
-
   class socket : private boost::noncopyable
   {
   public:
@@ -99,6 +111,6 @@ namespace ioxx
     bool                _close_on_destruction;
   };
 
-} // namespace ioxx
+}} // namespace ioxx::detail
 
-#endif // IOXX_SOCKET_HPP_INCLUDED_2008_04_20
+#endif // IOXX_DETAIL_SOCKET_HPP_INCLUDED_2008_04_20

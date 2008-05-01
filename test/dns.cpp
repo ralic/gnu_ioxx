@@ -1,5 +1,5 @@
-#include "ioxx/timer.hpp"
-#include "ioxx/resolver.hpp"
+#include "ioxx/time.hpp"
+#include "ioxx/dns.hpp"
 
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/unit_test.hpp>
@@ -28,7 +28,7 @@ struct print
   {
     if (vec)
     {
-      for (ioxx::default_resolver::mxname_list::const_iterator i( vec->begin() ); i != vec->end(); ++i)
+      for (ioxx::dns::mxname_list::const_iterator i( vec->begin() ); i != vec->end(); ++i)
       {
         std::cout << "MX " << i->first << " [ ";
         std::copy(i->second.begin(), i->second.end(), std::ostream_iterator<std::string>(std::cout, " "));
@@ -40,13 +40,12 @@ struct print
   }
 };
 
-BOOST_AUTO_TEST_CASE( test_resolver )
+BOOST_AUTO_TEST_CASE( test_dns_resolver )
 {
-  typedef ioxx::default_resolver resolver;
-  ioxx::timer         now;
-  resolver::scheduler scheduler;
-  resolver::dispatch  dispatch;
-  resolver            dns(scheduler, dispatch, now.as_timeval());
+  ioxx::time           now;
+  ioxx::dns::schedule  schedule;
+  ioxx::dns::dispatch  dispatch;
+  ioxx::dns            dns(schedule, dispatch, now.as_timeval());
 
   dns.query_mx("cryp.to", print());
   dns.query_ptr("1.0.0.127.in-addr.arpa", print());
@@ -55,8 +54,8 @@ BOOST_AUTO_TEST_CASE( test_resolver )
   {
     dispatch.run();
     dns.run();
-    ioxx::seconds_t timeout( scheduler.run(now.as_time_t()) );
-    if (scheduler.empty())
+    ioxx::seconds_t timeout( schedule.run(now.as_time_t()) );
+    if (schedule.empty())
     {
       if (dispatch.empty())  break;
       else                   timeout = dispatch.max_timeout();

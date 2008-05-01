@@ -1,5 +1,5 @@
-#include "ioxx/timer.hpp"
-#include "ioxx/scheduler.hpp"
+#include "ioxx/time.hpp"
+#include "ioxx/schedule.hpp"
 #include "ioxx/dispatch.hpp"
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -16,6 +16,7 @@ namespace ioxx
 
   inline void accept_socket(native_socket_t ls, socket_handler f)
   {
+    using namespace ioxx::detail;
     IOXX_TRACE_SOCKET(ls, "listen socket has become readable");
     native_socket_t     s;
     sockaddr            addr;
@@ -41,6 +42,7 @@ namespace ioxx
                       , socket_handler const & f
                       )
   {
+    using namespace detail;
     typedef dispatch<Demuxer,Handler,Allocator> dispatch;
     typedef typename dispatch::socket           dispatch_socket;
     boost::shared_ptr<addrinfo> _addr;
@@ -87,8 +89,6 @@ class echo
 
   void run(event_set ev)
   {
-    using ioxx::throw_errno_if_minus1;
-    using boost::bind;
     try
     {
       IOXX_TRACE_SOCKET(*_sock, "socket event " << ev);
@@ -140,18 +140,18 @@ public:
 
 BOOST_AUTO_TEST_CASE( test_echo_handler )
 {
-  ioxx::timer       now;
-  ioxx::scheduler<> scheduler;
+  ioxx::time        now;
+  ioxx::schedule<>  schedule;
   ioxx::dispatch<>  dispatch;
   boost::scoped_ptr<ioxx::dispatch<>::socket> ls;
   ls.reset(ioxx::accept_stream_socket(dispatch, "127.0.0.1", "8080", boost::bind(&echo::accept, &dispatch, _1)));
   IOXX_TRACE_SOCKET(ls, "accepting connections on port 8080");
-  scheduler.at(now.as_time_t() + 5, boost::bind(&boost::scoped_ptr<ioxx::dispatch<>::socket> ::reset, &ls, static_cast<ioxx::dispatch<>::socket *>(0)));
+  schedule.at(now.as_time_t() + 5, boost::bind(&boost::scoped_ptr<ioxx::dispatch<>::socket> ::reset, &ls, static_cast<ioxx::dispatch<>::socket *>(0)));
   for (;;)
   {
     dispatch.run();
-    ioxx::seconds_t timeout( scheduler.run(now.as_time_t()) );
-    if (scheduler.empty())
+    ioxx::seconds_t timeout( schedule.run(now.as_time_t()) );
+    if (schedule.empty())
     {
       if (dispatch.empty())  break;
       else                   timeout = dispatch.max_timeout();

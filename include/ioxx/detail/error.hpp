@@ -1,7 +1,20 @@
-#ifndef IOXX_ERROR_HPP_INCLUDED_2008_04_20
-#define IOXX_ERROR_HPP_INCLUDED_2008_04_20
+/*
+ * Copyright (c) 2008 Peter Simons <simons@cryp.to>
+ *
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors be held liable for any damages arising from the
+ * use of this software.
+ *
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.
+ */
 
-#include <boost/system/system_error.hpp>
+#ifndef IOXX_DETAIL_ERROR_HPP_INCLUDED_2008_04_20
+#define IOXX_DETAIL_ERROR_HPP_INCLUDED_2008_04_20
+
+#include <stdexcept>
+#include <boost/compatibility/cpp_c_headers/cerrno>
 #include <boost/assert.hpp>
 #include <boost/bind.hpp>
 #include <functional>
@@ -14,8 +27,19 @@
 #endif
 #define IOXX_TRACE_SOCKET(s,msg) IOXX_TRACE_MSG("socket " << s << ": " << msg)
 
-namespace ioxx
+namespace ioxx { namespace detail
 {
+  struct system_error : public std::runtime_error
+  {
+    int error_code;
+
+    explicit system_error(int ec, std::string const & context)
+    : std::runtime_error(std::string(context + ":" + std::strerror(ec)))
+    , error_code(ec)
+    {
+    }
+  };
+
   template <class Result, class Predicate, class Action>
   inline Result throw_errno_if(Predicate is_failure, std::string const & error_msg, Action f)
   {
@@ -24,7 +48,7 @@ namespace ioxx
     for(r = f(); is_failure(r); r = f())
     {
       if (errno == EINTR && max_retries--) continue;
-      boost::system::system_error err(errno, boost::system::errno_ecat, error_msg);
+      system_error err(errno, error_msg);
       throw err;
     }
     BOOST_ASSERT(!is_failure(r));
@@ -58,6 +82,6 @@ namespace ioxx
     }
   };
 
-} // namespace ioxx
+}} // namespace ioxx::detail
 
-#endif // IOXX_ERROR_HPP_INCLUDED_2008_04_20
+#endif // IOXX_DETAIL_ERROR_HPP_INCLUDED_2008_04_20

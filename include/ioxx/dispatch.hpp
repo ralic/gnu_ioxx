@@ -1,3 +1,15 @@
+/*
+ * Copyright (c) 2008 Peter Simons <simons@cryp.to>
+ *
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors be held liable for any damages arising from the
+ * use of this software.
+ *
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.
+ */
+
 #ifndef IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
 #define IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
 
@@ -7,22 +19,22 @@
 
 namespace ioxx
 {
-  /** \brief Unsigned type for representing seconds.
-   *
+  /**
+   * Unsigned type for representing seconds.
    */
   typedef unsigned int seconds_t;
 
-  /** \brief A simple time-event dispatcher.
-   *
+  /**
+   * A simple time-event dispatcher.
    */
-  template < class Demuxer   = default_demux
-           , class Handler   = boost::function1<void, typename Demuxer::socket::event_set>
+  template < class Demux     = demux
+           , class Handler   = boost::function1<void, typename Demux::socket::event_set>
            , class Allocator = std::allocator< std::pair<native_socket_t const, Handler> >
            >
-  class dispatch : protected Demuxer
+  class dispatch : protected Demux
   {
   public:
-    typedef Demuxer                                                                     demux;
+    typedef Demux                                                                       demux;
     typedef Handler                                                                     handler;
     typedef typename demux::socket::event_set                                           event_set;
 

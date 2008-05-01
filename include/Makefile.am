@@ -1,27 +1,28 @@
 # ~/include/Makefile.am
 
 noinst_HEADERS = \
-  ioxx/config.hpp.in
+  ioxx/detail/config.hpp.in
 
 nobase_nodist_include_HEADERS = \
-  ioxx/config.hpp
+  ioxx/detail/config.hpp
 
 nobase_include_HEADERS = \
   ioxx.hpp \
   ioxx/demux.hpp \
-  ioxx/demux/epoll.hpp \
-  ioxx/demux/poll.hpp \
-  ioxx/demux/select.hpp \
+  ioxx/detail/adns.hpp \
+  ioxx/detail/epoll.hpp \
+  ioxx/detail/error.hpp \
+  ioxx/detail/poll.hpp \
+  ioxx/detail/select.hpp \
+  ioxx/detail/socket.hpp \
   ioxx/dispatch.hpp \
-  ioxx/error.hpp \
-  ioxx/resolver.hpp \
-  ioxx/resolver/adns.hpp \
-  ioxx/scheduler.hpp \
-  ioxx/socket.hpp \
-  ioxx/timer.hpp
+  ioxx/dns.hpp \
+  ioxx/iovec.hpp \
+  ioxx/schedule.hpp \
+  ioxx/time.hpp
 
 CLEANFILES = \
-  ioxx/config.hpp.in~
+  ioxx/detail/config.hpp.in~
 
 MAINTAINERCLEANFILES = \
   Makefile.in
