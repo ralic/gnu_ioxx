@@ -126,7 +126,7 @@ namespace ioxx { namespace detail
       if (rc < 0)
       {
         if (errno == EINTR) return;
-        boost::system::system_error err(errno, boost::system::errno_ecat, "epoll_wait(2)");
+        system_error err(errno, "epoll_wait(2)");
         throw err;
       }
       _n_events = static_cast<size_t>(rc);
