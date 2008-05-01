@@ -16,27 +16,58 @@
 /**
  * The version of this library as a human-readable string.
  */
-#define IOXX_VERSION_STRING "@PACKAGE_VERSION@"
+#ifndef IOXX_VERSION_STRING
+#  define IOXX_VERSION_STRING "@PACKAGE_VERSION@"
+#endif
 
 /**
  * Defined to "true" if this platform supports epoll(7).
  */
-#define IOXX_HAVE_EPOLL @IOXX_HAVE_EPOLL@
+#ifndef IOXX_HAVE_EPOLL
+#  define IOXX_HAVE_EPOLL @IOXX_HAVE_EPOLL@
+#endif
+
+/**
+ * Defined to "true" if this platform supports epoll_pwait(2).
+ */
+#ifndef IOXX_HAVE_EPOLL_PWAIT
+#  define IOXX_HAVE_EPOLL_PWAIT @IOXX_HAVE_EPOLL_PWAIT@
+#endif
 
 /**
  * Defined to "true" if this platform supports poll(2).
  */
-#define IOXX_HAVE_POLL @IOXX_HAVE_POLL@
+#ifndef IOXX_HAVE_POLL
+#  define IOXX_HAVE_POLL @IOXX_HAVE_POLL@
+#endif
+
+/**
+ * Defined to "true" if this platform supports ppoll(2).
+ */
+#ifndef IOXX_HAVE_PPOLL
+#  define IOXX_HAVE_PPOLL @IOXX_HAVE_PPOLL@
+#endif
 
 /**
  * Defined to "true" if this platform supports select(2).
  */
-#define IOXX_HAVE_SELECT @IOXX_HAVE_SELECT@
+#ifndef IOXX_HAVE_SELECT
+#  define IOXX_HAVE_SELECT @IOXX_HAVE_SELECT@
+#endif
+
+/**
+ * Defined to "true" if this platform supports pselect(2).
+ */
+#ifndef IOXX_HAVE_PSELECT
+#  define IOXX_HAVE_PSELECT @IOXX_HAVE_PSELECT@
+#endif
 
 /**
  * Defined to "true" if this platform has GNU ADNS.
  */
-#define IOXX_HAVE_ADNS @IOXX_HAVE_ADNS@
+#ifndef IOXX_HAVE_ADNS
+#  define IOXX_HAVE_ADNS @IOXX_HAVE_ADNS@
+#endif
 
 namespace ioxx
 {

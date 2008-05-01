@@ -6,8 +6,6 @@ AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([-Wall gnu std-options filename-length-max=99])
 AC_CONFIG_MACRO_DIR([build-aux])
 
-dnl AC_SUBST([IOXX_VERSION_STRING], [$PACKAGE_VERSION])
-
 AC_COPYRIGHT([dnl
 Copyright (C) 2008 Peter Simons <simons@cryp.to>
 
@@ -33,7 +31,8 @@ AC_ARG_VAR([BOOST_SUFFIX], [library suffix used by boost libraries on this platf
 
 AC_MSG_CHECKING([whether boost/version.hpp is recent enough])
 AC_PREPROC_IFELSE(
-  [#include "boost/version.hpp"
+  [dnl
+#include "boost/version.hpp"
 #if !defined(BOOST_VERSION) || BOOST_VERSION < 103401
 #  error boost version is too old
 #endif],
@@ -48,32 +47,14 @@ AC_LINK_IFELSE([AC_LANG_CALL([], [exit])],
   [AC_MSG_FAILURE([no])])
 LIBS="${orig_libs}"
 
-dnl ----- check for epoll -----
+dnl ----- check for various i/o probes -----
 
-AX_HAVE_EPOLL([AX_CONFIG_FEATURE_ENABLE(epoll)], [AX_CONFIG_FEATURE_DISABLE(epoll)])
-AX_CONFIG_FEATURE(
-  [epoll], [This platform supports epoll(7)],
-  [HAVE_EPOLL], [This platform supports epoll(7).],
-  [AC_SUBST([IOXX_HAVE_EPOLL], [1])], [AC_SUBST([IOXX_HAVE_EPOLL], [0])])
-AX_HAVE_EPOLL_PWAIT
-
-dnl ----- check for poll -----
-
-AX_HAVE_POLL([AX_CONFIG_FEATURE_ENABLE(poll)], [AX_CONFIG_FEATURE_DISABLE(poll)])
-AX_CONFIG_FEATURE(
-  [poll], [This platform supports poll(2)],
-  [HAVE_POLL], [This platform supports poll(2).],
-  [AC_SUBST([IOXX_HAVE_POLL], [1])], [AC_SUBST([IOXX_HAVE_POLL], [0])])
-AX_HAVE_PPOLL
-
-dnl ----- check for select -----
-
-AX_HAVE_SELECT([AX_CONFIG_FEATURE_ENABLE(select)], [AX_CONFIG_FEATURE_DISABLE(select)])
-AX_CONFIG_FEATURE(
-  [select], [This platform supports select(2)],
-  [HAVE_SELECT], [This platform supports select().],
-  [AC_SUBST([IOXX_HAVE_SELECT], [1])], [AC_SUBST([IOXX_HAVE_SELECT], [0])])
-AX_HAVE_PSELECT
+IOXX_ENABLE_FEATURE([epoll],       [AX_HAVE_EPOLL],       [Support epoll(7) on this platform.])
+IOXX_ENABLE_FEATURE([epoll-pwait], [AX_HAVE_EPOLL_PWAIT], [Support epoll_pwait(2) on this platform.])
+IOXX_ENABLE_FEATURE([poll],	   [AX_HAVE_POLL],	  [Support poll(2) on this platform.])
+IOXX_ENABLE_FEATURE([ppoll],       [AX_HAVE_PPOLL],       [Support ppoll(2) on this platform.])
+IOXX_ENABLE_FEATURE([select],      [AX_HAVE_SELECT],	  [Support select(2) on this platform.])
+IOXX_ENABLE_FEATURE([pselect],     [AX_HAVE_PSELECT],	  [Support pselect(2) on this platform.])
 
 dnl ----- check for adns -----
 
@@ -112,8 +93,11 @@ echo ""
 echo "Optional features are configured as follows:"
 echo ""
 echo "${ECHO_N}" "    epoll(7) support ........... "; if test "${IOXX_HAVE_EPOLL}" = 1; then echo "yes"; else echo "no"; fi
+echo "${ECHO_N}" "    epoll_pwait(2) support ..... "; if test "${IOXX_HAVE_EPOLL_PWAIT}" = 1; then echo "yes"; else echo "no"; fi
 echo "${ECHO_N}" "    poll(2) support ............ "; if test "${IOXX_HAVE_POLL}" = 1; then echo "yes"; else echo "no"; fi
+echo "${ECHO_N}" "    ppoll(2) support ........... "; if test "${IOXX_HAVE_PPOLL}" = 1; then echo "yes"; else echo "no"; fi
 echo "${ECHO_N}" "    select(2) support .......... "; if test "${IOXX_HAVE_SELECT}" = 1; then echo "yes"; else echo "no"; fi
+echo "${ECHO_N}" "    pselect(2) support ......... "; if test "${IOXX_HAVE_PSELECT}" = 1; then echo "yes"; else echo "no"; fi
 echo "${ECHO_N}" "    ADNS support ............... "; if test "${IOXX_HAVE_ADNS}" = 1; then echo "yes"; else echo "no"; fi
 echo "${ECHO_N}" "    doxygen support............. "; if test "${ac_cv_path_DOXYGEN}" != ":"; then echo "yes"; else echo "no"; fi
 echo ""
