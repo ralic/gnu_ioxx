@@ -1,7 +1,7 @@
 #include "ioxx/detail/socket.hpp"
 
 #define BOOST_AUTO_TEST_MAIN
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
 
 BOOST_AUTO_TEST_CASE( cannot_construct_invalid_socket )
 {

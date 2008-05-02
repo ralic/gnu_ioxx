@@ -1,13 +1,13 @@
 /*
- * Copyright (c) 2007 Peter Simons <simons@cryp.to>
+ * Copyright (c) 2008 Peter Simons <simons@cryp.to>
  *
- * This software is provided 'as-is', without any express or
- * implied warranty. In no event will the authors be held liable
- * for any damages arising from the use of this software.
+ * This software is provided 'as-is', without any express or implied warranty.
+ * In no event will the authors be held liable for any damages arising from the
+ * use of this software.
  *
- * Copying and distribution of this file, with or without
- * modification, are permitted in any medium without royalty
- * provided the copyright notice and this notice are preserved.
+ * Copying and distribution of this file, with or without modification, are
+ * permitted in any medium without royalty provided the copyright notice and
+ * this notice are preserved.
  */
 
 #include "ioxx/iovec.hpp"
@@ -39,10 +39,11 @@ void test_range_type(T & r)
   boost::rend(r);       boost::const_rend(r);
 }
 
-int main(int, char**)
+#define BOOST_AUTO_TEST_MAIN
+#include <boost/test/included/unit_test.hpp>
+
+BOOST_AUTO_TEST_CASE( verify_that_iovec_is_a_valid_range )
 {
   { ioxx::iovec       iov = { 0, 0 }; test_range_type(iov); }
   { ioxx::iovec const iov = { 0, 0 }; test_range_type(iov); }
-
-  return 0;
 }
