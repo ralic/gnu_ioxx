@@ -35,14 +35,14 @@ dnl ----- check for various i/o probes -----
 
 IOXX_ENABLE_FEATURE([epoll],       [AX_HAVE_EPOLL],       [Support epoll(7) on this platform.])
 IOXX_ENABLE_FEATURE([epoll-pwait], [AX_HAVE_EPOLL_PWAIT], [Support epoll_pwait(2) on this platform.])
-IOXX_ENABLE_FEATURE([poll],	   [AX_HAVE_POLL],	  [Support poll(2) on this platform.])
+IOXX_ENABLE_FEATURE([poll],        [AX_HAVE_POLL],        [Support poll(2) on this platform.])
 IOXX_ENABLE_FEATURE([ppoll],       [AX_HAVE_PPOLL],       [Support ppoll(2) on this platform.])
-IOXX_ENABLE_FEATURE([select],      [AX_HAVE_SELECT],	  [Support select(2) on this platform.])
-IOXX_ENABLE_FEATURE([pselect],     [AX_HAVE_PSELECT],	  [Support pselect(2) on this platform.])
+IOXX_ENABLE_FEATURE([select],      [AX_HAVE_SELECT],      [Support select(2) on this platform.])
+IOXX_ENABLE_FEATURE([pselect],     [AX_HAVE_PSELECT],     [Support pselect(2) on this platform.])
 
 dnl ----- check for adns -----
 
-IOXX_ENABLE_FEATURE([adns],        [AX_HAVE_ADNS],	  [Support GNU ADNS on this platform.])
+IOXX_ENABLE_FEATURE([adns],        [AX_HAVE_ADNS],        [Support GNU ADNS on this platform.])
 
 dnl ----- doxygen -----
 
