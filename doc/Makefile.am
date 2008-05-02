@@ -1,12 +1,9 @@
 # ~/doc/Makefile.am
 
-htmldir = $(pkgdatadir)/html
-EXTRA_DIST = html
-
-html-local:
+all-local:
 	$(DOXYGEN)
 
-clean-local:
+distclean-local:
 	-rm -rf html
 
 MAINTAINERCLEANFILES = \
