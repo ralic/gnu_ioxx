@@ -1,6 +1,6 @@
 # ~/include/Makefile.am
 
-noinst_HEADERS = \
+EXTRA_DIST = \
   ioxx/detail/config.hpp.in
 
 nobase_nodist_include_HEADERS = \
@@ -8,6 +8,7 @@ nobase_nodist_include_HEADERS = \
 
 nobase_include_HEADERS = \
   ioxx.hpp \
+  ioxx/acceptor.hpp \
   ioxx/demux.hpp \
   ioxx/detail/adns.hpp \
   ioxx/detail/epoll.hpp \
