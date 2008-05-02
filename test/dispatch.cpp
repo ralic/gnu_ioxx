@@ -85,16 +85,21 @@ namespace ioxx
 
 class echo
 {
-  typedef ioxx::dispatch<>      dispatch;
-  typedef dispatch::socket      socket;
-  typedef socket::event_set     event_set;
+  typedef ioxx::schedule<>              schedule;
+  typedef schedule::timeout             timeout;
+  typedef ioxx::dispatch<>              dispatch;
+  typedef dispatch::socket              socket;
+  typedef boost::scoped_ptr<socket>     socket_ptr;
+  typedef socket::event_set             event_set;
 
-  boost::scoped_ptr<socket>     _sock;
+  socket_ptr                    _sock;
+  timeout                       _tout;
   boost::array<char,1024>       _buf;
   size_t                        _len;
   size_t                        _gap;
+  ioxx::time_t const &          _now;
 
-  echo() : _len(0u), _gap(0u)
+  echo(schedule & sched, ioxx::time_t const & now) : _tout(sched), _len(0u), _gap(0u), _now(now)
   {
     BOOST_REQUIRE(_buf.size());
   }
@@ -129,6 +134,7 @@ class echo
           _sock->request(socket::readable);
         }
       }
+      _tout.reset(_now + 5, boost::bind(&socket_ptr::reset, boost::ref(_sock), static_cast<socket*>(0)));
     }
     catch(std::exception const & e)
     {
@@ -140,12 +146,11 @@ class echo
 public:
   ~echo() { IOXX_TRACE_MSG("destroy echo handler"); }
 
-  static void accept(dispatch * p, ioxx::native_socket_t s)
+  static void accept(schedule & sched, ioxx::time_t const & now, dispatch & disp, ioxx::native_socket_t s)
   {
-    BOOST_REQUIRE(p);
     boost::shared_ptr<echo> f;
-    f.reset( new echo );
-    socket * sock( new socket(*p, s, boost::bind(&echo::run, f, _1), socket::readable) );
+    f.reset( new echo(sched, now) );
+    socket * sock( new socket(disp, s, boost::bind(&echo::run, f, _1), socket::readable) );
     f->_sock.reset(sock);
   }
 };
@@ -156,7 +161,7 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   ioxx::schedule<>  schedule;
   ioxx::dispatch<>  dispatch;
   boost::scoped_ptr<ioxx::dispatch<>::socket> ls;
-  ls.reset(ioxx::accept_stream_socket(dispatch, "127.0.0.1", "8080", boost::bind(&echo::accept, &dispatch, _1)));
+  ls.reset(ioxx::accept_stream_socket(dispatch, "127.0.0.1", "8080", boost::bind(&echo::accept, boost::ref(schedule), boost::ref(now.as_time_t()), boost::ref(dispatch), _1)));
   IOXX_TRACE_SOCKET(ls, "accepting connections on port 8080");
   schedule.at(now.as_time_t() + 5, boost::bind(&boost::scoped_ptr<ioxx::dispatch<>::socket> ::reset, &ls, static_cast<ioxx::dispatch<>::socket *>(0)));
   for (;;)
