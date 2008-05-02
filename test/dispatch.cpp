@@ -24,7 +24,7 @@
 
 namespace ioxx
 {
-  typedef boost::function<void (native_socket_t, sockaddr const *, socklen_t)> socket_handler;
+  typedef boost::function<void (native_socket_t, detail::socket::address const &)> socket_handler;
 
   inline void accept_socket(native_socket_t ls, socket_handler f)
   {
@@ -40,7 +40,7 @@ namespace ioxx
       if (s < 0) break;
       socket sock(s);           // acts as scope guard in case of exceptions
       sock.set_nonblocking();
-      f(s, &addr, len);
+      f(s, detail::socket::address(addr, len));
       sock.close_on_destruction(false);
     }
     IOXX_TRACE_SOCKET(ls, "no more pending connections");
@@ -150,8 +150,9 @@ class echo
 public:
   ~echo() { IOXX_TRACE_MSG("destroy echo handler"); }
 
-  static void accept(schedule & sched, ioxx::time_t const & now, dispatch & disp, ioxx::native_socket_t s)
+  static void accept(schedule & sched, ioxx::time_t const & now, dispatch & disp, ioxx::native_socket_t s, socket::address const & addr)
   {
+    IOXX_TRACE_SOCKET(s, "start echo handler for peer " << addr.show());
     boost::shared_ptr<echo> f;
     f.reset( new echo(sched, now) );
     socket * sock( new socket(disp, s, boost::bind(&echo::run, f, _1), socket::readable) );
@@ -165,7 +166,7 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   ioxx::schedule<>  schedule;
   ioxx::dispatch<>  dispatch;
   boost::scoped_ptr<ioxx::dispatch<>::socket> ls;
-  ls.reset(ioxx::accept_stream_socket(dispatch, "127.0.0.1", "8080", boost::bind(&echo::accept, boost::ref(schedule), boost::ref(now.as_time_t()), boost::ref(dispatch), _1)));
+  ls.reset(ioxx::accept_stream_socket(dispatch, "127.0.0.1", "8080", boost::bind(&echo::accept, boost::ref(schedule), boost::ref(now.as_time_t()), boost::ref(dispatch), _1, _2)));
   IOXX_TRACE_SOCKET(ls, "accepting connections on port 8080");
   schedule.at(now.as_time_t() + 5, boost::bind(&boost::scoped_ptr<ioxx::dispatch<>::socket> ::reset, &ls, static_cast<ioxx::dispatch<>::socket *>(0)));
   for (;;)

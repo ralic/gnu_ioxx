@@ -19,12 +19,46 @@
 #include <iosfwd>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 namespace ioxx { namespace detail
 {
   class socket : private boost::noncopyable
   {
   public:
+    class address
+    {
+    public:
+      typedef char host_name[NI_MAXHOST];
+      typedef char service_name[NI_MAXSERV];
+
+      address() : _len(0) { }
+      address(sockaddr const & addr, socklen_t len) : _addr(addr), _len(len) { }
+
+      void show(host_name & host, service_name & service) const
+      {
+        int const rc( getnameinfo(&_addr, _len, host, sizeof(host), service, sizeof(service), NI_NUMERICHOST | NI_NUMERICSERV) );
+        if (rc != 0) throw std::runtime_error(gai_strerror(rc));
+      }
+
+      std::string show() const
+      {
+        host_name host;
+        service_name service;
+        show(host, service);
+        return std::string(host) + ':' + service;
+      }
+
+      sockaddr const &   as_sockaddr()  const { return _addr; }
+      socklen_t const &  as_socklen_t() const { return _len; }
+
+    private:
+      sockaddr  _addr;
+      socklen_t _len;
+    };
+
     enum ownership_type_tag { weak, take_ownership };
 
     explicit socket(native_socket_t sock, ownership_type_tag owner = take_ownership) : _sock(sock)
@@ -95,6 +129,22 @@ namespace ioxx { namespace detail
       };
     }
 
+    address local_address() const
+    {
+      sockaddr addr;
+      socklen_t len( sizeof(addr) );
+      throw_errno_if_minus1("getsockname(2)", boost::bind(&::getsockname, _sock, &addr, &len));
+      return address(addr, len);
+    }
+
+    address peer_address() const
+    {
+      sockaddr addr;
+      socklen_t len( sizeof(addr) );
+      throw_errno_if_minus1("getpeername(2)", boost::bind(&::getpeername, _sock, &addr, &len));
+      return address(addr, len);
+    }
+
     native_socket_t as_native_socket_t() const { return _sock; }
 
     friend bool operator<  (socket const & lhs, socket const & rhs) { return lhs._sock <  rhs._sock; }
@@ -107,8 +157,8 @@ namespace ioxx { namespace detail
     friend std::ostream & operator<< (std::ostream & os, socket const & s) { return os << "socket(" << s._sock << ')'; }
 
   private:
-    native_socket_t     _sock;
-    bool                _close_on_destruction;
+    native_socket_t const       _sock;
+    bool                        _close_on_destruction;
   };
 
 }} // namespace ioxx::detail
