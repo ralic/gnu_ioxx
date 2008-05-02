@@ -30,7 +30,7 @@
    the signed type =byte_offset= for us --, but the current specialization
    returns =byte_size=, which is unsigned.
 
-** TODO Boost libraries don't compile on AIX.
+** DONE Boost libraries don't compile on AIX.
 
    The header-only libraries probably work, but Boost.Build doesn't seem to
    know about the IBM xlC++ compiler. Is it a good idea to use Boost.System
@@ -39,6 +39,9 @@
    to build those is a smaller problem than not being able to build the actual
    library. A simple replacement class for =system_error= might make things a
    lot easier.
+
+   [2008-05-02 Fri]: ioxx no longer depends on any boost link libraries;
+   everything is header-only.
 
 ** DONE Demuxer sockets support no =release()=, =swap()=, or =reset()=.
 
@@ -81,15 +84,13 @@
    [2008-04-30 Wed]: [[gnus:nnml:mail.archive#8089][Asked Francesco.]]
    [2008-05-02 Fri]: Fixed.
 
-** TODO Try linking =adns_init()= without =-ladns= first.
+** DONE Try linking =adns_init()= without =-ladns= first.
 
    The user may want to specify an entirely different library in =$LIBS=. If
    that is the case, then linking =-ladns= might break a link that would have
    succeeded otherwise.
 
-   [2008-05-02 Fri]: Implemented in configure.ac. Now, it would be nice if the
-   script would provide a define, say IOXX_ADNS_LIB, that the Makefile could
-   use to link the library only where it's really required.
+   [2008-05-02 Fri]: Implemented in AX_HAVE_ADNS.
 
 
 * Documentation
