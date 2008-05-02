@@ -40,11 +40,11 @@ namespace ioxx
     class timeout : private boost::noncopyable
     {
     public:
-      timeout(schedule & sched) : _sched(_sched), _id(task_id(static_cast<time_t>(0), queue_iterator()))
+      timeout(schedule & sched) : _sched(sched), _id(task_id(static_cast<time_t>(0), queue_iterator()))
       {
       }
 
-      timeout(schedule & sched, time_t to, task const & f) : _sched(_sched), _id(_sched.at(to, f))
+      timeout(schedule & sched, time_t to, task const & f) : _sched(sched), _id(_sched.at(to, f))
       {
       }
 
@@ -88,14 +88,14 @@ namespace ioxx
 
     void unsafe_cancel(task_id & tid)
     {
-      BOOST_ASSERT(tid.first != 0);
+      BOOST_ASSERT(tid.first != 0); BOOST_ASSERT(!_queue.empty());
       _queue.erase(tid.second);
       tid.first = static_cast<time_t>(0);
     }
 
     bool cancel(task_id & tid)
     {
-      if (tid.first == 0) return false;
+      if (tid.first == 0 || _queue.empty()) return false;
       queue_iterator i( _queue.begin() );
       if (tid.first > i->first)
       {
