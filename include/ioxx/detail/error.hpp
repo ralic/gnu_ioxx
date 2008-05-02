@@ -34,7 +34,7 @@ namespace ioxx { namespace detail
     int error_code;
 
     explicit system_error(int ec, std::string const & context)
-    : std::runtime_error(std::string(context + ":" + std::strerror(ec)))
+    : std::runtime_error(std::string(context + ": " + std::strerror(ec)))
     , error_code(ec)
     {
     }
