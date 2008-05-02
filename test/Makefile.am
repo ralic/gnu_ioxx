@@ -1,6 +1,6 @@
 # ~/test/Makefile.am
 
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include
 
 TESTS =                         \
   iovec_is_valid_range          \

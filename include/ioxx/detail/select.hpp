@@ -13,7 +13,7 @@
 #ifndef IOXX_DETAIL_SELECT_HPP_INCLUDED_2008_04_20
 #define IOXX_DETAIL_SELECT_HPP_INCLUDED_2008_04_20
 
-#include "socket.hpp"
+#include <ioxx/detail/socket.hpp>
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <limits>

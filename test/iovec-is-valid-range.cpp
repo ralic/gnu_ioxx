@@ -10,7 +10,7 @@
  * this notice are preserved.
  */
 
-#include "ioxx/iovec.hpp"
+#include <ioxx/iovec.hpp>
 #include <boost/concept_check.hpp>
 
 template <typename T>

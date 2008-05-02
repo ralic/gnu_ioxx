@@ -19,7 +19,7 @@
  * Access to the current time of day.
  */
 
-#include "detail/error.hpp"
+#include <ioxx/detail/error.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/compatibility/cpp_c_headers/ctime>
 #include <sys/time.h>

@@ -13,8 +13,8 @@
 #ifndef IOXX_DETAIL_ADNS_HPP_INCLUDED_2008_04_20
 #define IOXX_DETAIL_ADNS_HPP_INCLUDED_2008_04_20
 
-#include "ioxx/schedule.hpp"
-#include "ioxx/dispatch.hpp"
+#include <ioxx/schedule.hpp>
+#include <ioxx/dispatch.hpp>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <map>
@@ -24,7 +24,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#ifdef IOXX_HAVE_POLL
+#if defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
 #  include <sys/poll.h>
 #else
 #  error "ADNS requires poll() support; select() isn't implemented yet."

@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#include "ioxx/time.hpp"
-#include "ioxx/dns.hpp"
+#include <ioxx/time.hpp>
+#include <ioxx/dns.hpp>
 
 #define BOOST_AUTO_TEST_MAIN
 #include <boost/test/included/unit_test.hpp>

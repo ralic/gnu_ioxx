@@ -13,18 +13,18 @@
 #ifndef IOXX_DEMUX_HPP_INCLUDED_2008_04_20
 #define IOXX_DEMUX_HPP_INCLUDED_2008_04_20
 
-#include "detail/config.hpp"
+#include <ioxx/detail/config.hpp>
 
 #if defined(IOXX_BUILDING_DOCUMENTATION)
 namespace ioxx { typedef implementation_defined demux; }
 #elif defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL
-#  include "detail/epoll.hpp"
+#  include <ioxx/detail/epoll.hpp>
 namespace ioxx { typedef detail::epoll demux; }
 #elif defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
-#  include "detail/poll.hpp"
+#  include <ioxx/detail/poll.hpp>
 namespace ioxx { typedef detail::poll<> demux; }
 #elif defined(IOXX_HAVE_SELECT) && IOXX_HAVE_SELECT
-#  include "detail/select.hpp"
+#  include <ioxx/detail/select.hpp>
 namespace ioxx { typedef detail::select demux; }
 #else
 #  error "No I/O de-multiplexer available for this platform."

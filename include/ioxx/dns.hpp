@@ -13,12 +13,12 @@
 #ifndef IOXX_DNS_HPP_INCLUDED_2008_04_20
 #define IOXX_DNS_HPP_INCLUDED_2008_04_20
 
-#include "detail/config.hpp"
+#include <ioxx/detail/config.hpp>
 
 #if defined(IOXX_BUILDING_DOCUMENTATION)
 namespace ioxx { typedef implementation_defined dns; }
 #elif defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
-#  include "detail/adns.hpp"
+#  include <ioxx/detail/adns.hpp>
 namespace ioxx { typedef detail::adns<> dns; }
 #else
 #  error "No asynchronous DNS resolver available."

@@ -13,7 +13,7 @@
 #ifndef IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
 #define IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
 
-#include "demux.hpp"
+#include <ioxx/demux.hpp>
 #include <boost/function/function1.hpp>
 #include <map>
 

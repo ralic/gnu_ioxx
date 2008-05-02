@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#include "ioxx/time.hpp"
-#include "ioxx/demux.hpp"
+#include <ioxx/time.hpp>
+#include <ioxx/demux.hpp>
 #include <functional>
 
 #define BOOST_AUTO_TEST_MAIN
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE( test_demux_archetype )
 }
 
 #if defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL
-#  include "ioxx/detail/epoll.hpp"
+#  include <ioxx/detail/epoll.hpp>
 
 BOOST_AUTO_TEST_CASE( test_epoll_demux )
 {
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE( test_epoll_demux )
 #endif
 
 #if defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
-#  include "ioxx/detail/poll.hpp"
+#  include <ioxx/detail/poll.hpp>
 
 BOOST_AUTO_TEST_CASE( test_poll_demux )
 {
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE( test_poll_demux )
 #endif
 
 #if defined(IOXX_HAVE_SELECT) && IOXX_HAVE_SELECT
-#  include "ioxx/detail/select.hpp"
+#  include <ioxx/detail/select.hpp>
 
 BOOST_AUTO_TEST_CASE( test_select_demux )
 {
