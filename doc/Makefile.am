@@ -1,6 +1,6 @@
 # ~/doc/Makefile.am
 
-all-local:
+html-local:
 	$(DOXYGEN)
 
 distclean-local:
