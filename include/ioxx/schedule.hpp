@@ -17,6 +17,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/compatibility/cpp_c_headers/ctime>
 #include <boost/assert.hpp>
+#include <algorithm>
 #include <map>
 
 namespace ioxx
@@ -35,6 +36,50 @@ namespace ioxx
     typedef typename task_queue::iterator                               queue_iterator;
     typedef typename task_queue::value_type                             queue_entry;
     typedef std::pair<time_t,queue_iterator>                            task_id;
+
+    class timeout : private boost::noncopyable
+    {
+    public:
+      timeout(schedule & sched) : _sched(_sched), _id(task_id(static_cast<time_t>(0), queue_iterator()))
+      {
+      }
+
+      timeout(schedule & sched, time_t to, task const & f) : _sched(_sched), _id(_sched.at(to, f))
+      {
+      }
+
+      ~timeout()
+      {
+        _sched.cancel(_id);
+      }
+
+      void swap(timeout & other)
+      {
+        BOOST_ASSERT(&other._sched == &_sched);
+        std::swap(other._id, _id);
+      }
+
+      bool reset()
+      {
+        return _sched.cancel(_id);
+      }
+
+      bool reset(time_t now)
+      {
+        return _sched.cancel(_id, now);
+      }
+
+      bool reset(time_t to, task const & f)
+      {
+        bool const cancelled( _sched.cancel(_id) );
+        _id = _sched.at(to, f);
+        return cancelled;
+      }
+
+    private:
+      schedule & _sched;
+      task_id    _id;
+    };
 
     task_id at(time_t to, task const & f)
     {

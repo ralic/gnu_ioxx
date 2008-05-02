@@ -52,12 +52,14 @@
 
    [2008-04-27 Sun]: It won't have to.
 
-** TODO Add a scoped task class to =Scheduler= that mirrors =demux::socket=.
+** DONE Add a scoped task class to =schedule=.
 
    The standard =task_id= is not scoped, i.e. the task is not cancelled on
    destruction. A common use case for scheduled tasks, however, are timeouts,
    and those tasks will exist only for a certain scope, namely the time the
    application is waiting for the i/o operation to complete.
+
+   [2008-05-02 Fri]: Added =schedule<>::timeout=.
 
 ** DONE =dispatch::run()= is insufficient
 
