@@ -134,7 +134,11 @@ class echo
           _sock->request(socket::readable);
         }
       }
+#if 0
+      _tout.reset(_now + 5, boost::bind(&socket::modify, boost::ref(_sock), dispatch::handler()));
+#else
       _tout.reset(_now + 5, boost::bind(&socket_ptr::reset, boost::ref(_sock), static_cast<socket*>(0)));
+#endif
     }
     catch(std::exception const & e)
     {
