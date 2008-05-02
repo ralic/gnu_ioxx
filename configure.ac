@@ -27,25 +27,9 @@ AC_PROG_LIBTOOL
 
 dnl ----- check for boost -----
 
-AC_ARG_VAR([BOOST_SUFFIX], [library suffix used by boost libraries on this platform])
-
-AC_MSG_CHECKING([whether boost/version.hpp is recent enough])
-AC_PREPROC_IFELSE(
-  [dnl
-#include "boost/version.hpp"
-#if !defined(BOOST_VERSION) || BOOST_VERSION < 103401
-#  error boost version is too old
-#endif],
-  [AC_MSG_RESULT([>= 1.34.1])],
-  [AC_MSG_FAILURE([boost version is too old])])
-
-orig_libs="${LIBS}"
-AC_MSG_CHECKING([whether boost_unit_test_framework is available])
-LIBS="${LIBS} -lboost_unit_test_framework${BOOST_SUFFIX}"
-AC_LINK_IFELSE([AC_LANG_CALL([], [exit])],
-  [AC_MSG_RESULT([yes])],
-  [AC_MSG_FAILURE([no])])
-LIBS="${orig_libs}"
+for n in shared_ptr.hpp assert.hpp range.hpp function.hpp test/included/unit_test.hpp; do
+  AC_CHECK_HEADER([boost/$n], [], [AC_MSG_FAILURE([please install boost.org libraries])])
+done
 
 dnl ----- check for various i/o probes -----
 
@@ -58,22 +42,14 @@ IOXX_ENABLE_FEATURE([pselect],     [AX_HAVE_PSELECT],	  [Support pselect(2) on t
 
 dnl ----- check for adns -----
 
-AC_CHECK_HEADER([adns.h])
-AS_IF([test "${ac_cv_header_adns_h}" = yes],
-  [AX_CONFIG_FEATURE_ENABLE(adns)],
-  [AX_CONFIG_FEATURE_DISABLE(adns)])
-AX_CONFIG_FEATURE(
-  adns, [build with GNU ADNS support],
-  IOXX_HAVE_ADNS, [This host has GNU ADNS installed.],
-  [AC_SUBST([IOXX_HAVE_ADNS], [1])], [AC_SUBST([IOXX_HAVE_ADNS], [0])])
-AS_IF([test "${IOXX_HAVE_ADNS}" = 1], [AC_SEARCH_LIBS([adns_init], [adns])], [])
+IOXX_ENABLE_FEATURE([adns],        [AX_HAVE_ADNS],	  [Support GNU ADNS on this platform.])
 
 dnl ----- doxygen -----
 
-AX_WITH_PROG([DOXYGEN], [doxygen], [], [:])
-AX_WITH_PROG([DOT], [dot], [], [:])
-AS_IF([test "${ac_cv_path_DOT}" != ":"], AC_SUBST([HAVE_DOT], [yes]), AC_SUBST([HAVE_DOT], [no]))
-AX_WITH_PERL([], [:])
+AX_WITH_PROG([DOXYGEN], [doxygen], [:])
+AX_WITH_PROG([DOT], [dot], [:])
+AS_IF([test "${ac_cv_path_DOT}" != ":"], [AC_SUBST([HAVE_DOT], [yes])], [AC_SUBST([HAVE_DOT], [no])])
+AX_WITH_PERL([:])
 
 dnl ----- write results -----
 
