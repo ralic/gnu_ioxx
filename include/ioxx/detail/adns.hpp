@@ -90,7 +90,7 @@ namespace ioxx { namespace detail
     {
       IOXX_TRACE_MSG("adns requests A record for " << owner);
       BOOST_ASSERT(h);
-      submit(owner, adns_r_a, adns_queryflags(0), boost::bind(handleA, _1, h));
+      submit(owner, adns_r_a, adns_qf_none, boost::bind(handleA, _1, h));
     }
 
     void query_a_no_cname(char const * owner, a_handler const & h)
@@ -104,14 +104,14 @@ namespace ioxx { namespace detail
     {
       IOXX_TRACE_MSG("adns requests MX record for " << owner);
       BOOST_ASSERT(h);
-      submit(owner, adns_r_mx, adns_queryflags(0), boost::bind(handleMX, _1, h));
+      submit(owner, adns_r_mx, adns_qf_none, boost::bind(handleMX, _1, h));
     }
 
     void query_ptr(char const * owner, ptr_handler const & h)
     {
       IOXX_TRACE_MSG("adns requests PTR record for " << owner);
       BOOST_ASSERT(h);
-      submit(owner, adns_r_ptr, adns_queryflags(0), boost::bind(handlePTR, _1, h));
+      submit(owner, adns_r_ptr, adns_qf_none, boost::bind(handlePTR, _1, h));
     }
 
     void run()
