@@ -46,11 +46,11 @@ namespace ioxx
     public:
       typedef typename demux::socket::event_set event_set;
 
-      socket(dispatch & p, native_socket_t sock, handler const & f, event_set ev = demux::socket::no_events)
-      : demux::socket(p, sock, ev)
+      socket(dispatch & disp, native_socket_t sock, handler const & f = handler(), event_set ev = demux::socket::no_events)
+      : demux::socket(disp, sock, ev)
       {
-        BOOST_ASSERT(sock >= 0);
-        std::pair<iterator,bool> const r( context()._handlers.insert(std::make_pair(sock, f)) );
+        BOOST_ASSERT(this->as_native_socket_t() >= 0);
+        std::pair<iterator,bool> const r( context()._handlers.insert(std::make_pair(this->as_native_socket_t(), f)) );
         _iter = r.first;
         BOOST_ASSERT(r.second);
       }
@@ -65,10 +65,10 @@ namespace ioxx
         _iter->second = f;
       }
 
-      void modify(handler const & f, event_set ev)
+      void modify(handler f, event_set ev)
       {
-        modify(f);
-        demux::request(ev);
+        this->request(ev);
+        std::swap(_iter->second, f);
       }
 
     protected:
