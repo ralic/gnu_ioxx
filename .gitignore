@@ -26,6 +26,7 @@
 /libtool
 /ltmain.sh
 /missing
+/test/core
 /test/demux
 /test/dispatch
 /test/dns
