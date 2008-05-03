@@ -7,8 +7,11 @@ TESTS =                         \
   schedule			\
   socket			\
   demux				\
-  dispatch			\
-  dns
+  dispatch
+
+if HAVE_DNS
+TESTS += dns
+endif
 
 check_PROGRAMS = ${TESTS}
 

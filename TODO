@@ -94,6 +94,8 @@
 
    [2008-05-02 Fri]: Implemented in AX_HAVE_ADNS.
 
+** TODO Add a dummy DNS server we can use is case ADNS isn't available.
+
 
 * Documentation
 
