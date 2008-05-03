@@ -22,16 +22,12 @@
 
 class echo : public boost::enable_shared_from_this<echo>
 {
-  typedef ioxx::core::socket            socket;
-  typedef boost::scoped_ptr<socket>     socket_ptr;
-  typedef socket::event_set             event_set;
-
-  socket_ptr                    _sock;
+  ioxx::core::socket            _sock;
   boost::array<char,1024>       _buf;
   size_t                        _len;
   size_t                        _gap;
 
-  echo() : _len(0u), _gap(0u)
+  echo(ioxx::core & io, ioxx::native_socket_t s) : _sock(io, s), _len(0u), _gap(0u)
   {
     BOOST_REQUIRE(_buf.size());
   }
@@ -39,18 +35,18 @@ class echo : public boost::enable_shared_from_this<echo>
   void input()
   {
     BOOST_REQUIRE_EQUAL(_len, 0u);
-    char * const data_end( _sock->read(_buf.begin(), _buf.end()) );
+    char * const data_end( _sock.read(_buf.begin(), _buf.end()) );
     if (!data_end) throw std::runtime_error("reached end of input");
     BOOST_ASSERT(_buf.begin() < data_end);
     _len = static_cast<size_t>(data_end - _buf.begin());
-    _sock->on_output(boost::bind(&echo::output, shared_from_this()));
+    _sock.on_output(boost::bind(&echo::output, shared_from_this()));
   }
 
   void output()
   {
     BOOST_REQUIRE(_len);
     BOOST_REQUIRE(_gap + _len <= _buf.size());
-    char const * const new_begin( _sock->write(&_buf[_gap], &_buf[_gap + _len]) );
+    char const * const new_begin( _sock.write(&_buf[_gap], &_buf[_gap + _len]) );
     BOOST_REQUIRE(new_begin);
     BOOST_REQUIRE(_buf.begin() < new_begin);
     size_t const n(new_begin - _buf.begin());
@@ -59,21 +55,19 @@ class echo : public boost::enable_shared_from_this<echo>
     if (_len == 0u)
     {
       _gap = 0u;
-      _sock->on_input(boost::bind(&echo::input, shared_from_this()));
+      _sock.on_input(boost::bind(&echo::input, shared_from_this()));
     }
   }
 
 public:
   ~echo() { IOXX_TRACE_MSG("destroy echo handler"); }
 
-  static void accept(ioxx::core & io, ioxx::native_socket_t s, socket::address const & addr)
+  static void accept(ioxx::core & io, ioxx::native_socket_t s, ioxx::core::socket::address const & addr)
   {
     IOXX_TRACE_SOCKET(s, "start echo handler for peer " << addr.show());
     boost::shared_ptr<echo> ptr;
-    ptr.reset( new echo );
-    socket * sock( new socket(io, s) );
-    ptr->_sock.reset(sock);
-    ptr->_sock->on_input(boost::bind(&echo::input, ptr));
+    ptr.reset( new echo(io, s) );
+    ptr->_sock.on_input(boost::bind(&echo::input, ptr));
   }
 };
 
