@@ -7,11 +7,9 @@ TESTS =                         \
   schedule			\
   socket			\
   demux				\
-  dispatch
-
-if HAVE_DNS
-TESTS += dns
-endif
+  dispatch			\
+  dns				\
+  core
 
 check_PROGRAMS = ${TESTS}
 
@@ -21,5 +19,6 @@ socket_SOURCES = socket.cpp
 dispatch_SOURCES = dispatch.cpp
 demux_SOURCES = demux.cpp
 dns_SOURCES = dns.cpp
+core_SOURCES = core.cpp
 
 MAINTAINERCLEANFILES = Makefile.in

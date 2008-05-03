@@ -10,11 +10,9 @@
  * this notice are preserved.
  */
 
+#if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
 #include <ioxx/time.hpp>
 #include <ioxx/dns.hpp>
-
-#define BOOST_AUTO_TEST_MAIN
-#include <boost/test/included/unit_test.hpp>
 #include <iostream>
 
 struct print
@@ -51,9 +49,14 @@ struct print
       std::cout << "NULL" << std::endl;
   }
 };
+#endif
+
+#define BOOST_AUTO_TEST_MAIN
+#include <boost/test/included/unit_test.hpp>
 
 BOOST_AUTO_TEST_CASE( test_dns_resolver )
 {
+#if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
   ioxx::time           now;
   ioxx::dns::schedule  schedule;
   ioxx::dns::dispatch  dispatch;
@@ -75,4 +78,5 @@ BOOST_AUTO_TEST_CASE( test_dns_resolver )
     dispatch.wait(timeout);
     now.update();
   }
+#endif
 }

@@ -53,7 +53,6 @@ AX_WITH_PERL([:])
 
 dnl ----- write results -----
 
-AM_CONDITIONAL([HAVE_DNS], [test "${IOXX_HAVE_ADNS}" = 1])
 AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/include/ioxx/detail/config.hpp.in'])
 AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/doc/Doxyfile.in'])
 AC_CONFIG_HEADERS([build-aux/config.h])
