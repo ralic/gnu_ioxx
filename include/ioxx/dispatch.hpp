@@ -14,8 +14,8 @@
 #define IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
 
 #include <ioxx/demux.hpp>
-#include <ioxx/detail/hash_map.hpp>
 #include <boost/function/function1.hpp>
+#include <map>
 
 namespace ioxx
 {
@@ -79,7 +79,7 @@ namespace ioxx
 
     static seconds_t max_timeout() { return demux::max_timeout(); }
 
-    explicit dispatch(unsigned int size_hint = 512u) : demux(size_hint) { }
+    dispatch() { }
 
     bool empty() const { return _handlers.empty(); }
 
