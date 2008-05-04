@@ -14,8 +14,8 @@
 #define IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
 
 #include <ioxx/demux.hpp>
+#include <ioxx/detail/hash_map.hpp>
 #include <boost/function/function1.hpp>
-#include <map>
 
 namespace ioxx
 {
@@ -27,19 +27,18 @@ namespace ioxx
   /**
    * A simple time-event dispatcher.
    */
-  template < class Demux     = demux
-           , class Handler   = boost::function1<void, typename Demux::socket::event_set>
-           , class Allocator = std::allocator< std::pair<native_socket_t const, Handler> >
+  template < class Demux      = demux
+           , class Handler    = boost::function1<void, typename Demux::socket::event_set>
+           , class HandlerMap = std::map<native_socket_t,Handler>
            >
   class dispatch : protected Demux
   {
   public:
     typedef Demux                                                                       demux;
     typedef Handler                                                                     handler;
-    typedef typename demux::socket::event_set                                           event_set;
-
-    typedef std::map<native_socket_t,Handler,std::less<native_socket_t>,Allocator>      handler_map;
+    typedef HandlerMap                                                                  handler_map;
     typedef typename handler_map::iterator                                              iterator;
+    typedef typename demux::socket::event_set                                           event_set;
 
     class socket : public demux::socket
     {
