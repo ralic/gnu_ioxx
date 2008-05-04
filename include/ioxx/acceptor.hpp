@@ -48,13 +48,8 @@ namespace ioxx
     {
       native_socket_t s;
       address addr;
-      for(;;)
+      while(this->accept(s, addr))
       {
-        addr.as_socklen_t() = sizeof(sockaddr);
-        s = detail::throw_errno_if( detail::not_ewould_block(), "accept(2)"
-                                  , boost::bind(&::accept, this->as_native_socket_t(), &addr.as_sockaddr(), &addr.as_socklen_t())
-                                  );
-        if (s < 0) break;
         detail::socket new_socket(s); // act as scope guard
         new_socket.set_nonblocking();
         new_socket.set_linger_timeout(0);
