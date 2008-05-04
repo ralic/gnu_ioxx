@@ -17,8 +17,6 @@
 #include <ioxx/schedule.hpp>
 #include <ioxx/dispatch.hpp>
 #include <ioxx/dns.hpp>
-#include <ioxx/acceptor.hpp>
-#include <boost/shared_ptr.hpp>
 
 namespace ioxx
 {
@@ -26,6 +24,8 @@ namespace ioxx
   {
   public:
     typedef schedule<>                  schedule;
+    typedef schedule::task              task;
+    typedef schedule::task_id           task_id;
     typedef schedule::timeout           timeout;
     typedef dispatch<>                  dispatch;
     typedef boost::function0<void>      handler;
@@ -37,6 +37,14 @@ namespace ioxx
       : dispatch::socket( io, sock, boost::bind(&socket::run, this, _1), dispatch::socket::no_events)
       , _to_in(io._schedule), _to_out(io._schedule), _to_pri(io._schedule)
       {
+      }
+
+      void reset()
+      {
+        _in.clear();  _to_in.reset();
+        _out.clear(); _to_out.reset();
+        _pri.clear(); _to_pri.reset();
+        register_events();
       }
 
       void on_input(handler const & f)
@@ -59,12 +67,12 @@ namespace ioxx
         set(_out, _to_out, f, tout, on_timeout);
       }
 
-      void on_priput(handler const & f)
+      void on_pridata(handler const & f)
       {
         set(_pri, _to_pri, f, 0u, handler());
       }
 
-      void on_priput(handler const & f, seconds_t tout, handler const & on_timeout)
+      void on_pridata(handler const & f, seconds_t tout, handler const & on_timeout)
       {
         set(_pri, _to_pri, f, tout, on_timeout);
       }
@@ -131,6 +139,9 @@ namespace ioxx
           register_events();
       }
     };
+
+    task_id at(time_t ts, task const & f)       { return _schedule.at(ts, f); }
+    task_id in(seconds_t to, task const & f)    { return _schedule.at(_now.as_time_t() + to, f); }
 
     void run()
     {

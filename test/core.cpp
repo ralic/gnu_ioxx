@@ -10,7 +10,7 @@
  * this notice are preserved.
  */
 
-#include <ioxx/core.hpp>
+#include "core.hpp"
 #include <ioxx/acceptor.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -36,10 +36,10 @@ class echo : public boost::enable_shared_from_this<echo>
   {
     BOOST_REQUIRE_EQUAL(_len, 0u);
     char * const data_end( _sock.read(_buf.begin(), _buf.end()) );
-    if (!data_end) throw std::runtime_error("reached end of input");
+    if (!data_end) return;
     BOOST_ASSERT(_buf.begin() < data_end);
     _len = static_cast<size_t>(data_end - _buf.begin());
-    _sock.on_output(boost::bind(&echo::output, shared_from_this()));
+    _sock.on_output(boost::bind(&echo::output, shared_from_this()), 5u, boost::bind(&echo::reset, shared_from_this()));
   }
 
   void output()
@@ -55,9 +55,11 @@ class echo : public boost::enable_shared_from_this<echo>
     if (_len == 0u)
     {
       _gap = 0u;
-      _sock.on_input(boost::bind(&echo::input, shared_from_this()));
+      _sock.on_input(boost::bind(&echo::input, shared_from_this()), 5u, boost::bind(&echo::reset, shared_from_this()));
     }
   }
+
+  void reset() { _sock.reset(); }
 
 public:
   ~echo() { IOXX_TRACE_MSG("destroy echo handler"); }
@@ -83,14 +85,14 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   using boost::bind;
   using boost::ref;
 
-  ioxx::core io;
+  ioxx::core    io;
   dispatch      disp;
   acceptor_ptr  ls;
   ls.reset( new acceptor( io, endpoint("127.0.0.1", "8080")
                         , bind(&echo::accept, ref(io), _1, _2)
                         ));
   IOXX_TRACE_SOCKET(*ls, "accepting connections on port 8080");
-  //sched.at(now.as_time_t() + 5, bind(&acceptor_ptr::reset, ref(ls), static_cast<acceptor*>(0)));
+  io.in(5u, bind(&acceptor_ptr::reset, ref(ls), static_cast<acceptor*>(0)));
   io.run();
   IOXX_TRACE_MSG("shutting down");
 }
