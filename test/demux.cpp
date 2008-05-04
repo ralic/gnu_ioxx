@@ -42,7 +42,7 @@ struct demux_concept
     ev1 = socket::writable;
     ev1 = socket::pridata;
 
-    demux dmx(static_cast<unsigned int>(128u)); // instantiate with size hint
+    demux dmx;
     bool b( dmx.empty() );
     b = dmx.pop_event(sock, ev1);
     dmx.wait(static_cast<ioxx::seconds_t>(0));
@@ -70,12 +70,13 @@ struct demux_archetype
     void request(event_set) { }
   };
 
-  demux_archetype() { }
-  demux_archetype(unsigned int /* size hint */) { }
+  typedef socket::event_set     event_set;
+
+  demux_archetype() { throw std::logic_error("demux_archetype is not a valid implementation"); }
 
   bool empty() { return true; }
   bool pop_event(ioxx::native_socket_t & s, socket::event_set & ev)  { return false; }
-  void wait(ioxx::seconds_t to) { ::sleep(to); }
+  void wait(ioxx::seconds_t to) { }
 };
 
 demux_archetype::socket::event_set const demux_archetype::socket::readable;
@@ -138,7 +139,7 @@ void test_demux()
 
 BOOST_AUTO_TEST_CASE( test_demux_archetype )
 {
-  test_demux<demux_archetype>();
+  BOOST_REQUIRE_THROW(test_demux<demux_archetype>(), std::logic_error);
 }
 
 #if defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL

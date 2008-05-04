@@ -127,7 +127,7 @@ namespace ioxx { namespace detail
       return static_cast<seconds_t>(std::numeric_limits<int>::max() / 1000);
     }
 
-    poll(unsigned int /* size_hint */ = 0u) : _n_events(0u), _current(0u)
+    poll() : _n_events(0u), _current(0u)
     {
     }
 

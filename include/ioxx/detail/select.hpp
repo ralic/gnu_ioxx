@@ -102,7 +102,7 @@ namespace ioxx { namespace detail
       return static_cast<seconds_t>(std::numeric_limits<int>::max());
     }
 
-    select(unsigned int /* size_hint */ = 0u) : _max_fd(-1), _current(0), _n_events(0u)
+    select() : _max_fd(-1), _current(0), _n_events(0u)
     {
       FD_ZERO(&_req_read_fds);
       FD_ZERO(&_req_write_fds);

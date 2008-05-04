@@ -90,7 +90,7 @@ namespace ioxx { namespace detail
       return static_cast<seconds_t>(std::numeric_limits<int>::max() / 1000);
     }
 
-    epoll(unsigned int size_hint = 128u) : _n_events(0u), _current(0u)
+    explicit epoll(unsigned int size_hint = 128u) : _n_events(0u), _current(0u)
     {
       size_hint = std::min(size_hint, static_cast<unsigned int>(std::numeric_limits<int>::max()));
       _epoll_fd = throw_errno_if_minus1("create epoll socket", boost::bind(&epoll_create, static_cast<int>(size_hint)));
