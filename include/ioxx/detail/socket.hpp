@@ -24,8 +24,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include <boost/function/function2.hpp>
-
 namespace ioxx { namespace detail
 {
   class socket : private boost::noncopyable
@@ -185,6 +183,15 @@ namespace ioxx { namespace detail
     void listen(unsigned short backlog)
     {
       throw_errno_if_minus1("listen(2)", boost::bind(&::listen, _sock, static_cast<int>(backlog)));
+    }
+
+    bool accept(native_socket_t & s, address & addr)
+    {
+      addr.as_socklen_t() = sizeof(sockaddr);
+      s = detail::throw_errno_if( detail::not_ewould_block(), "accept(2)"
+                                , boost::bind(&::accept, as_native_socket_t(), &addr.as_sockaddr(), &addr.as_socklen_t())
+                                );
+      return s >= 0;
     }
 
     char * read(char * begin, char const * end)
