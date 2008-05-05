@@ -59,12 +59,12 @@ namespace ioxx
         std::swap(other._id, _id);
       }
 
-      bool reset()
+      bool cancel()
       {
         return _sched.cancel(_id);
       }
 
-      bool reset(time_t now)
+      bool cancel(time_t now)
       {
         return _sched.cancel(_id, now);
       }

@@ -38,9 +38,9 @@ namespace ioxx
 
       void reset()
       {
-        _in.clear();  _to_in.reset();
-        _out.clear(); _to_out.reset();
-        _pri.clear(); _to_pri.reset();
+        _in.clear();  _to_in.cancel();
+        _out.clear(); _to_out.cancel();
+        _pri.clear(); _to_pri.cancel();
         register_events();
       }
 
@@ -114,21 +114,21 @@ namespace ioxx
         if (ev & dispatch::socket::readable && _in)
         {
           handler f;
-          _to_in.reset();
+          _to_in.cancel();
           f.swap(_in);
           f();
         }
         if (ev & dispatch::socket::writable && _out)
         {
           handler f;
-          _to_out.reset();
+          _to_out.cancel();
           f.swap(_out);
           f();
         }
         if (ev & dispatch::socket::pridata && _pri)
         {
           handler f;
-          _to_pri.reset();
+          _to_pri.cancel();
           f.swap(_pri);
           f();
         }
