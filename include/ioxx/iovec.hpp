@@ -29,17 +29,17 @@ namespace ioxx
   /**
    * Set an iovec to the given byte range.
    */
-  inline void reset(iovec & iov, char * b, char * e)
+  inline void reset(iovec & iov, char const * b, char const * e)
   {
     BOOST_ASSERT(b <= e);
-    iov.iov_base = b;
+    iov.iov_base = const_cast<char*>(b);
     iov.iov_len = static_cast<std::size_t>(e - b);
   }
 
   /**
    * Construct ioxx::iovec using an iterator range.
    */
-  inline iovec make_iovec(char * b, char * e)
+  inline iovec make_iovec(char const * b, char const * e)
   {
     iovec v;
     reset(v, b, e);
