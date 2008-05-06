@@ -44,7 +44,11 @@ namespace ioxx
       {
       }
 
-      timeout(schedule & sched, time_t to, task const & f) : _sched(sched), _id(_sched.at(to, f))
+      timeout(schedule & sched, time_t ts, task const & f) : _sched(sched), _id(_sched.at(ts, f))
+      {
+      }
+
+      timeout(schedule & sched, seconds_t to, task const & f) : _sched(sched), _id(_sched.in(to, f))
       {
       }
 
@@ -64,31 +68,44 @@ namespace ioxx
         return _sched.cancel(_id);
       }
 
-      bool cancel(time_t now)
-      {
-        return _sched.cancel(_id, now);
-      }
-
-      bool reset(time_t to, task const & f)
+      bool at(time_t ts, task const & f)
       {
         bool const cancelled( _sched.cancel(_id) );
-        _id = _sched.at(to, f);
+        _id = _sched.at(ts, f);
         return cancelled;
       }
+
+      bool in(seconds_t to, task const & f)
+      {
+        return at(_sched.now() + to, f);
+      }
+
+      schedule &        get_schedule()          { return _sched; }
+      schedule const &  get_schedule() const    { return _sched; }
 
     private:
       schedule & _sched;
       task_id    _id;
     };
 
-    task_id at(time_t to, task const & f)
+    schedule(time_t const & now) : _now(now) { }
+
+    time_t const & now() const { return _now; }
+
+    task_id at(time_t ts, task const & f)
     {
-      return task_id(to, _queue.insert(queue_entry(to, f)));
+      return task_id(ts, _queue.insert(queue_entry(ts, f)));
+    }
+
+    task_id in(seconds_t to, task const & f)
+    {
+      return at(_now + to, f);
     }
 
     void unsafe_cancel(task_id & tid)
     {
-      BOOST_ASSERT(tid.first != 0); BOOST_ASSERT(!_queue.empty());
+      BOOST_ASSERT(tid.first != 0);
+      BOOST_ASSERT(!_queue.empty());
       _queue.erase(tid.second);
       tid.first = static_cast<time_t>(0);
     }
@@ -115,42 +132,31 @@ namespace ioxx
       return false;
     }
 
-    bool cancel(task_id & tid, time_t now)
-    {
-      if (tid.first > now)
-      {
-        BOOST_ASSERT(_queue.begin()->first <= tid.first);
-        unsafe_cancel(tid);
-        return true;
-      }
-      else
-        return cancel(tid);
-    }
-
     bool empty() const
     {
       return _queue.empty();
     }
 
-    seconds_t run(time_t now)
+    seconds_t run()
     {
       while (!empty())
       {
         queue_iterator i( _queue.begin() );
-        if (i->first <= now)
+        if (i->first <= _now)
         {
           task f(i->second);
           _queue.erase(i);
           f();
         }
         else
-          return static_cast<seconds_t>(i->first - now);
+          return static_cast<seconds_t>(i->first - _now);
       }
       return 0;
     }
 
   private:
-    task_queue _queue;
+    task_queue          _queue;
+    time_t const &      _now;
   };
 
 } // namespace ioxx

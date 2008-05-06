@@ -37,6 +37,10 @@ namespace ioxx
     typedef typename dispatch::event_set                                                                event_set;
     typedef typename dispatch::socket                                                                   socket;
 
+    io_core() : _schedule(_now.as_time_t())
+    {
+    }
+
     time &      get_time()      { return _now; }
     schedule &  get_schedule()  { return _schedule; }
     dispatch &  get_dispatch()  { return _dispatch; }
@@ -44,7 +48,7 @@ namespace ioxx
     seconds_t run()
     {
       _dispatch.run();
-      seconds_t timeout( _schedule.run(_now.as_time_t()) );
+      seconds_t timeout( _schedule.run() );
       if (_schedule.empty())
       {
         if (_dispatch.empty())  BOOST_ASSERT(timeout == 0u);
@@ -93,7 +97,7 @@ public:
     self_ptr p;
     p.reset(new httpd(io, s));
     p->_sock.modify(boost::bind(&self::run, p, _1), socket::readable);;
-    p->_timeout.reset(io.get_time().as_time_t() + 30u, boost::bind(&socket::modify, boost::ref(p->_sock), handler()));
+    p->_timeout.in(30u, boost::bind(&socket::modify, boost::ref(p->_sock), handler()));
   }
 
 private:

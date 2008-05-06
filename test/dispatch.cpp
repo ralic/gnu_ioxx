@@ -35,9 +35,8 @@ class echo
   boost::array<char,1024>       _buf;
   size_t                        _len;
   size_t                        _gap;
-  ioxx::time_t const &          _now;
 
-  echo(schedule & sched, ioxx::time_t const & now) : _tout(sched), _len(0u), _gap(0u), _now(now)
+  echo(schedule & sched) : _tout(sched), _len(0u), _gap(0u)
   {
     BOOST_REQUIRE(_buf.size());
   }
@@ -73,9 +72,9 @@ class echo
         }
       }
 #if 0
-      _tout.reset(_now + 5, boost::bind(&socket::modify, boost::ref(_sock), dispatch::handler()));
+      _tout.in(5, boost::bind(&socket::modify, boost::ref(_sock), dispatch::handler()));
 #else
-      _tout.reset(_now + 5, boost::bind(&socket_ptr::reset, boost::ref(_sock), static_cast<socket*>(0)));
+      _tout.in(5, boost::bind(&socket_ptr::reset, boost::ref(_sock), static_cast<socket*>(0)));
 #endif
     }
     catch(std::exception const & e)
@@ -88,11 +87,11 @@ class echo
 public:
   ~echo() { IOXX_TRACE_MSG("destroy echo handler"); }
 
-  static void accept(schedule & sched, ioxx::time_t const & now, dispatch & disp, ioxx::native_socket_t s, socket::address const & addr)
+  static void accept(schedule & sched, dispatch & disp, ioxx::native_socket_t s, socket::address const & addr)
   {
     IOXX_TRACE_SOCKET(s, "start echo handler for peer " << addr.show());
     boost::shared_ptr<echo> f;
-    f.reset( new echo(sched, now) );
+    f.reset( new echo(sched) );
     socket * sock( new socket(disp, s, boost::bind(&echo::run, f, _1), socket::readable) );
     f->_sock.reset(sock);
     f->run(socket::no_events);
@@ -114,18 +113,18 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   using boost::ref;
 
   time          now;
-  schedule      sched;
+  schedule      sched(now.as_time_t());
   dispatch      disp;
   acceptor_ptr  ls;
   ls.reset( new acceptor( disp, endpoint("127.0.0.1", "8080")
-                        , bind(&echo::accept, ref(sched), ref(now.as_time_t()), ref(disp), _1, _2)
+                        , bind(&echo::accept, ref(sched), ref(disp), _1, _2)
                         ));
   IOXX_TRACE_SOCKET(*ls, "accepting connections on port 8080");
-  sched.at(now.as_time_t() + 5, bind(&acceptor_ptr::reset, ref(ls), static_cast<acceptor*>(0)));
+  sched.in(5u, bind(&acceptor_ptr::reset, ref(ls), static_cast<acceptor*>(0)));
   for (;;)
   {
     disp.run();
-    ioxx::seconds_t timeout( sched.run(now.as_time_t()) );
+    ioxx::seconds_t timeout( sched.run() );
     if (sched.empty())
     {
       if (disp.empty()) break;

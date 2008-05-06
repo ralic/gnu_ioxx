@@ -34,23 +34,23 @@ BOOST_AUTO_TEST_CASE( dummy_schedule_test )
   typedef ioxx::schedule<dummy> scheduler;
 
   time now;
-  scheduler schedule;
+  scheduler schedule(now.as_time_t());
   size_t dummy_call_counter( 0u );
   BOOST_REQUIRE(schedule.empty());
-  BOOST_REQUIRE_EQUAL(schedule.run(now.as_time_t()), 0u);
+  BOOST_REQUIRE_EQUAL(schedule.run(), 0u);
   BOOST_REQUIRE_EQUAL(dummy_call_counter, 0u);
   schedule.at(now.as_time_t(), dummy(dummy_call_counter));
-  schedule.at(now.as_time_t() + 1u, dummy(dummy_call_counter));
-  scheduler::task_id tid( schedule.at(now.as_time_t() + 5u, dummy(dummy_call_counter)) );
-  seconds_t delay( schedule.run(now.as_time_t()) );
+  schedule.in(1u, dummy(dummy_call_counter));
+  scheduler::task_id tid( schedule.in(5u, dummy(dummy_call_counter)) );
+  seconds_t delay( schedule.run() );
   BOOST_REQUIRE_EQUAL(delay, 1u);
   BOOST_REQUIRE_EQUAL(dummy_call_counter, 1u);
   sleep(delay); now.update();
-  delay = schedule.run(now.as_time_t());
+  delay = schedule.run();
   BOOST_REQUIRE_EQUAL(delay, 4u);
   BOOST_REQUIRE_EQUAL(dummy_call_counter, 2u);
   schedule.unsafe_cancel(tid);
-  delay = schedule.run(now.as_time_t());
+  delay = schedule.run();
   BOOST_REQUIRE_EQUAL(dummy_call_counter, 2u);
   BOOST_REQUIRE_EQUAL(delay, 0u);
   BOOST_REQUIRE(schedule.empty());
@@ -60,17 +60,17 @@ BOOST_AUTO_TEST_CASE( test_schedule_timeout )
 {
   ioxx::time now;
   typedef ioxx::schedule<dummy> scheduler;
-  scheduler schedule;
+  scheduler schedule(now.as_time_t());
   size_t dummy_call_counter( 0u );
   {
     scheduler::timeout timeout( schedule );
     BOOST_REQUIRE_EQUAL(dummy_call_counter, 0u);
-    timeout.reset(now.as_time_t(), dummy(dummy_call_counter));
-    schedule.run(now.as_time_t());
+    timeout.at(now.as_time_t(), dummy(dummy_call_counter));
+    schedule.run();
     BOOST_REQUIRE_EQUAL(dummy_call_counter, 1u);
-    timeout.reset(now.as_time_t() + 1, dummy(dummy_call_counter));
+    timeout.in(1u, dummy(dummy_call_counter));
   }
-  schedule.run(now.as_time_t());
+  schedule.run();
   BOOST_REQUIRE_EQUAL(dummy_call_counter, 1u);
 }
 
@@ -83,23 +83,23 @@ BOOST_AUTO_TEST_CASE( basic_schedule_test )
   using ioxx::seconds_t;
   typedef ioxx::schedule<> scheduler;
   time now;
-  scheduler schedule;
+  scheduler schedule(now.as_time_t());
   BOOST_REQUIRE(schedule.empty());
-  BOOST_REQUIRE_EQUAL(schedule.run(now.as_time_t()), 0u);
+  BOOST_REQUIRE_EQUAL(schedule.run(), 0u);
   BOOST_REQUIRE_EQUAL(dummy_was_called, 0u);
   schedule.at(now.as_time_t(), dummy_function);
-  schedule.at(now.as_time_t() + 1u, dummy_function);
-  scheduler::task_id tid( schedule.at(now.as_time_t() + 5u, dummy_function) );
-  schedule.at(now.as_time_t() + 2u, boost::bind(&scheduler::cancel, &schedule, tid));
-  seconds_t delay( schedule.run(now.as_time_t()) );
+  schedule.in(1u, dummy_function);
+  scheduler::task_id tid( schedule.in(5u, dummy_function) );
+  schedule.in(2u, boost::bind(&scheduler::cancel, &schedule, tid));
+  seconds_t delay( schedule.run() );
   BOOST_REQUIRE_EQUAL(delay, 1u);
   BOOST_REQUIRE_EQUAL(dummy_was_called, 1u);
   sleep(delay); now.update();
-  delay = schedule.run(now.as_time_t());
+  delay = schedule.run();
   BOOST_REQUIRE_EQUAL(dummy_was_called, 2u);
   BOOST_REQUIRE_PREDICATE(std::less_equal<int>(), (delay)(1u));
   sleep(delay); now.update();
-  delay = schedule.run(now.as_time_t());
+  delay = schedule.run();
   BOOST_REQUIRE_EQUAL(dummy_was_called, 2u);
   BOOST_REQUIRE_EQUAL(delay, 0u);
   BOOST_REQUIRE(schedule.empty());
