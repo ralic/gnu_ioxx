@@ -14,6 +14,7 @@
 #define IOXX_DETAIL_POLL_HPP_INCLUDED_2008_04_20
 
 #include <ioxx/detail/socket.hpp>
+#include <ioxx/detail/signals.hpp>
 #include <boost/noncopyable.hpp>
 #include <vector>
 #include <map>
@@ -153,7 +154,18 @@ namespace ioxx { namespace detail
     {
       BOOST_ASSERT(timeout <= max_timeout());
       BOOST_ASSERT(!_n_events);
-      int const rc( ::poll(&_pfd[0], _pfd.size(), static_cast<int>(timeout) * 1000) );
+#if defined(IOXX_HAVE_PPOLL) && IOXX_HAVE_PPOLL
+      timespec const to = { timeout, 0 };
+      sigset_t unblock_all;
+      throw_errno_if_minus1("sigemptyset(3)", boost::bind(&::sigemptyset, &unblock_all));
+      int const rc( ::ppoll(&_pfd[0], _pfd.size(), &to, &unblock_all) );
+#else
+      int rc;
+      {
+        unblock_signals signal_scope;
+        rc = ::poll(&_pfd[0], _pfd.size(), static_cast<int>(timeout) * 1000);
+      }
+#endif
       IOXX_TRACE_MSG("poll::wait() returned " << rc);
       if (rc < 0)
       {

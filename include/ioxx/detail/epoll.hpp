@@ -14,6 +14,7 @@
 #define IOXX_DETAIL_EPOLL_HPP_INCLUDED_2008_04_20
 
 #include <ioxx/detail/socket.hpp>
+#include <ioxx/detail/signals.hpp>
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <limits>
@@ -118,10 +119,24 @@ namespace ioxx { namespace detail
     {
       BOOST_ASSERT(timeout <= max_timeout());
       BOOST_ASSERT(!_n_events);
-      int const rc( epoll_wait( _epoll_fd
-                              , _events, sizeof(_events) / sizeof(epoll_event)
-                              , static_cast<int>(timeout) * 1000
-                              ));
+#if defined(IOXX_HAVE_EPOLL_PWAIT) && IOXX_HAVE_EPOLL_PWAIT
+      sigset_t unblock_all;
+      throw_errno_if_minus1("sigemptyset(3)", boost::bind(&::sigemptyset, &unblock_all));
+      int const rc( epoll_pwait( _epoll_fd
+                               , _events, sizeof(_events) / sizeof(epoll_event)
+                               , static_cast<int>(timeout) * 1000
+                               , &unblock_all
+                               ));
+#else
+      int rc;
+      {
+        unblock_signals signal_scope;
+        rc = epoll_wait( _epoll_fd
+                       , _events, sizeof(_events) / sizeof(epoll_event)
+                       , static_cast<int>(timeout) * 1000
+                       );
+      }
+#endif
       IOXX_TRACE_MSG("epoll::wait() returned " << rc);
       if (rc < 0)
       {

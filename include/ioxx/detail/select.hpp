@@ -14,6 +14,7 @@
 #define IOXX_DETAIL_SELECT_HPP_INCLUDED_2008_04_20
 
 #include <ioxx/detail/socket.hpp>
+#include <ioxx/detail/signals.hpp>
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <limits>
@@ -132,16 +133,36 @@ namespace ioxx { namespace detail
     {
       BOOST_ASSERT(timeout <= max_timeout());
       BOOST_ASSERT(!_n_events);
-      timeval tv = { timeout, 0 };
       if (_max_fd == -1)
       {
+#if defined(IOXX_HAVE_PSELECT) && IOXX_HAVE_PSELECT
+        timespec const to = { timeout, 0 };
+        sigset_t unblock_all;
+        throw_errno_if_minus1("sigemptyset(3)", boost::bind(&::sigemptyset, &unblock_all));
+        ::pselect(0, NULL, NULL, NULL, &to, &unblock_all);
+#else
+        timeval tv = { timeout, 0 };
+        unblock_signals signal_scope;
         ::select(0, NULL, NULL, NULL, &tv);
+#endif
         return;
       }
       _recv_read_fds   = _req_read_fds;
       _recv_write_fds  = _req_write_fds;
       _recv_except_fds = _req_except_fds;
-      int const rc( ::select(_max_fd + 1, &_recv_read_fds, &_recv_write_fds, &_recv_except_fds, &tv) );
+#if defined(IOXX_HAVE_PSELECT) && IOXX_HAVE_PSELECT
+      timespec const to = { timeout, 0 };
+      sigset_t unblock_all;
+      throw_errno_if_minus1("sigemptyset(3)", boost::bind(&::sigemptyset, &unblock_all));
+      int const rc( ::pselect(_max_fd + 1, &_recv_read_fds, &_recv_write_fds, &_recv_except_fds, &to, &unblock_all) );
+#else
+      int rc;
+      {
+        timeval tv = { timeout, 0 };
+        unblock_signals signal_scope;
+        rc = ::select(_max_fd + 1, &_recv_read_fds, &_recv_write_fds, &_recv_except_fds, &tv);
+      }
+#endif
       IOXX_TRACE_MSG("select::wait() returned " << rc);
       if (rc < 0)
       {
