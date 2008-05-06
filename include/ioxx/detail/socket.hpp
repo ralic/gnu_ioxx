@@ -29,6 +29,8 @@ namespace ioxx { namespace detail
   class socket : private boost::noncopyable
   {
   public:
+    typedef native_socket_t native_t;
+
     enum service_type_tag { stream_service = SOCK_STREAM, datagram_service = SOCK_DGRAM };
 
     class address
