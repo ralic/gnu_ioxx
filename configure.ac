@@ -32,6 +32,10 @@ AC_CHECK_HEADERS(
   [],
   [AC_MSG_FAILURE([please install boost.org libraries])])
 
+dnl ----- check for logxx -----
+
+AC_CHECK_HEADERS([logxx.hpp], [], [AC_MSG_FAILURE([please install logxx.cryp.to library])])
+
 dnl ----- check for various i/o probes -----
 
 IOXX_ENABLE_FEATURE([epoll],       [AX_HAVE_EPOLL],       [Support epoll(7) on this platform.])
