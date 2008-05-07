@@ -147,5 +147,4 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
     if (!timeout) break;
     io.wait(timeout);
   }
-  IOXX_TRACE_MSG("shutting down");
 }
