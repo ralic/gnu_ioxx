@@ -18,10 +18,12 @@
 #include <boost/assert.hpp>
 #include <boost/bind.hpp>
 #include <functional>
+#include <logxx.hpp>
+
+namespace ioxx { LOGXX_SCOPE("ioxx"); }
 
 #ifndef NDEBUG
-#  include <iostream>
-#  define IOXX_TRACE_MSG(msg) std::cout << msg << std::endl
+#  define IOXX_TRACE_MSG(msg) LOGXX_TRACE(msg)
 #else
 #  define IOXX_TRACE_MSG(msg) static_cast<void>(0)
 #endif
