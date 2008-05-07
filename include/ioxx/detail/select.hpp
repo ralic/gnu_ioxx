@@ -105,6 +105,7 @@ namespace ioxx { namespace detail
 
     select() : _max_fd(-1), _current(0), _n_events(0u)
     {
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.select." + show(this));
       FD_ZERO(&_req_read_fds);
       FD_ZERO(&_req_write_fds);
       FD_ZERO(&_req_except_fds);
@@ -116,7 +117,7 @@ namespace ioxx { namespace detail
     {
       while (_n_events)
       {
-        IOXX_TRACE_MSG("select::pop_event() has " << _n_events << " events to deliver; _max_fd = " << _max_fd << "; _current = " << _current);
+        IOXX_TRACE_MSG("pop_event() has " << _n_events << " events to deliver; _max_fd = " << _max_fd << "; _current = " << _current);
         BOOST_ASSERT(_current <= _max_fd);
         sock = _current++;
         BOOST_ASSERT(sock >= 0);
@@ -138,7 +139,7 @@ namespace ioxx { namespace detail
 #if defined(IOXX_HAVE_PSELECT) && IOXX_HAVE_PSELECT
         timespec const to = { timeout, 0 };
         sigset_t unblock_all;
-        throw_errno_if_minus1("sigemptyset(3)", boost::bind(&::sigemptyset, &unblock_all));
+        throw_errno_if_minus1("sigemptyset(3)", boost::bind(boost::type<int>(), &::sigemptyset, &unblock_all));
         ::pselect(0, NULL, NULL, NULL, &to, &unblock_all);
 #else
         timeval tv = { timeout, 0 };
@@ -153,7 +154,7 @@ namespace ioxx { namespace detail
 #if defined(IOXX_HAVE_PSELECT) && IOXX_HAVE_PSELECT
       timespec const to = { timeout, 0 };
       sigset_t unblock_all;
-      throw_errno_if_minus1("sigemptyset(3)", boost::bind(&::sigemptyset, &unblock_all));
+      throw_errno_if_minus1("sigemptyset(3)", boost::bind(boost::type<int>(), &::sigemptyset, &unblock_all));
       int const rc( ::pselect(_max_fd + 1, &_recv_read_fds, &_recv_write_fds, &_recv_except_fds, &to, &unblock_all) );
 #else
       int rc;
@@ -163,7 +164,7 @@ namespace ioxx { namespace detail
         rc = ::select(_max_fd + 1, &_recv_read_fds, &_recv_write_fds, &_recv_except_fds, &tv);
       }
 #endif
-      IOXX_TRACE_MSG("select::wait() returned " << rc);
+      IOXX_TRACE_MSG("wait() returned " << rc);
       if (rc < 0)
       {
         if (errno == EINTR) return;
@@ -180,6 +181,8 @@ namespace ioxx { namespace detail
     native_socket_t     _max_fd;
     native_socket_t     _current;
     size_t              _n_events;
+
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
   };
 
 }} // namespace ioxx::detail

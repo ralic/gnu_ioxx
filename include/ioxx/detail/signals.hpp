@@ -24,13 +24,15 @@ namespace ioxx { namespace detail
     block_signals()
     {
       sigset_t block_all;
-      throw_errno_if_minus1("sigfillset(3)", boost::bind(&::sigfillset, &block_all));
-      throw_errno_if_minus1("sigprocmask(2)", boost::bind(&::sigprocmask, SIG_SETMASK, &block_all, &_orig_mask));
+      throw_errno_if_minus1("sigfillset(3)", boost::bind(boost::type<int>(), &::sigfillset, &block_all));
+      throw_errno_if_minus1("sigprocmask(2)", boost::bind(boost::type<int>(), &::sigprocmask, SIG_SETMASK, &block_all, &_orig_mask));
+      IOXX_TRACE_MSG("block all signals");
     }
 
     ~block_signals()
     {
-      throw_errno_if_minus1("sigprocmask(2)", boost::bind(&::sigprocmask, SIG_SETMASK, &_orig_mask, static_cast<sigset_t*>(0)));
+      throw_errno_if_minus1("sigprocmask(2)", boost::bind(boost::type<int>(), &::sigprocmask, SIG_SETMASK, &_orig_mask, static_cast<sigset_t*>(0)));
+      IOXX_TRACE_MSG("cancel blocking of all signals");
     }
 
   private:
@@ -43,13 +45,15 @@ namespace ioxx { namespace detail
     unblock_signals()
     {
       sigset_t unblock_all;
-      throw_errno_if_minus1("sigemptyset(3)", boost::bind(&::sigemptyset, &unblock_all));
-      throw_errno_if_minus1("sigprocmask(2)", boost::bind(&::sigprocmask, SIG_SETMASK, &unblock_all, &_orig_mask));
+      throw_errno_if_minus1("sigemptyset(3)", boost::bind(boost::type<int>(), &::sigemptyset, &unblock_all));
+      throw_errno_if_minus1("sigprocmask(2)", boost::bind(boost::type<int>(), &::sigprocmask, SIG_SETMASK, &unblock_all, &_orig_mask));
+      IOXX_TRACE_MSG("unblock all signals");
     }
 
     ~unblock_signals()
     {
-      throw_errno_if_minus1("sigprocmask(2)", boost::bind(&::sigprocmask, SIG_SETMASK, &_orig_mask, static_cast<sigset_t*>(0)));
+      throw_errno_if_minus1("sigprocmask(2)", boost::bind(boost::type<int>(), &::sigprocmask, SIG_SETMASK, &_orig_mask, static_cast<sigset_t*>(0)));
+      IOXX_TRACE_MSG("cancel unblocking of all signals");
     }
 
   private:

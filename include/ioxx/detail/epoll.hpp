@@ -60,7 +60,7 @@ namespace ioxx { namespace detail
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = ev;
-        throw_errno_if_minus1("add socket into epoll", boost::bind(&epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_ADD, as_native_socket_t(), &e));
+        throw_errno_if_minus1("add socket into epoll", boost::bind(boost::type<int>(), &epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_ADD, as_native_socket_t(), &e));
       }
 
       ~socket()
@@ -68,7 +68,7 @@ namespace ioxx { namespace detail
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = 0;
-        throw_errno_if_minus1("del socket from epoll", boost::bind(&epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_DEL, as_native_socket_t(), &e));
+        throw_errno_if_minus1("del socket from epoll", boost::bind(boost::type<int>(), &epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_DEL, as_native_socket_t(), &e));
       }
 
       void request(event_set ev)
@@ -76,7 +76,7 @@ namespace ioxx { namespace detail
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = ev;
-        throw_errno_if_minus1("modify socket in epoll", boost::bind(&epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_MOD, as_native_socket_t(), &e));
+        throw_errno_if_minus1("modify socket in epoll", boost::bind(boost::type<int>(), &epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_MOD, as_native_socket_t(), &e));
       }
 
     protected:
@@ -94,19 +94,20 @@ namespace ioxx { namespace detail
     explicit epoll(unsigned int size_hint = 128u) : _n_events(0u), _current(0u)
     {
       size_hint = std::min(size_hint, static_cast<unsigned int>(std::numeric_limits<int>::max()));
-      _epoll_fd = throw_errno_if_minus1("create epoll socket", boost::bind(&epoll_create, static_cast<int>(size_hint)));
+      _epoll_fd = throw_errno_if_minus1("create epoll socket", boost::bind(boost::type<int>(), &epoll_create, static_cast<int>(size_hint)));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.epoll." + show(_epoll_fd));
     }
 
     ~epoll()
     {
-      throw_errno_if_minus1("close epoll socket", boost::bind(&::close, _epoll_fd));
+      throw_errno_if_minus1("close epoll socket", boost::bind(boost::type<int>(), &::close, _epoll_fd));
     }
 
     bool empty() const { return _n_events == 0u; }
 
     bool pop_event(native_socket_t & sock, socket::event_set & ev)
     {
-      IOXX_TRACE_MSG("epoll::pop_event() has " << _n_events << " events to deliver");
+      IOXX_TRACE_MSG("pop_event() has " << _n_events << " events to deliver");
       if (!_n_events) return false;
       sock = _events[_current].data.fd;
       ev   = static_cast<socket::event_set>(_events[_current].events);
@@ -121,7 +122,7 @@ namespace ioxx { namespace detail
       BOOST_ASSERT(!_n_events);
 #if defined(IOXX_HAVE_EPOLL_PWAIT) && IOXX_HAVE_EPOLL_PWAIT
       sigset_t unblock_all;
-      throw_errno_if_minus1("sigemptyset(3)", boost::bind(&::sigemptyset, &unblock_all));
+      throw_errno_if_minus1("sigemptyset(3)", boost::bind(boost::type<int>(), &::sigemptyset, &unblock_all));
       int const rc( epoll_pwait( _epoll_fd
                                , _events, sizeof(_events) / sizeof(epoll_event)
                                , static_cast<int>(timeout) * 1000
@@ -137,7 +138,7 @@ namespace ioxx { namespace detail
                        );
       }
 #endif
-      IOXX_TRACE_MSG("epoll::wait() returned " << rc);
+      IOXX_TRACE_MSG("wait() returned " << rc);
       if (rc < 0)
       {
         if (errno == EINTR) return;
@@ -153,6 +154,8 @@ namespace ioxx { namespace detail
     epoll_event         _events[128];
     size_t              _n_events;
     size_t              _current;
+
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
   };
 
 }} // namespace ioxx::detail

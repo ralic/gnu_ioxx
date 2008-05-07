@@ -130,6 +130,7 @@ namespace ioxx { namespace detail
 
     poll() : _n_events(0u), _current(0u)
     {
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.poll." + show(this));
     }
 
     bool empty() const { return _n_events == 0u; }
@@ -138,7 +139,7 @@ namespace ioxx { namespace detail
     {
       while (_n_events)
       {
-        IOXX_TRACE_MSG("poll::pop_event() has " << _n_events << " events to deliver; _current = " << _current);
+        IOXX_TRACE_MSG("pop_event() has " << _n_events << " events to deliver; _current = " << _current);
         pollfd const & pfd( _pfd[_current++] );
         BOOST_ASSERT(pfd.fd >= 0);
         if (!pfd.revents) continue;
@@ -157,7 +158,7 @@ namespace ioxx { namespace detail
 #if defined(IOXX_HAVE_PPOLL) && IOXX_HAVE_PPOLL
       timespec const to = { timeout, 0 };
       sigset_t unblock_all;
-      throw_errno_if_minus1("sigemptyset(3)", boost::bind(&::sigemptyset, &unblock_all));
+      throw_errno_if_minus1("sigemptyset(3)", boost::bind(boost::type<int>(), &::sigemptyset, &unblock_all));
       int const rc( ::ppoll(&_pfd[0], _pfd.size(), &to, &unblock_all) );
 #else
       int rc;
@@ -166,7 +167,7 @@ namespace ioxx { namespace detail
         rc = ::poll(&_pfd[0], _pfd.size(), static_cast<int>(timeout) * 1000);
       }
 #endif
-      IOXX_TRACE_MSG("poll::wait() returned " << rc);
+      IOXX_TRACE_MSG("wait() returned " << rc);
       if (rc < 0)
       {
         if (errno == EINTR) return;
@@ -182,6 +183,8 @@ namespace ioxx { namespace detail
     index_map _indices;
     size_type _n_events;
     size_type _current;
+
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
   };
 
 }} // namespace ioxx::detail

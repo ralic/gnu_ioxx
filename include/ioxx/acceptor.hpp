@@ -32,14 +32,19 @@ namespace ioxx
     typedef Handler                     handler;
 
     acceptor(dispatch & disp, endpoint const & addr, handler const & f = handler())
-    : socket(disp, socket::create(addr), boost::bind(&acceptor::run, this), socket::readable)
+    : socket(disp, addr.create(), boost::bind(&acceptor::run, this), socket::readable)
     , _f(f)
     {
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.acceptor." + addr.show());
       this->set_nonblocking();
       this->reuse_bind_address();
       this->bind(addr);
       this->listen(16u);
+      IOXX_TRACE_MSG("accepting connections on " << addr);
     }
+
+  protected:
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
 
   private:
     handler     _f;
@@ -51,6 +56,7 @@ namespace ioxx
       while(this->accept(s, addr))
       {
         detail::socket new_socket(s); // act as scope guard
+        IOXX_TRACE_MSG("accepted connection from " << addr << " on " << s);
         new_socket.set_nonblocking();
         new_socket.set_linger_timeout(0);
         _f(s, addr);

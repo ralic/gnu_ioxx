@@ -76,50 +76,51 @@ namespace ioxx { namespace detail
       flags |= adns_if_debug | adns_if_checkc_freq;
 #endif
       throw_rc_if_not_zero(adns_init(&_state, flags, static_cast<FILE*>(0)), "cannot initialize adns");
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.adns." + show(_state));
       BOOST_ASSERT(_state);
     }
 
     ~adns()
     {
       BOOST_ASSERT(_state);
-      _schedule.cancel(_timeout, _now.tv_sec);
+      _schedule.cancel(_timeout);
       adns_finish(_state);
     }
 
     void query_a(char const * owner, a_handler const & h)
     {
-      IOXX_TRACE_MSG("adns requests A record for " << owner);
+      IOXX_TRACE_MSG("request A record for " << owner);
       BOOST_ASSERT(h);
       submit(owner, adns_r_a, adns_qf_none, boost::bind(handleA, _1, h));
     }
 
     void query_a_no_cname(char const * owner, a_handler const & h)
     {
-      IOXX_TRACE_MSG("adns requests A record for " << owner << " (no cname)");
+      IOXX_TRACE_MSG("request A record for " << owner << " (no cname)");
       BOOST_ASSERT(h);
       submit(owner, adns_r_a, adns_qf_cname_forbid, boost::bind(handleA, _1, h));
     }
 
     void query_mx(char const * owner, mx_handler const & h)
     {
-      IOXX_TRACE_MSG("adns requests MX record for " << owner);
+      IOXX_TRACE_MSG("request MX record for " << owner);
       BOOST_ASSERT(h);
       submit(owner, adns_r_mx, adns_qf_none, boost::bind(handleMX, _1, h));
     }
 
     void query_ptr(char const * owner, ptr_handler const & h)
     {
-      IOXX_TRACE_MSG("adns requests PTR record for " << owner);
+      IOXX_TRACE_MSG("request PTR record for " << owner);
       BOOST_ASSERT(h);
       submit(owner, adns_r_ptr, adns_qf_none, boost::bind(handlePTR, _1, h));
     }
 
     void run()
     {
-      IOXX_TRACE_MSG(   "adns::run() has " << _queries.size() << " open queries and "
+      IOXX_TRACE_MSG(   "run() has " << _queries.size() << " open queries and "
                     << _registered_sockets.size() << " registered sockets");
       check_consistency();
-      _schedule.cancel(_timeout, _now.tv_sec);
+      _schedule.cancel(_timeout);
       if (_queries.empty()) return _registered_sockets.clear();
 
       // Deliver outstanding responses.
@@ -399,6 +400,8 @@ namespace ioxx { namespace detail
       system_error err(rc, ctx);
       throw err;
     }
+
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
   };
 
 }} // namespace ioxx::detail

@@ -107,14 +107,10 @@ namespace ioxx { namespace detail
         freeaddrinfo(addr);
       }
 
-      int &         as_domain()        { return _domain; }
-      int const &   as_domain()  const { return _domain; }
-
-      int &         as_socktype()        { return _socktype; }
-      int const &   as_socktype()  const { return _socktype; }
-
-      int &         as_protocol()        { return _protocol; }
-      int const &   as_protocol()  const { return _protocol; }
+      native_socket_t create() const
+      {
+        return throw_errno_if_minus1("socket(2)", boost::bind(boost::type<int>(), &::socket, _domain, _socktype, _protocol));
+      }
 
     protected:
       int       _domain;
@@ -126,26 +122,21 @@ namespace ioxx { namespace detail
 
     explicit socket(native_socket_t sock, ownership_type_tag owner = take_ownership) : _sock(sock)
     {
-      IOXX_TRACE_SOCKET(_sock, "construct " << this);
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.socket." + show(_sock));
       if (_sock < 0) throw std::invalid_argument("cannot construct an invalid ioxx::socket");
       close_on_destruction(owner == take_ownership);
     }
 
     ~socket()
     {
-      IOXX_TRACE_SOCKET(_sock, (_close_on_destruction ? "close and " : "") << "destruct " << this) ;
+      IOXX_TRACE_MSG((_close_on_destruction ? "close and " : "") << "destruct ");
       if (_close_on_destruction)
-        throw_errno_if_minus1("close(2)", boost::bind(&::close, _sock));
-    }
-
-    static native_socket_t create(endpoint const & addr)
-    {
-      return throw_errno_if_minus1("socket(2)", boost::bind(&::socket, addr.as_domain(), addr.as_socktype(), addr.as_protocol()));
+        throw_errno_if_minus1("close(2)", boost::bind(boost::type<int>(), &::close, _sock));
     }
 
     void close_on_destruction(bool enable = true)
     {
-      IOXX_TRACE_SOCKET(_sock, (enable ? "enable" : "disable") << " close-on-destruction semantics on " << this);
+      IOXX_TRACE_MSG((enable ? "enable" : "disable") << " close-on-destruction semantics");
       _close_on_destruction = enable;
     }
 
@@ -156,7 +147,7 @@ namespace ioxx { namespace detail
 
     void set_nonblocking(bool enable = true)
     {
-      IOXX_TRACE_SOCKET(_sock, (enable ? "enable" : "disable") << " nonblocking mode on " << this);
+      IOXX_TRACE_MSG((enable ? "enable" : "disable") << " nonblocking mode");
       int const rc( throw_errno_if_minus1("cannot obtain socket flags", boost::bind<int>(&::fcntl, _sock, F_GETFL, 0)) );
       int const flags( enable ? rc | O_NONBLOCK : rc & ~O_NONBLOCK );
       if (rc != flags)
@@ -168,43 +159,43 @@ namespace ioxx { namespace detail
       linger ling;
       ling.l_onoff  = second_timeout > 0 ? 1 : 0;
       ling.l_linger = static_cast<int>(second_timeout);
-      throw_errno_if_minus1("set socket lingering", boost::bind(&::setsockopt, _sock, SOL_SOCKET, SO_LINGER, &ling, sizeof(linger)));
+      throw_errno_if_minus1("set socket lingering", boost::bind(boost::type<int>(), &::setsockopt, _sock, SOL_SOCKET, SO_LINGER, &ling, sizeof(linger)));
     }
 
     void reuse_bind_address(bool enable = true)
     {
       int true_flag = enable ? 1 : 0;
-      throw_errno_if_minus1("bind with SO_REUSEADDR", boost::bind(&::setsockopt, _sock, SOL_SOCKET, SO_REUSEADDR, &true_flag, sizeof(int)));
+      throw_errno_if_minus1("bind with SO_REUSEADDR", boost::bind(boost::type<int>(), &::setsockopt, _sock, SOL_SOCKET, SO_REUSEADDR, &true_flag, sizeof(int)));
     }
 
     void bind(address const & addr)
     {
-      throw_errno_if_minus1("bind(2)", boost::bind(&::bind, _sock, &addr.as_sockaddr(), addr.as_socklen_t()));
+      throw_errno_if_minus1("bind(2)", boost::bind(boost::type<int>(), &::bind, _sock, &addr.as_sockaddr(), addr.as_socklen_t()));
     }
 
     void listen(unsigned short backlog)
     {
-      throw_errno_if_minus1("listen(2)", boost::bind(&::listen, _sock, static_cast<int>(backlog)));
+      throw_errno_if_minus1("listen(2)", boost::bind(boost::type<int>(), &::listen, _sock, static_cast<int>(backlog)));
     }
 
     bool accept(native_socket_t & s, address & addr)
     {
       addr.as_socklen_t() = sizeof(sockaddr);
       s = detail::throw_errno_if( detail::not_ewould_block(), "accept(2)"
-                                , boost::bind(&::accept, as_native_socket_t(), &addr.as_sockaddr(), &addr.as_socklen_t())
+                                , boost::bind(boost::type<int>(), &::accept, as_native_socket_t(), &addr.as_sockaddr(), &addr.as_socklen_t())
                                 );
       return s >= 0;
     }
 
     char * read(char * begin, char const * end)
     {
-      IOXX_TRACE_SOCKET(_sock, "read up to " << end - begin << " bytes from " << this);
+      IOXX_TRACE_MSG("read up to " << end - begin << " bytes");
       BOOST_ASSERT(begin < end);
       ssize_t const rc( throw_errno_if( not_ewould_block()
                                       , "read(2)"
-                                      , boost::bind(&::read, _sock, begin, static_cast<size_t>(end - begin))
+                                      , boost::bind(boost::type<ssize_t>(), & ::read, _sock, begin, static_cast<size_t>(end - begin))
                                       ));
-      IOXX_TRACE_SOCKET(_sock, "read(2) received " << rc << " bytes from " << this);
+      IOXX_TRACE_MSG("read(2) received " << rc << " bytes");
       switch (rc)
       {
         case -1:  BOOST_ASSERT(errno == EWOULDBLOCK || errno == EAGAIN); return begin;
@@ -215,13 +206,13 @@ namespace ioxx { namespace detail
 
     char const * write(char const * begin, char const * end)
     {
-      IOXX_TRACE_SOCKET(_sock, "write up to " << end - begin << " bytes to " << this);
+      IOXX_TRACE_MSG("write up to " << end - begin << " bytes");
       BOOST_ASSERT(begin < end);
       ssize_t const rc( throw_errno_if( not_ewould_block()
                                       , "write(2)"
-                                      , boost::bind(&::write, _sock, begin, static_cast<size_t>(end - begin))
+                                      , boost::bind(boost::type<ssize_t>(), & ::write, _sock, begin, static_cast<size_t>(end - begin))
                                       ));
-      IOXX_TRACE_SOCKET(_sock, "write(2) sent " << rc << " bytes to " << this);
+      IOXX_TRACE_MSG("write(2) sent " << rc << " bytes");
       switch (rc)
       {
         case -1:  BOOST_ASSERT(errno == EWOULDBLOCK || errno == EAGAIN); return begin;
@@ -235,9 +226,9 @@ namespace ioxx { namespace detail
       BOOST_ASSERT(begin < end);
       ssize_t const rc( throw_errno_if( not_ewould_block()
                                       , "readv(2)"
-                                      , boost::bind(&::readv, _sock, begin, static_cast<int>(end - begin))
+                                      , boost::bind(boost::type<ssize_t>(), & ::readv, _sock, begin, static_cast<int>(end - begin))
                                       ));
-      IOXX_TRACE_SOCKET(_sock, "readv(2) received " << rc << " bytes from " << this);
+      IOXX_TRACE_MSG("readv(2) received " << rc << " bytes");
       return rc;
     }
 
@@ -246,9 +237,9 @@ namespace ioxx { namespace detail
       BOOST_ASSERT(begin < end);
       ssize_t const rc( throw_errno_if( not_ewould_block()
                                       , "writev(2)"
-                                      , boost::bind(&::writev, _sock, begin, static_cast<int>(end - begin))
+                                      , boost::bind(boost::type<ssize_t>(), & ::writev, _sock, begin, static_cast<int>(end - begin))
                                       ));
-      IOXX_TRACE_SOCKET(_sock, "writev(2) wrote " << rc << " bytes to " << this);
+      IOXX_TRACE_MSG("writev(2) wrote " << rc << " bytes");
       return rc;
     }
 
@@ -266,9 +257,9 @@ namespace ioxx { namespace detail
         };
       ssize_t const rc( throw_errno_if( not_ewould_block()
                                       , "recvmsg(2)"
-                                      , boost::bind(&::recvmsg, _sock, &msg, static_cast<int>(MSG_DONTWAIT))
+                                      , boost::bind(boost::type<ssize_t>(), & ::recvmsg, _sock, &msg, static_cast<int>(MSG_DONTWAIT))
                                       ));
-      IOXX_TRACE_SOCKET(_sock, "recvmsg(2) received " << rc << " bytes from " << this);
+      IOXX_TRACE_MSG("recvmsg(2) received " << rc << " bytes");
       from.as_socklen_t() = msg.msg_namelen;
       return rc;
     }
@@ -285,14 +276,14 @@ namespace ioxx { namespace detail
         , static_cast<socklen_t>(0)                 // control data size
         , static_cast<int>(0)                       // flags: set on return
         };
-      return throw_errno_if(not_ewould_block(), "sendmsg(2)", boost::bind(&::sendmsg, _sock, &msg, static_cast<int>(MSG_DONTWAIT)));
+      return throw_errno_if(not_ewould_block(), "sendmsg(2)", boost::bind(boost::type<ssize_t>(), & ::sendmsg, _sock, &msg, static_cast<int>(MSG_DONTWAIT)));
     }
 
     address local_address() const
     {
       address addr;
       addr.as_socklen_t() = sizeof(sockaddr);
-      throw_errno_if_minus1("getsockname(2)", boost::bind(&::getsockname, _sock, &addr.as_sockaddr(), &addr.as_socklen_t()));
+      throw_errno_if_minus1("getsockname(2)", boost::bind(boost::type<int>(), &::getsockname, _sock, &addr.as_sockaddr(), &addr.as_socklen_t()));
       return addr;
     }
 
@@ -300,7 +291,7 @@ namespace ioxx { namespace detail
     {
       address addr;
       addr.as_socklen_t() = sizeof(sockaddr);
-      throw_errno_if_minus1("getpeername(2)", boost::bind(&::getpeername, _sock, &addr.as_sockaddr(), &addr.as_socklen_t()));
+      throw_errno_if_minus1("getpeername(2)", boost::bind(boost::type<int>(), &::getpeername, _sock, &addr.as_sockaddr(), &addr.as_socklen_t()));
       return addr;
     }
 
@@ -314,6 +305,9 @@ namespace ioxx { namespace detail
     friend bool operator>  (socket const & lhs, socket const & rhs) { return lhs._sock >  rhs._sock; }
 
     friend std::ostream & operator<< (std::ostream & os, socket const & s) { return os << "socket(" << s._sock << ')'; }
+
+  protected:
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
 
   private:
     native_socket_t const       _sock;
