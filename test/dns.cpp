@@ -10,9 +10,11 @@
  * this notice are preserved.
  */
 
+#include <ioxx/detail/config.hpp>
 #if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
 #include <ioxx/time.hpp>
 #include <ioxx/dns.hpp>
+#include <iterator>
 #include <iostream>
 
 struct print
@@ -58,7 +60,7 @@ BOOST_AUTO_TEST_CASE( test_dns_resolver )
 {
 #if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
   ioxx::time           now;
-  ioxx::dns::schedule  schedule;
+  ioxx::dns::schedule  schedule(now.as_time_t());
   ioxx::dns::dispatch  dispatch;
   ioxx::dns            dns(schedule, dispatch, now.as_timeval());
 
@@ -69,7 +71,7 @@ BOOST_AUTO_TEST_CASE( test_dns_resolver )
   {
     dispatch.run();
     dns.run();
-    ioxx::seconds_t timeout( schedule.run(now.as_time_t()) );
+    ioxx::seconds_t timeout( schedule.run() );
     if (schedule.empty())
     {
       if (dispatch.empty())  break;
