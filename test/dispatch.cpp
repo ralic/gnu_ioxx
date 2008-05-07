@@ -45,7 +45,6 @@ class echo
   {
     try
     {
-      IOXX_TRACE_SOCKET(*_sock, "socket event " << ev);
       if (ev & socket::readable)
       {
         BOOST_REQUIRE_EQUAL(_len, 0u);
@@ -79,17 +78,13 @@ class echo
     }
     catch(std::exception const & e)
     {
-      IOXX_TRACE_SOCKET(*_sock, "socket event: " << e.what());
       _sock.reset();
     }
   }
 
 public:
-  ~echo() { IOXX_TRACE_MSG("destroy echo handler"); }
-
   static void accept(schedule & sched, dispatch & disp, ioxx::native_socket_t s, socket::address const & addr)
   {
-    IOXX_TRACE_SOCKET(s, "start echo handler for peer " << addr.show());
     boost::shared_ptr<echo> f;
     f.reset( new echo(sched) );
     socket * sock( new socket(disp, s, boost::bind(&echo::run, f, _1), socket::readable) );
@@ -119,7 +114,6 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   ls.reset( new acceptor( disp, endpoint("127.0.0.1", "8080")
                         , bind(&echo::accept, ref(sched), ref(disp), _1, _2)
                         ));
-  IOXX_TRACE_SOCKET(*ls, "accepting connections on port 8080");
   sched.in(5u, bind(&acceptor_ptr::reset, ref(ls), static_cast<acceptor*>(0)));
   for (;;)
   {
@@ -133,5 +127,4 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
     disp.wait(timeout);
     now.update();
   }
-  IOXX_TRACE_MSG("shutting down");
 }
