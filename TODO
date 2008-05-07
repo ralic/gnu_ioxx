@@ -96,6 +96,24 @@
 
 ** TODO Add a dummy DNS server we can use is case ADNS isn't available.
 
+** TODO Fix comments in =AX_HAVE_POLL_PWAIT=.
+
+** TODO Don't assume to know the =msghdr= layout.
+
+   On Solaris, the structure doesn't have the layout it does on Linux, so our
+   all-in-one initialization style fails to compile =socket::sendmsg()=, etc.
+
+** TODO The SUN compiler has no real std::reverse_iterator.
+
+   The boost libraries fail to compile as much as our own iovec specializations
+   do. Not sure how this can be remedied at all.
+
+** TODO Don't rely on the compiler to deduce return type of bind().
+
+   When binding function pointers, older compilers cannot determine the return
+   type. The SUN compiler doesn't even understand bind<T>() syntax; so we need
+   to use bind(type<T>(), ...) instead.
+
 
 * Documentation
 
