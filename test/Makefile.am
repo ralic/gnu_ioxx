@@ -8,10 +8,10 @@ TESTS =                         \
   socket			\
   demux				\
   dispatch			\
-  dns				\
-  core
+  dns
 
 check_PROGRAMS = ${TESTS}
+noinst_PROGRAMS = core
 
 iovec_is_valid_range_SOURCES = iovec-is-valid-range.cpp
 schedule_SOURCES = schedule.cpp
