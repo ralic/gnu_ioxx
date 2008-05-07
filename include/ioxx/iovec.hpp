@@ -17,6 +17,7 @@
 #include <boost/assert.hpp>
 #include <boost/compatibility/cpp_c_headers/cstddef>
 #include <iterator>
+#include <limits>
 #include <sys/uio.h>
 
 namespace ioxx
@@ -63,9 +64,10 @@ namespace boost
 #undef IOXX_SPECIALIZE_IOVEC_TRAITS
 
   template<>
-  inline range_size<ioxx::iovec>::type size(iovec const & iov)
+  inline range_difference<ioxx::iovec>::type size(iovec const & iov)
   {
-    return iov.iov_len;
+    BOOST_ASSERT(iov.iov_len <= static_cast<std::size_t>(std::numeric_limits<range_difference<ioxx::iovec>::type>::max()));
+    return static_cast<range_difference<ioxx::iovec>::type>(iov.iov_len);
   }
 
   template<>
