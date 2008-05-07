@@ -290,14 +290,16 @@ namespace ioxx { namespace detail
 
     address local_address() const
     {
-      address addr(sockaddr(), sizeof(sockaddr));
+      address addr;
+      addr.as_socklen_t() = sizeof(sockaddr);
       throw_errno_if_minus1("getsockname(2)", boost::bind(&::getsockname, _sock, &addr.as_sockaddr(), &addr.as_socklen_t()));
       return addr;
     }
 
     address peer_address() const
     {
-      address addr(sockaddr(), sizeof(sockaddr));
+      address addr;
+      addr.as_socklen_t() = sizeof(sockaddr);
       throw_errno_if_minus1("getpeername(2)", boost::bind(&::getpeername, _sock, &addr.as_sockaddr(), &addr.as_socklen_t()));
       return addr;
     }
