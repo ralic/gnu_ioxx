@@ -22,14 +22,15 @@ License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with Ioxx. If not, see <http://www.gnu.org/licenses/>.])
 
+AC_PROG_CXX
 AC_LANG([C++])
-AC_PROG_LIBTOOL
 
 dnl ----- check for boost -----
 
-for n in shared_ptr.hpp assert.hpp range.hpp function.hpp test/included/unit_test.hpp; do
-  AC_CHECK_HEADER([boost/$n], [], [AC_MSG_FAILURE([please install boost.org libraries])])
-done
+AC_CHECK_HEADERS(
+  [boost/shared_ptr.hpp boost/assert.hpp boost/range.hpp boost/function.hpp boost/test/included/unit_test.hpp],
+  [],
+  [AC_MSG_FAILURE([please install boost.org libraries])])
 
 dnl ----- check for various i/o probes -----
 
@@ -46,9 +47,10 @@ IOXX_ENABLE_FEATURE([adns],        [AX_HAVE_ADNS],        [Support GNU ADNS on t
 
 dnl ----- doxygen -----
 
-AX_WITH_PROG([DOXYGEN], [doxygen], [:])
-AX_WITH_PROG([DOT], [dot], [:])
-AS_IF([test "${ac_cv_path_DOT}" != ":"], [AC_SUBST([HAVE_DOT], [yes])], [AC_SUBST([HAVE_DOT], [no])])
+AX_WITH_PROG([DOXYGEN], [doxygen], [no])
+AS_IF([test "${DOXYGEN}" = "no"], [DOXYGEN=":"], [])
+AX_WITH_PROG([DOT], [dot], [no])
+AS_IF([test "${DOT}" != "no"], [AC_SUBST([HAVE_DOT], [yes])], [AC_SUBST([HAVE_DOT], [no])])
 AX_WITH_PERL([:])
 
 dnl ----- write results -----
@@ -76,5 +78,5 @@ echo "${ECHO_N}" "    ppoll(2) support ........... "; if test "${IOXX_HAVE_PPOLL
 echo "${ECHO_N}" "    select(2) support .......... "; if test "${IOXX_HAVE_SELECT}" = 1; then echo "yes"; else echo "no"; fi
 echo "${ECHO_N}" "    pselect(2) support ......... "; if test "${IOXX_HAVE_PSELECT}" = 1; then echo "yes"; else echo "no"; fi
 echo "${ECHO_N}" "    ADNS support ............... "; if test "${IOXX_HAVE_ADNS}" = 1; then echo "yes"; else echo "no"; fi
-echo "${ECHO_N}" "    doxygen support............. "; if test "${ac_cv_path_DOXYGEN}" != ":"; then echo "yes"; else echo "no"; fi
+echo "${ECHO_N}" "    doxygen support............. "; if test "${DOXYGEN}" != ":"; then echo "yes"; else echo "no"; fi
 echo ""
