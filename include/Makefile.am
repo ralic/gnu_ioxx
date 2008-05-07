@@ -15,6 +15,7 @@ nobase_include_HEADERS = \
   ioxx/detail/error.hpp \
   ioxx/detail/poll.hpp \
   ioxx/detail/select.hpp \
+  ioxx/detail/signals.hpp \
   ioxx/detail/socket.hpp \
   ioxx/dispatch.hpp \
   ioxx/dns.hpp \
