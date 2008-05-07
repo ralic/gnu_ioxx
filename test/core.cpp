@@ -13,7 +13,6 @@
 #include <ioxx/time.hpp>
 #include <ioxx/schedule.hpp>
 #include <ioxx/dispatch.hpp>
-#include <ioxx/dns.hpp>
 
 namespace ioxx
 {
