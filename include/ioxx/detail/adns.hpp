@@ -45,14 +45,18 @@ namespace ioxx { namespace detail
   /**
    * Asynchronous DNS resolver implementation based an GNU ADNS.
    */
-  template < class Schedule  = schedule<>
-           , class Dispatch  = dispatch<>
+  template < class Allocator = std::allocator<void>
+           , class Schedule  = schedule<Allocator>
+           , class Dispatch  = dispatch<Allocator>
            >
   class adns : private boost::noncopyable
   {
   public:
     typedef Schedule                                    schedule;
+    typedef typename schedule::timeout                  timeout;
+
     typedef Dispatch                                    dispatch;
+    typedef typename dispatch::socket                   socket;
 
     typedef std::string                                 hostname;
     typedef std::vector<hostname>                       hostname_list;
@@ -69,7 +73,7 @@ namespace ioxx { namespace detail
 
   public:
     adns(schedule & sched, dispatch & disp, timeval const & now)
-    : _schedule(sched), _dispatch(disp), _now(now), _pfds(ADNS_POLLFDS_RECOMMENDED)
+    : _dispatch(disp), _now(now), _timeout(sched), _pfds(ADNS_POLLFDS_RECOMMENDED)
     {
       adns_initflags flags( adns_if_noautosys | adns_if_nosigpipe );
 #ifndef NDEBUG
@@ -83,7 +87,6 @@ namespace ioxx { namespace detail
     ~adns()
     {
       BOOST_ASSERT(_state);
-      _schedule.cancel(_timeout);
       adns_finish(_state);
     }
 
@@ -120,7 +123,7 @@ namespace ioxx { namespace detail
       IOXX_TRACE_MSG(   "run() has " << _queries.size() << " open queries and "
                     << _registered_sockets.size() << " registered sockets");
       check_consistency();
-      _schedule.cancel(_timeout);
+      _timeout.cancel();
       if (_queries.empty()) return _registered_sockets.clear();
 
       // Deliver outstanding responses.
@@ -141,7 +144,7 @@ namespace ioxx { namespace detail
         BOOST_ASSERT(a);
         ans.reset(a, &::free);
         IOXX_TRACE_MSG("deliver ADNS query " << qid);
-        query_set::iterator const i( _queries.find(qid) );
+        typename query_set::iterator const i( _queries.find(qid) );
         BOOST_ASSERT(i != _queries.end());
         std::swap(f, i->second);
         _queries.erase(i);
@@ -175,7 +178,7 @@ namespace ioxx { namespace detail
       {
         seconds_t to( timeout / 1000 );
         if (timeout % 1000) ++to;
-        _timeout = _schedule.at(_now.tv_sec + to, boost::bind(&adns_processtimeouts, _state, &_now));
+        _timeout.in(to, boost::bind(&adns_processtimeouts, _state, &_now));
       }
 
       // Re-register the descriptors in dispatch.
@@ -224,21 +227,21 @@ namespace ioxx { namespace detail
     }
 
   private:
-    schedule &          _schedule;
     dispatch &          _dispatch;
     adns_state          _state;
     timeval const &     _now;
+    timeout             _timeout;
 
-    typedef typename schedule::task_id                  task_id;
-    task_id             _timeout;
+    typedef boost::shared_ptr<adns_answer const> answer;
 
-    typedef boost::shared_ptr<adns_answer const>        answer;
-    typedef boost::function1<void, answer>              callback;
-    typedef std::map<adns_query,callback>               query_set;
+    typedef typename Allocator::template rebind<boost::function_base>::other                    callback_allocator;
+    typedef boost::function1<void, answer, callback_allocator>                                  callback;
+
+    typedef typename Allocator::template rebind< std::pair<adns_query const, callback> >::other query_set_allocator;
+    typedef std::map<adns_query,callback,std::less<adns_query>,query_set_allocator>             query_set;
     query_set           _queries;
 
-    typedef typename dispatch::socket                   socket;
-    typedef boost::shared_ptr<socket>                   shared_socket;
+    typedef boost::shared_ptr<socket>                                                           shared_socket;
     struct less
     {
       bool operator() (pollfd const & lhs, pollfd const & rhs) const { return lhs.fd < rhs.fd; }
@@ -247,9 +250,12 @@ namespace ioxx { namespace detail
         return lhs->as_native_socket_t() < rhs->as_native_socket_t();
       }
     };
-    typedef std::set<shared_socket,less>                socket_set;
-    socket_set          _registered_sockets;
-    std::vector<pollfd> _pfds;
+    typedef typename Allocator::template rebind<shared_socket>::other                           socket_set_allocator;
+    typedef std::set<shared_socket,less,socket_set_allocator>                                   socket_set;
+    socket_set                          _registered_sockets;
+
+    typedef typename Allocator::template rebind<pollfd>::other                                  pfd_allocator;
+    std::vector<pollfd,pfd_allocator>   _pfds;
 
     void check_consistency() const
     {
