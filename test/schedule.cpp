@@ -13,8 +13,8 @@
 #include <ioxx/time.hpp>
 #include <ioxx/schedule.hpp>
 
-#define BOOST_AUTO_TEST_MAIN
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 #include <functional>
 
 class dummy
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE( basic_schedule_test )
   sleep(delay); now.update();
   delay = schedule.run();
   BOOST_REQUIRE_EQUAL(dummy_was_called, 2u);
-  BOOST_REQUIRE_PREDICATE(std::less_equal<int>(), (delay)(1u));
+  BOOST_REQUIRE_PREDICATE(std::less_equal<seconds_t>(), (delay)(1u));
   sleep(delay); now.update();
   delay = schedule.run();
   BOOST_REQUIRE_EQUAL(dummy_was_called, 2u);

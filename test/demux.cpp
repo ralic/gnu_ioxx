@@ -14,8 +14,8 @@
 #include <ioxx/demux.hpp>
 #include <functional>
 
-#define BOOST_AUTO_TEST_MAIN
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 #include <boost/concept_check.hpp>
 
 template <class T>
@@ -126,7 +126,7 @@ void use_demuxer_for_sleeping()
   demux.wait(1u);
   now.update();
   ioxx::time_t const post_sleep( now.as_time_t() );
-  BOOST_REQUIRE_PREDICATE(std::greater_equal<int>(), (post_sleep - pre_sleep)(1));
+  BOOST_REQUIRE_PREDICATE(std::greater_equal<ioxx::time_t>(), (post_sleep)(pre_sleep));
 }
 
 template <class Demux>

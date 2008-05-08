@@ -27,9 +27,12 @@ AC_LANG([C++])
 
 dnl ----- check for boost -----
 
+AC_ARG_VAR([BOOST_SUFFIX], [Suffix to append to Boost link library names on this platform.])
 AC_CHECK_HEADERS(
-  [boost/shared_ptr.hpp boost/assert.hpp boost/range.hpp boost/function.hpp boost/test/included/unit_test.hpp],
+  [boost/shared_ptr.hpp boost/assert.hpp boost/range.hpp boost/function.hpp boost/test/unit_test.hpp],
   [],
+  [AC_MSG_FAILURE([please install boost.org libraries])])
+AC_CHECK_LIB([boost_unit_test_framework${BOOST_SUFFIX}], [exit], [],
   [AC_MSG_FAILURE([please install boost.org libraries])])
 
 dnl ----- check for logxx -----

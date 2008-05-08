@@ -18,8 +18,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/array.hpp>
 
-#define BOOST_AUTO_TEST_MAIN
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 
 class echo
 {
@@ -57,10 +57,10 @@ class echo
       if (ev & socket::writable)
       {
         BOOST_REQUIRE(_len);
-        BOOST_REQUIRE(_gap + _len <= _buf.size());
+        BOOST_REQUIRE_PREDICATE(std::less_equal<size_t>(), (_gap + _len)(_buf.size()));
         char const * const new_begin( _sock->write(&_buf[_gap], &_buf[_gap + _len]) );
         BOOST_REQUIRE(new_begin);
-        BOOST_REQUIRE(_buf.begin() < new_begin);
+        BOOST_REQUIRE_PREDICATE(std::less<char const *>(), (_buf.begin())(new_begin));
         size_t const n(new_begin - _buf.begin());
         _gap  += n;
         _len -= n;

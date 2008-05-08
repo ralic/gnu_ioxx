@@ -112,8 +112,8 @@ private:
   timeout       _timeout;
 };
 
-#define BOOST_AUTO_TEST_MAIN
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 
 #include <boost/pool/pool_alloc.hpp>
 

@@ -53,8 +53,8 @@ struct print
 };
 #endif
 
-#define BOOST_AUTO_TEST_MAIN
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 
 BOOST_AUTO_TEST_CASE( test_dns_resolver )
 {

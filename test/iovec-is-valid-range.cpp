@@ -39,8 +39,8 @@ void test_range_type(T & r)
   boost::rend(r);       boost::const_rend(r);
 }
 
-#define BOOST_AUTO_TEST_MAIN
-#include <boost/test/included/unit_test.hpp>
+#define BOOST_TEST_MAIN
+#include <boost/test/unit_test.hpp>
 
 BOOST_AUTO_TEST_CASE( verify_that_iovec_is_a_valid_range )
 {
