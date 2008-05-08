@@ -10,45 +10,7 @@
  * this notice are preserved.
  */
 
-#include <ioxx/time.hpp>
-#include <ioxx/schedule.hpp>
-#include <ioxx/dispatch.hpp>
-
-namespace ioxx
-{
-  template < class Allocator = std::allocator<void> >
-  class io_core : public schedule<Allocator>
-                , public dispatch<Allocator>
-  {
-  public:
-    typedef schedule<Allocator>         schedule;
-    typedef dispatch<Allocator>         dispatch;
-
-    io_core(time_t const & now) : schedule(now)
-    {
-    }
-
-    seconds_t run()
-    {
-      dispatch::run();
-      seconds_t timeout( schedule::run() );
-      if (schedule::empty())
-      {
-        if (dispatch::empty())  BOOST_ASSERT(timeout == 0u);
-        else                    timeout = dispatch::max_timeout();
-      }
-      return timeout;
-    }
-
-    void wait(seconds_t timeout)
-    {
-      dispatch::wait(timeout);
-    }
-  };
-
-} // namespace ioxx
-
-///// test cases //////////////////////////////////////////////////////////////
+#include <ioxx/core.hpp>
 
 #include <ioxx/acceptor.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -74,7 +36,7 @@ public:
     self_ptr p;
     p.reset(new httpd(io, s));
     p->_sock.modify(boost::bind(&self::run, p, _1), socket::readable);;
-    p->_timeout.in(30u, boost::bind(&socket::modify, boost::ref(p->_sock), handler()));
+    p->_timeout.in(10u, boost::bind(&socket::modify, boost::ref(p->_sock), handler()));
   }
 
 private:
@@ -100,26 +62,22 @@ static void stop_service_hook(int) { stop_service = true; }
 
 BOOST_AUTO_TEST_CASE( test_echo_handler )
 {
-  typedef ioxx::native_socket_t                         native_socket_t;
-  typedef boost::fast_pool_allocator<native_socket_t>   allocator;
-  typedef ioxx::io_core<allocator>                      io_core;
-  typedef io_core::dispatch                             dispatch;
-  typedef io_core::socket                               socket;
-  typedef socket::address                               address;
-  typedef socket::endpoint                              endpoint;
-  typedef ioxx::acceptor<dispatch>                      acceptor;
+  typedef boost::fast_pool_allocator<char>              allocator;
+  typedef ioxx::core<allocator>                         io_core;
+  typedef ioxx::acceptor<io_core>                       acceptor;
+  typedef acceptor::endpoint                            endpoint;
 
   using boost::bind;
   using boost::ref;
 
   ioxx::block_signals no_signal_scope;
 
-  ioxx::time now;
-  io_core io(now.as_time_t());
+  io_core io;
   acceptor listen_port(io, endpoint("127.0.0.1", "8080"), bind(&httpd<io_core>::accept, ref(io), _1, _2) );
   for (int i(0); i != 32; ++i) ::signal(i, SIG_IGN);
   ioxx::throw_errno_if(boost::bind(std::equal_to<sighandler_t>(), _1, SIG_ERR), "signal(2)", bind(&::signal, SIGINT, &stop_service_hook));
   ioxx::throw_errno_if(boost::bind(std::equal_to<sighandler_t>(), _1, SIG_ERR), "signal(2)", bind(&::signal, SIGTERM, &stop_service_hook));
+  io.in(5u, bind(&::kill, getpid(), SIGINT));
   while (!stop_service)
   {
     ioxx::seconds_t timeout( io.run() );

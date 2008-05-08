@@ -9,12 +9,13 @@ nobase_nodist_include_HEADERS = \
 nobase_include_HEADERS = \
   ioxx.hpp \
   ioxx/acceptor.hpp \
+  ioxx/core.hpp \
   ioxx/detail/adns.hpp \
   ioxx/detail/epoll.hpp \
+  ioxx/detail/logging.hpp \
   ioxx/detail/poll.hpp \
   ioxx/detail/select.hpp \
   ioxx/dispatch.hpp \
-  ioxx/dns.hpp \
   ioxx/error.hpp \
   ioxx/iovec.hpp \
   ioxx/schedule.hpp \
