@@ -1,7 +1,7 @@
 # ~/test/Makefile.am
 
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include
-LIBS = -lboost_unit_test_framework$(BOOST_SUFFIX)
+LDADD = -lboost_unit_test_framework$(BOOST_SUFFIX)
 
 TESTS =                         \
   iovec_is_valid_range          \

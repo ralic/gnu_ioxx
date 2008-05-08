@@ -32,8 +32,10 @@ AC_CHECK_HEADERS(
   [boost/shared_ptr.hpp boost/assert.hpp boost/range.hpp boost/function.hpp boost/test/unit_test.hpp],
   [],
   [AC_MSG_FAILURE([please install boost.org libraries])])
+orig_libs="${LIBS}"
 AC_CHECK_LIB([boost_unit_test_framework${BOOST_SUFFIX}], [exit], [],
   [AC_MSG_FAILURE([please install boost.org libraries])])
+LIBS="${orig_libs}"
 
 dnl ----- check for logxx -----
 
