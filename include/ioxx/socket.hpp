@@ -10,11 +10,11 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_DETAIL_SOCKET_HPP_INCLUDED_2008_04_20
-#define IOXX_DETAIL_SOCKET_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_SOCKET_HPP_INCLUDED_2008_04_20
+#define IOXX_SOCKET_HPP_INCLUDED_2008_04_20
 
 #include <ioxx/detail/config.hpp>
-#include <ioxx/detail/error.hpp>
+#include <ioxx/error.hpp>
 #include <boost/noncopyable.hpp>
 #include <iosfwd>
 #include <unistd.h>
@@ -24,9 +24,9 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-namespace ioxx { namespace detail
+namespace ioxx
 {
-  class socket : private boost::noncopyable
+  class system_socket : private boost::noncopyable
   {
   public:
     typedef native_socket_t native_t;
@@ -120,14 +120,14 @@ namespace ioxx { namespace detail
 
     enum ownership_type_tag { weak, take_ownership };
 
-    explicit socket(native_socket_t sock, ownership_type_tag owner = take_ownership) : _sock(sock)
+    explicit system_socket(native_socket_t sock, ownership_type_tag owner = take_ownership) : _sock(sock)
     {
       LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.socket." + show(_sock));
       if (_sock < 0) throw std::invalid_argument("cannot construct an invalid ioxx::socket");
       close_on_destruction(owner == take_ownership);
     }
 
-    ~socket()
+    ~system_socket()
     {
       IOXX_TRACE_MSG((_close_on_destruction ? "close and " : "") << "destruct ");
       if (_close_on_destruction)
@@ -181,9 +181,9 @@ namespace ioxx { namespace detail
     bool accept(native_socket_t & s, address & addr)
     {
       addr.as_socklen_t() = sizeof(sockaddr);
-      s = detail::throw_errno_if( detail::not_ewould_block(), "accept(2)"
-                                , boost::bind(boost::type<int>(), &::accept, as_native_socket_t(), &addr.as_sockaddr(), &addr.as_socklen_t())
-                                );
+      s = throw_errno_if( not_ewould_block(), "accept(2)"
+                        , boost::bind(boost::type<int>(), &::accept, as_native_socket_t(), &addr.as_sockaddr(), &addr.as_socklen_t())
+                        );
       return s >= 0;
     }
 
@@ -297,23 +297,23 @@ namespace ioxx { namespace detail
 
     native_socket_t as_native_socket_t() const { return _sock; }
 
-    friend bool operator<  (socket const & lhs, socket const & rhs) { return lhs._sock <  rhs._sock; }
-    friend bool operator<= (socket const & lhs, socket const & rhs) { return lhs._sock <= rhs._sock; }
-    friend bool operator== (socket const & lhs, socket const & rhs) { return lhs._sock == rhs._sock; }
-    friend bool operator!= (socket const & lhs, socket const & rhs) { return lhs._sock != rhs._sock; }
-    friend bool operator>= (socket const & lhs, socket const & rhs) { return lhs._sock >= rhs._sock; }
-    friend bool operator>  (socket const & lhs, socket const & rhs) { return lhs._sock >  rhs._sock; }
+    friend bool operator<  (system_socket const & lhs, system_socket const & rhs) { return lhs._sock <  rhs._sock; }
+    friend bool operator<= (system_socket const & lhs, system_socket const & rhs) { return lhs._sock <= rhs._sock; }
+    friend bool operator== (system_socket const & lhs, system_socket const & rhs) { return lhs._sock == rhs._sock; }
+    friend bool operator!= (system_socket const & lhs, system_socket const & rhs) { return lhs._sock != rhs._sock; }
+    friend bool operator>= (system_socket const & lhs, system_socket const & rhs) { return lhs._sock >= rhs._sock; }
+    friend bool operator>  (system_socket const & lhs, system_socket const & rhs) { return lhs._sock >  rhs._sock; }
 
-    friend std::ostream & operator<< (std::ostream & os, socket const & s) { return os << "socket(" << s._sock << ')'; }
+    friend std::ostream & operator<< (std::ostream & os, system_socket const & s) { return os << "socket(" << s._sock << ')'; }
 
   protected:
     LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
 
   private:
-    native_socket_t const       _sock;
-    bool                        _close_on_destruction;
+    native_t const      _sock;
+    bool                _close_on_destruction;
   };
 
-}} // namespace ioxx::detail
+} // namespace ioxx
 
-#endif // IOXX_DETAIL_SOCKET_HPP_INCLUDED_2008_04_20
+#endif // IOXX_SOCKET_HPP_INCLUDED_2008_04_20
