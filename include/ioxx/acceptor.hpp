@@ -56,7 +56,7 @@ namespace ioxx
       while(this->accept(s, addr))
       {
         system_socket new_socket(s); // act as scope guard
-        IOXX_TRACE_MSG("accepted connection from " << addr << " on " << s);
+        IOXX_TRACE_MSG("accepted connection from " << addr << " on " << new_socket);
         new_socket.set_nonblocking();
         new_socket.set_linger_timeout(0);
         _f(s, addr);
