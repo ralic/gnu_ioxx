@@ -13,9 +13,11 @@
 #include <ioxx/detail/config.hpp>
 #if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
 #include <ioxx/time.hpp>
-#include <ioxx/dns.hpp>
+#include <ioxx/detail/adns.hpp>
 #include <iterator>
 #include <iostream>
+
+namespace ioxx { typedef detail::adns<> dns; }
 
 struct print
 {
