@@ -19,41 +19,6 @@
 #include <boost/bind.hpp>
 #include <functional>
 
-#if defined(IOXX_HAVE_LOGGING) && IOXX_HAVE_LOGGING
-#  include <logxx.hpp>
-#else
-#  include <ostream>
-#  define LOGXX_DEFINE_TARGET(id)
-#  define LOGXX_GET_TARGET(target,channel)
-#  define LOGXX_CONFIGURE_TARGET(target,channel,pri)
-#  define LOGXX_MSG(target,pri,msg)
-#  define LOGXX_MSG_FATAL(target,msg)
-#  define LOGXX_MSG_CRITICAL(target,msg)
-#  define LOGXX_MSG_WARNING(target,msg)
-#  define LOGXX_MSG_NOTICE(target,msg)
-#  define LOGXX_MSG_INFO(target,msg)
-#  define LOGXX_MSG_DEBUG(target,msg)
-#  define LOGXX_MSG_TRACE(target,msg)
-#  define LOGXX_SCOPE_NAME
-#  define LOGXX_SCOPE(channel)
-#  define LOGXX_FATAL(msg)
-#  define LOGXX_CRITICAL(msg)
-#  define LOGXX_WARNING(msg)
-#  define LOGXX_NOTICE(msg)
-#  define LOGXX_INFO(msg)
-#  define LOGXX_DEBUG(msg)
-#  define LOGXX_TRACE(msg)
-#endif
-
-#ifndef NDEBUG
-#  define IOXX_TRACE_MSG(msg) LOGXX_TRACE(msg)
-#else
-#  define IOXX_TRACE_MSG(msg) static_cast<void>(0)
-#endif
-#define IOXX_TRACE_SOCKET(s,msg) IOXX_TRACE_MSG("socket " << s << ": " << msg)
-
-namespace ioxx { LOGXX_SCOPE("ioxx"); }
-
 namespace ioxx
 {
   struct system_error : public std::runtime_error
