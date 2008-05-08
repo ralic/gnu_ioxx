@@ -13,7 +13,7 @@
 #ifndef IOXX_SOCKET_HPP_INCLUDED_2008_04_20
 #define IOXX_SOCKET_HPP_INCLUDED_2008_04_20
 
-#include <ioxx/detail/config.hpp>
+#include <ioxx/detail/logging.hpp>
 #include <ioxx/error.hpp>
 #include <boost/noncopyable.hpp>
 #include <iosfwd>
