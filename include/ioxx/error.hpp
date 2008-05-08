@@ -10,17 +10,40 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_DETAIL_ERROR_HPP_INCLUDED_2008_04_20
-#define IOXX_DETAIL_ERROR_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_ERROR_HPP_INCLUDED_2008_04_20
+#define IOXX_ERROR_HPP_INCLUDED_2008_04_20
 
 #include <stdexcept>
 #include <boost/compatibility/cpp_c_headers/cerrno>
 #include <boost/assert.hpp>
 #include <boost/bind.hpp>
 #include <functional>
-#include <logxx.hpp>
 
-namespace ioxx { LOGXX_SCOPE("ioxx"); }
+#if defined(IOXX_HAVE_LOGGING) && IOXX_HAVE_LOGGING
+#  include <logxx.hpp>
+#else
+#  include <ostream>
+#  define LOGXX_DEFINE_TARGET(id)
+#  define LOGXX_GET_TARGET(target,channel)
+#  define LOGXX_CONFIGURE_TARGET(target,channel,pri)
+#  define LOGXX_MSG(target,pri,msg)
+#  define LOGXX_MSG_FATAL(target,msg)
+#  define LOGXX_MSG_CRITICAL(target,msg)
+#  define LOGXX_MSG_WARNING(target,msg)
+#  define LOGXX_MSG_NOTICE(target,msg)
+#  define LOGXX_MSG_INFO(target,msg)
+#  define LOGXX_MSG_DEBUG(target,msg)
+#  define LOGXX_MSG_TRACE(target,msg)
+#  define LOGXX_SCOPE_NAME
+#  define LOGXX_SCOPE(channel)
+#  define LOGXX_FATAL(msg)
+#  define LOGXX_CRITICAL(msg)
+#  define LOGXX_WARNING(msg)
+#  define LOGXX_NOTICE(msg)
+#  define LOGXX_INFO(msg)
+#  define LOGXX_DEBUG(msg)
+#  define LOGXX_TRACE(msg)
+#endif
 
 #ifndef NDEBUG
 #  define IOXX_TRACE_MSG(msg) LOGXX_TRACE(msg)
@@ -29,7 +52,9 @@ namespace ioxx { LOGXX_SCOPE("ioxx"); }
 #endif
 #define IOXX_TRACE_SOCKET(s,msg) IOXX_TRACE_MSG("socket " << s << ": " << msg)
 
-namespace ioxx { namespace detail
+namespace ioxx { LOGXX_SCOPE("ioxx"); }
+
+namespace ioxx
 {
   struct system_error : public std::runtime_error
   {
@@ -84,6 +109,6 @@ namespace ioxx { namespace detail
     }
   };
 
-}} // namespace ioxx::detail
+} // namespace ioxx
 
-#endif // IOXX_DETAIL_ERROR_HPP_INCLUDED_2008_04_20
+#endif // IOXX_ERROR_HPP_INCLUDED_2008_04_20
