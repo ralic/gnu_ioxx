@@ -69,6 +69,13 @@
 #  define IOXX_HAVE_ADNS @IOXX_HAVE_ADNS@
 #endif
 
+/**
+ * Defined to "true" if the logxx library is available.
+ */
+#ifndef IOXX_HAVE_LOGGING
+#  define IOXX_HAVE_LOGGING @IOXX_HAVE_LOGGING@
+#endif
+
 namespace ioxx
 {
   /**
