@@ -25,17 +25,22 @@ namespace ioxx
   using std::time_t;
   typedef unsigned int seconds_t;
 
-  template < class Task      = boost::function0<void>
-           , class Allocator = std::allocator< std::pair<time_t const, Task> >
+  template < class Allocator = std::allocator<void>
+           , class Task      = boost::function0<void, typename Allocator::template rebind<boost::function_base>::other>
+           , class TaskQueue = std::multimap< time_t
+                                            , Task
+                                            , std::less<time_t>
+                                            , typename Allocator::template rebind< std::pair<time_t const, Task> >::other
+                                            >
            >
   class schedule : boost::noncopyable
   {
   public:
-    typedef Task                                                        task;
-    typedef std::multimap<time_t,task,std::less<time_t>,Allocator>      task_queue;
-    typedef typename task_queue::iterator                               queue_iterator;
-    typedef typename task_queue::value_type                             queue_entry;
-    typedef std::pair<time_t,queue_iterator>                            task_id;
+    typedef Task                                        task;
+    typedef TaskQueue                                   task_queue;
+    typedef typename task_queue::iterator               queue_iterator;
+    typedef typename task_queue::value_type             queue_entry;
+    typedef std::pair<time_t,queue_iterator>            task_id;
 
     class timeout : private boost::noncopyable
     {
