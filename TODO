@@ -24,13 +24,13 @@
 
 * Known Bugs and Portability Problems
 
-** TODO Specialization for =size(iovec const &)= doesn't compile with ICC 9.11.
+** DONE Specialization for =size(iovec const &)= doesn't compile with ICC 9.11.
 
    Boost 1.35 defines that function to return =range_difference<T>::type= --
    the signed type =byte_offset= for us --, but the current specialization
    returns =byte_size=, which is unsigned.
 
-** DONE Boost libraries don't compile on AIX.
+** TODO Boost libraries don't compile on AIX.
 
    The header-only libraries probably work, but Boost.Build doesn't seem to
    know about the IBM xlC++ compiler. Is it a good idea to use Boost.System
@@ -42,6 +42,10 @@
 
    [2008-05-02 Fri]: ioxx no longer depends on any boost link libraries;
    everything is header-only.
+
+   [2008-05-09 Fri]: Test programs *do* depend on link libraries. However, the
+   build should be able to fall back to header-only by including the special
+   version of boost_unit_test.
 
 ** DONE Demuxer sockets support no =release()=, =swap()=, or =reset()=.
 
@@ -76,10 +80,14 @@
    The demuxers don't forward the dont-close-on-destruction constructor. The
    concept check test should proably enforce that.
 
-** TODO All our classes must accept an allocators object at construction.
+** DONE All our classes must accept an allocators object at construction.
 
    Having a template parameter is nice, but it must be possible to pass a
    concrete instance.
+
+   [2008-05-09 Fri]: It turns out that most STL classes don't accept an
+   allocator at construction! So this is probably a nice-to-have but not
+   important feature.
 
 ** DONE The =AX_WITH_PROG= macro has some screwed up documentation.
 
@@ -96,7 +104,7 @@
 
 ** TODO Add a dummy DNS server we can use is case ADNS isn't available.
 
-** TODO Fix comments in =AX_HAVE_POLL_PWAIT=.
+** DONE Fix comments in =AX_HAVE_POLL_PWAIT=.
 
 ** TODO Don't assume to know the =msghdr= layout.
 
@@ -113,6 +121,13 @@
    When binding function pointers, older compilers cannot determine the return
    type. The SUN compiler doesn't even understand bind<T>() syntax; so we need
    to use bind(type<T>(), ...) instead.
+
+   [2008-05-09 Fri]: Most bind() calls have been fixed.
+
+** TODO Link boost_unit_test shared library correctly.
+
+   To link that bloody library, binaries need to be compiled with
+   =BOOST_TEST_DYN_LINK= defined.
 
 
 * Documentation
