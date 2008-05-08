@@ -17,55 +17,33 @@
 namespace ioxx
 {
   template < class Allocator = std::allocator<void> >
-  class io_core
+  class io_core : public schedule<Allocator>
+                , public dispatch<Allocator>
   {
   public:
-    typedef Allocator                                                                                   allocator;
-    typedef typename Allocator::template rebind<boost::function_base>::other                            function_allocator;
+    typedef schedule<Allocator>         schedule;
+    typedef dispatch<Allocator>         dispatch;
 
-    typedef boost::function0<void, function_allocator>                                                  task;
-    typedef typename Allocator::template rebind< std::pair<time_t const, task> >::other                 schedule_allocator;
-    typedef schedule<task, schedule_allocator>                                                          schedule;
-    typedef typename schedule::task_id                                                                  task_id;
-    typedef typename schedule::timeout                                                                  timeout;
-
-    typedef boost::function1<void, demux::socket::event_set, function_allocator>                        handler;
-    typedef typename Allocator::template rebind< std::pair<native_socket_t const, handler> >::other     dispatch_allocator;
-    typedef std::map<native_socket_t,handler,std::less<native_socket_t>,dispatch_allocator>             dispatch_map;
-    typedef dispatch<demux, handler, dispatch_map>                                                      dispatch;
-    typedef typename dispatch::event_set                                                                event_set;
-    typedef typename dispatch::socket                                                                   socket;
-
-    io_core() : _schedule(_now.as_time_t())
+    io_core(time_t const & now) : schedule(now)
     {
     }
 
-    time &      get_time()      { return _now; }
-    schedule &  get_schedule()  { return _schedule; }
-    dispatch &  get_dispatch()  { return _dispatch; }
-
     seconds_t run()
     {
-      _dispatch.run();
-      seconds_t timeout( _schedule.run() );
-      if (_schedule.empty())
+      dispatch::run();
+      seconds_t timeout( schedule::run() );
+      if (schedule::empty())
       {
-        if (_dispatch.empty())  BOOST_ASSERT(timeout == 0u);
-        else                    timeout = _dispatch.max_timeout();
+        if (dispatch::empty())  BOOST_ASSERT(timeout == 0u);
+        else                    timeout = dispatch::max_timeout();
       }
       return timeout;
     }
 
     void wait(seconds_t timeout)
     {
-      _dispatch.wait(timeout);
-      _now.update();
+      dispatch::wait(timeout);
     }
-
-  protected:
-    time        _now;
-    schedule    _schedule;
-    dispatch    _dispatch;
   };
 
 } // namespace ioxx
@@ -100,7 +78,7 @@ public:
   }
 
 private:
-  httpd(io_core & io, native_socket_t s) : _sock(io.get_dispatch(), s), _timeout(io.get_schedule())
+  httpd(io_core & io, native_socket_t s) : _sock(io, s), _timeout(io)
   {
   }
 
@@ -134,13 +112,14 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   using boost::bind;
   using boost::ref;
 
-  ioxx::detail::block_signals no_signal_scope;
+  ioxx::block_signals no_signal_scope;
 
-  io_core io;
-  acceptor listen_port(io.get_dispatch(), endpoint("127.0.0.1", "8080"), bind(&httpd<io_core>::accept, ref(io), _1, _2) );
+  ioxx::time now;
+  io_core io(now.as_time_t());
+  acceptor listen_port(io, endpoint("127.0.0.1", "8080"), bind(&httpd<io_core>::accept, ref(io), _1, _2) );
   for (int i(0); i != 32; ++i) ::signal(i, SIG_IGN);
-  ioxx::detail::throw_errno_if(boost::bind(std::equal_to<sighandler_t>(), _1, SIG_ERR), "signal(2)", bind(&::signal, SIGINT, &stop_service_hook));
-  ioxx::detail::throw_errno_if(boost::bind(std::equal_to<sighandler_t>(), _1, SIG_ERR), "signal(2)", bind(&::signal, SIGTERM, &stop_service_hook));
+  ioxx::throw_errno_if(boost::bind(std::equal_to<sighandler_t>(), _1, SIG_ERR), "signal(2)", bind(&::signal, SIGINT, &stop_service_hook));
+  ioxx::throw_errno_if(boost::bind(std::equal_to<sighandler_t>(), _1, SIG_ERR), "signal(2)", bind(&::signal, SIGTERM, &stop_service_hook));
   while (!stop_service)
   {
     ioxx::seconds_t timeout( io.run() );
