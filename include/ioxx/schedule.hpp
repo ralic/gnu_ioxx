@@ -93,9 +93,14 @@ namespace ioxx
       task_id    _id;
     };
 
-    schedule(time_t const & now) : _now(now) { }
+    explicit schedule(time_t const & now) : _now(now)
+    {
+    }
 
-    time_t const & now() const { return _now; }
+    time_t const & now() const
+    {
+      return _now;
+    }
 
     task_id at(time_t ts, task const & f)
     {
@@ -160,8 +165,8 @@ namespace ioxx
     }
 
   private:
-    task_queue          _queue;
     time_t const &      _now;
+    task_queue          _queue;
   };
 
 } // namespace ioxx
