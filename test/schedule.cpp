@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE( dummy_schedule_test )
 {
   using ioxx::time;
   using ioxx::seconds_t;
-  typedef ioxx::schedule<dummy> scheduler;
+  typedef ioxx::schedule<> scheduler;
 
   time now;
   scheduler schedule(now.as_time_t());
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE( dummy_schedule_test )
 BOOST_AUTO_TEST_CASE( test_schedule_timeout )
 {
   ioxx::time now;
-  typedef ioxx::schedule<dummy> scheduler;
+  typedef ioxx::schedule<> scheduler;
   scheduler schedule(now.as_time_t());
   size_t dummy_call_counter( 0u );
   {

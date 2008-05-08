@@ -11,7 +11,7 @@
  */
 
 #include <ioxx/time.hpp>
-#include <ioxx/demux.hpp>
+#include <ioxx/socket.hpp>
 #include <functional>
 
 #define BOOST_TEST_MAIN
@@ -23,15 +23,14 @@ struct demux_concept
 {
   void constraints()
   {
-    typedef T                           demux;
-    typedef typename demux::socket      socket;
-    typedef typename socket::event_set  event_set;
+    typedef T                                   demux;
+    typedef typename demux::socket              socket;
+    typedef typename demux::socket::native_t    native_socket_t;
+    typedef typename socket::event_set          event_set;
 
     using namespace boost;
     function_requires< DefaultConstructibleConcept<demux> >();
     function_requires< DefaultConstructibleConcept<event_set> >();
-
-    ioxx::native_socket_t sock;
 
     event_set ev1, ev2;
     ev1 |= ev2; ev1 = ev1 | ev2;
@@ -43,20 +42,21 @@ struct demux_concept
     ev1 = socket::pridata;
 
     demux dmx;
+    native_socket_t sock;
     bool b( dmx.empty() );
     b = dmx.pop_event(sock, ev1);
     dmx.wait(static_cast<ioxx::seconds_t>(0));
 
     socket s2(dmx, sock), s3(dmx, sock, ev1);
     s2.request(ev1);
-    ioxx::detail::socket & s4( s3 );
+    ioxx::system_socket & s4( s3 );
     ignore_unused_variable_warning(s4);
   }
 };
 
 struct demux_archetype
 {
-  struct socket : public ioxx::detail::socket
+  struct socket : public ioxx::system_socket
   {
     typedef short event_set;
     static event_set const no_events = 0;
@@ -64,8 +64,8 @@ struct demux_archetype
     static event_set const writable  = 1 << 1;
     static event_set const pridata   = 1 << 2;
 
-    socket(demux_archetype &, ioxx::native_socket_t s) : ioxx::detail::socket(s) { }
-    socket(demux_archetype &, ioxx::native_socket_t s, event_set) : ioxx::detail::socket(s) { }
+    socket(demux_archetype &, ioxx::native_socket_t s) : ioxx::system_socket(s) { }
+    socket(demux_archetype &, ioxx::native_socket_t s, event_set) : ioxx::system_socket(s) { }
 
     void request(event_set) { }
   };
