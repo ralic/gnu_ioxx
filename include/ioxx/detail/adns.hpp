@@ -43,7 +43,9 @@ namespace ioxx { namespace detail
   inline adns_queryflags   operator&  (adns_queryflags   lhs, adns_queryflags rhs) { return lhs &= rhs; }
 
   /**
-   * Asynchronous DNS resolver implementation based an GNU ADNS.
+   * \internal
+   *
+   * \brief Asynchronous DNS resolver implementation based on GNU ADNS.
    */
   template < class Allocator = std::allocator<void>
            , class Schedule  = schedule<Allocator>

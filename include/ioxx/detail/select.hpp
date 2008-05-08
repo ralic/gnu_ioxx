@@ -25,6 +25,11 @@ namespace ioxx { namespace detail
 {
   typedef unsigned int seconds_t;
 
+  /**
+   * \internal
+   *
+   * \brief I/O demultiplexer implementation based on \c select(2).
+   */
   class select : private boost::noncopyable
   {
   public:

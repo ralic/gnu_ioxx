@@ -27,6 +27,11 @@ namespace ioxx { namespace detail
 {
   typedef unsigned int seconds_t;
 
+  /**
+   * \internal
+   *
+   * \brief I/O demultiplexer implementation based on \c poll(2).
+   */
   template < class VectorAllocator = std::allocator<pollfd>
            , class MapAllocator    = std::allocator< std::pair<native_socket_t const, typename std::vector<pollfd,VectorAllocator>::size_type> >
            >
