@@ -39,7 +39,7 @@ LIBS="${orig_libs}"
 
 dnl ----- check for logxx -----
 
-AC_CHECK_HEADERS([logxx.hpp], [], [AC_MSG_FAILURE([please install logxx.cryp.to library])])
+IOXX_ENABLE_FEATURE([logging],     [AX_HAVE_LOGXX],       [Support the http://logxx.cryp.to/ library.])
 
 dnl ----- check for various i/o probes -----
 
