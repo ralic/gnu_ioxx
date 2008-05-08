@@ -61,6 +61,18 @@ AS_IF([test "${DOXYGEN}" = "no"], [DOXYGEN=":"], [])
 AX_WITH_PROG([DOT], [dot], [no])
 AS_IF([test "${DOT}" != "no"], [AC_SUBST([HAVE_DOT], [yes])], [AC_SUBST([HAVE_DOT], [no])])
 AX_WITH_PERL([:])
+AC_ARG_ENABLE(
+  [internal-docs],
+  [AC_HELP_STRING([--enable-internal-docs], [Include internal classes in doxygen documentation.])],
+  [case "${enableval}" in
+     yes|no)
+       ;;
+     *)
+       AC_MSG_ERROR([bad value ${enableval} for feature --enable-internal-docs])
+       ;;
+   esac],
+   [enable_internal_docs="no"])
+AC_SUBST([IOXX_INTERNAL_DOCS], [${enable_internal_docs}])
 
 dnl ----- write results -----
 
@@ -87,5 +99,7 @@ echo "${ECHO_N}" "    ppoll(2) support ........... "; if test "${IOXX_HAVE_PPOLL
 echo "${ECHO_N}" "    select(2) support .......... "; if test "${IOXX_HAVE_SELECT}" = 1; then echo "yes"; else echo "no"; fi
 echo "${ECHO_N}" "    pselect(2) support ......... "; if test "${IOXX_HAVE_PSELECT}" = 1; then echo "yes"; else echo "no"; fi
 echo "${ECHO_N}" "    ADNS support ............... "; if test "${IOXX_HAVE_ADNS}" = 1; then echo "yes"; else echo "no"; fi
+echo "${ECHO_N}" "    logxx support .............. "; if test "${IOXX_HAVE_LOGGING}" = 1; then echo "yes"; else echo "no"; fi
 echo "${ECHO_N}" "    doxygen support............. "; if test "${DOXYGEN}" != ":"; then echo "yes"; else echo "no"; fi
+echo "${ECHO_N}" "    generate internal docs ..... "; echo "${enable_internal_docs}"
 echo ""
