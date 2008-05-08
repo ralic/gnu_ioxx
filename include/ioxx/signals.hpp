@@ -10,13 +10,13 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_DETAIL_SIGNALS_HPP_INCLUDED_2008_04_20
-#define IOXX_DETAIL_SIGNALS_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_SIGNALS_HPP_INCLUDED_2008_04_20
+#define IOXX_SIGNALS_HPP_INCLUDED_2008_04_20
 
-#include <ioxx/detail/error.hpp>
+#include <ioxx/error.hpp>
 #include <signal.h>
 
-namespace ioxx { namespace detail
+namespace ioxx
 {
   class block_signals : private boost::noncopyable
   {
@@ -60,6 +60,6 @@ namespace ioxx { namespace detail
     sigset_t _orig_mask;
   };
 
-}} // namespace ioxx::detail
+} // namespace ioxx
 
-#endif // IOXX_DETAIL_SIGNALS_HPP_INCLUDED_2008_04_20
+#endif // IOXX_SIGNALS_HPP_INCLUDED_2008_04_20
