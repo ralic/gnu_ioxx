@@ -13,7 +13,16 @@
 #ifndef IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
 #define IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
 
-#include <ioxx/demux.hpp>
+#include <ioxx/detail/config.hpp>
+#if defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL
+#  include <ioxx/detail/epoll.hpp>
+#elif defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
+#  include <ioxx/detail/poll.hpp>
+#elif defined(IOXX_HAVE_SELECT) && IOXX_HAVE_SELECT
+#  include <ioxx/detail/select.hpp>
+#else
+#  error "No I/O de-multiplexer available for this platform."
+#endif
 #include <boost/function/function1.hpp>
 #include <map>
 
@@ -27,9 +36,26 @@ namespace ioxx
   /**
    * A simple time-event dispatcher.
    */
-  template < class Demux      = demux
-           , class Handler    = boost::function1<void, typename Demux::socket::event_set>
-           , class HandlerMap = std::map<native_socket_t,Handler>
+  template < class Allocator  = std::allocator<void>
+           , class Demux      =
+#if defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL
+                                detail::epoll
+#elif defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
+                                detail::poll< typename Allocator::template rebind<pollfd>::other
+                                            , typename Allocator::template rebind< std::pair<native_socket_t const, size_t> >::other
+                                            >
+#elif defined(IOXX_HAVE_SELECT) && IOXX_HAVE_SELECT
+                                detail::select
+#endif
+           , class Handler    = boost::function1< void
+                                                , typename Demux::socket::event_set
+                                                , typename Allocator::template rebind<boost::function_base>::other
+                                                >
+           , class HandlerMap = std::map< native_socket_t
+                                        , Handler
+                                        , std::less<native_socket_t>
+                                        , typename Allocator::template rebind< std::pair<native_socket_t const, Handler> >::other
+                                        >
            >
   class dispatch : protected Demux
   {
