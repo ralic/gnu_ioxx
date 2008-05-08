@@ -19,7 +19,7 @@
  * Access to the current time of day.
  */
 
-#include <ioxx/detail/error.hpp>
+#include <ioxx/error.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/compatibility/cpp_c_headers/ctime>
 #include <sys/time.h>
@@ -82,7 +82,7 @@ namespace ioxx
      */
     void update()
     {
-      detail::throw_errno_if_minus1("gettimeofday(2)", boost::bind(boost::type<int>(), gettimeofday, &_now, static_cast<struct timezone *>(0)));
+      throw_errno_if_minus1("gettimeofday(2)", boost::bind(boost::type<int>(), gettimeofday, &_now, static_cast<struct timezone *>(0)));
     }
 
   private:

@@ -13,8 +13,8 @@
 #ifndef IOXX_DETAIL_SELECT_HPP_INCLUDED_2008_04_20
 #define IOXX_DETAIL_SELECT_HPP_INCLUDED_2008_04_20
 
-#include <ioxx/detail/socket.hpp>
-#include <ioxx/detail/signals.hpp>
+#include <ioxx/socket.hpp>
+#include <ioxx/signals.hpp>
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <limits>
@@ -28,7 +28,7 @@ namespace ioxx { namespace detail
   class select : private boost::noncopyable
   {
   public:
-    class socket : public detail::socket
+    class socket : public system_socket
     {
     public:
       enum event_set
@@ -51,7 +51,7 @@ namespace ioxx { namespace detail
         return os;
       }
 
-      socket(select & demux, native_socket_t sock, event_set ev = no_events) : detail::socket(sock), _select(demux)
+      socket(select & demux, native_socket_t sock, event_set ev = no_events) : system_socket(sock), _select(demux)
       {
         BOOST_ASSERT(sock >= 0);
         BOOST_ASSERT(sock <= FD_SETSIZE);

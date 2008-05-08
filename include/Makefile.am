@@ -9,18 +9,17 @@ nobase_nodist_include_HEADERS = \
 nobase_include_HEADERS = \
   ioxx.hpp \
   ioxx/acceptor.hpp \
-  ioxx/demux.hpp \
   ioxx/detail/adns.hpp \
   ioxx/detail/epoll.hpp \
-  ioxx/detail/error.hpp \
   ioxx/detail/poll.hpp \
   ioxx/detail/select.hpp \
-  ioxx/detail/signals.hpp \
-  ioxx/detail/socket.hpp \
   ioxx/dispatch.hpp \
   ioxx/dns.hpp \
+  ioxx/error.hpp \
   ioxx/iovec.hpp \
   ioxx/schedule.hpp \
+  ioxx/signals.hpp \
+  ioxx/socket.hpp \
   ioxx/time.hpp
 
 CLEANFILES = \

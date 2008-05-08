@@ -13,8 +13,8 @@
 #ifndef IOXX_DETAIL_POLL_HPP_INCLUDED_2008_04_20
 #define IOXX_DETAIL_POLL_HPP_INCLUDED_2008_04_20
 
-#include <ioxx/detail/socket.hpp>
-#include <ioxx/detail/signals.hpp>
+#include <ioxx/socket.hpp>
+#include <ioxx/signals.hpp>
 #include <boost/noncopyable.hpp>
 #include <vector>
 #include <map>
@@ -39,7 +39,7 @@ namespace ioxx { namespace detail
     typedef std::map<native_socket_t,size_type,std::less<native_socket_t>,MapAllocator> index_map;
     typedef typename index_map::iterator                                                iterator;
 
-    class socket : public detail::socket
+    class socket : public system_socket
     {
     public:
       enum event_set
@@ -62,7 +62,7 @@ namespace ioxx { namespace detail
         return os;
       }
 
-      socket(poll & demux, native_socket_t sock, event_set ev = no_events) : detail::socket(sock), _poll(demux)
+      socket(poll & demux, native_socket_t sock, event_set ev = no_events) : system_socket(sock), _poll(demux)
       {
         BOOST_ASSERT(sock >= 0);
         std::pair<iterator,bool> const r( _poll._indices.insert(std::make_pair(sock, _poll._pfd.size())) );
