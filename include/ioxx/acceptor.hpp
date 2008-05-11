@@ -18,10 +18,15 @@
 
 namespace ioxx
 {
-  template < class Dispatch = dispatch<>
-           , class Handler  = boost::function2<void, native_socket_t, typename Dispatch::socket::address const &>
+  template < class Allocator = std::allocator<void>
+           , class Dispatch  = dispatch<Allocator>
+           , class Handler   = boost::function2< void
+                                               , typename Dispatch::socket::native_t
+                                               , typename Dispatch::socket::address const &
+                                               , typename Allocator::template rebind<boost::function_base>::other
+                                               >
            >
-  class acceptor : public Dispatch::socket
+  class acceptor : private boost::noncopyable
   {
   public:
     typedef Dispatch                    dispatch;
@@ -31,15 +36,15 @@ namespace ioxx
     typedef typename socket::event_set  event_set;
     typedef Handler                     handler;
 
-    acceptor(dispatch & disp, endpoint const & addr, handler const & f = handler())
-    : socket(disp, addr.create(), boost::bind(&acceptor::run, this), socket::readable)
+    acceptor(dispatch & disp, endpoint const & addr, handler const & f)
+    : _ls(disp, addr.create(), boost::bind(&acceptor::run, this), socket::readable)
     , _f(f)
     {
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.acceptor." + addr.show());
-      this->set_nonblocking();
-      this->reuse_bind_address();
-      this->bind(addr);
-      this->listen(16u);
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.acceptor." + show(_ls.as_native_socket_t()));
+      _ls.set_nonblocking();
+      _ls.reuse_bind_address();
+      _ls.bind(addr);
+      _ls.listen(16u);
       IOXX_TRACE_MSG("accepting connections on " << addr);
     }
 
@@ -47,13 +52,14 @@ namespace ioxx
     LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
 
   private:
+    socket      _ls;
     handler     _f;
 
     void run()
     {
       native_socket_t s;
       address addr;
-      while(this->accept(s, addr))
+      while(_ls.accept(s, addr))
       {
         system_socket new_socket(s); // act as scope guard
         IOXX_TRACE_MSG("accepted connection from " << addr << " on " << new_socket);

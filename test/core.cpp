@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
 {
   typedef boost::fast_pool_allocator<char>              allocator;
   typedef ioxx::core<allocator>                         io_core;
-  typedef ioxx::acceptor<io_core>                       acceptor;
+  typedef ioxx::acceptor<allocator>                     acceptor;
   typedef acceptor::endpoint                            endpoint;
 
   using boost::bind;

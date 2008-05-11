@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   typedef dispatch::socket              socket;
   typedef socket::address               address;
   typedef socket::endpoint              endpoint;
-  typedef ioxx::acceptor<dispatch>      acceptor;
+  typedef ioxx::acceptor<>              acceptor;
   typedef boost::scoped_ptr<acceptor>   acceptor_ptr;
 
   using boost::bind;
