@@ -160,6 +160,8 @@
    See commit bfde4809d49c739b29f7de252e972c4f8ab0546b for details.
    The same problem exists in =core::run()=.
 
+** TODO =adns= must use an allocator to get new sockets, not =operator new=.
+
 * Documentation
 
 ** What is ioxx?
@@ -167,14 +169,15 @@
    The ioxx library provides primitives for asynchronous i/o in C++. That kind
    of thing is typically useful for people who would like to implement a highly
    concurrent network service, i.e. an application that performs input/output
-   on a great number of sockets simultaneously. The library's main components
+   simultaneously on a great number of sockets. The library's main components
    are a socket event dispatcher, a time event dispatcher, and an asynchronous
    DNS resolver. There is also a convenient class interface to socket
    programming that offers wonders of modern C++ such as exception-style error
    reporting, automatic resource management through construction/destruction,
-   type-safety, and full support for custom allocators. The code is completely
-   re-entrant and runs on any somewhat POSIX-compliant operating system, like
-   Linux, NetBSD, Solaris, AIX, HP/UX, and Windows.
+   type-safety, and support for custom allocators. Ioxx is thread-safe in the
+   sense that it is fully re-entrant. The code runs on any POSIX-compliant
+   operating system, most notably Linux, NetBSD, Solaris, AIX, HP/UX, and
+   Windows.
 
 *** How to download the latest version
 
@@ -195,8 +198,8 @@
       : git clone http://git.cryp.to/ioxx/
 
       Note that unlike the stable releases, development snapshots do not
-      contain the whole zoo of build scripts that are necessary to compile the
-      code -- like =configure=. Those scripts can be generated with the command
+      contain the whole zoo of build scripts necessary to compile the code --
+      like =configure=. Those scripts can be generated with the command
       =autoreconf -i= if [[http://www.gnu.org/software/autoconf/][Autoconf]] 2.61 and [[http://sources.redhat.com/automake/][Automake]] 1.10 (or later versions)
       are available.
 
@@ -256,12 +259,11 @@
 
 *** How to get help, submit patches, or report bugs
 
-    Please direct any correspondence to [[mailto:simons@cryp.to][Peter Simons]]. The library is still
-    pretty new and I'm particularly interested in hearing about portability
+    Please direct any correspondence to me [[mailto:simons@cryp.to][via e-mail]]. The library is still
+    fairly new and I'm particularly interested in hearing about portability
     problems, i.e. platforms on which ioxx doesn't compile or fails the test
-    suite. Patches and improvements are always welcome, of course. When sending
-    them in, please make sure to state exactly which version of the library the
-    patch applies to! Users of [[http://git.or.cz/][git]] obviously don't have to worry about that.
+    suite. Patches and suggestions for improvement are always welcome, of
+    course.
 
 ** How to write network services with ioxx
 
