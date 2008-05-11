@@ -122,66 +122,49 @@ namespace ioxx { namespace detail
 
     void run()
     {
-      IOXX_TRACE_MSG(   "run() has " << _queries.size() << " open queries and "
+      IOXX_TRACE_MSG(  "run() has " << _queries.size() << " open queries and "
                     << _registered_sockets.size() << " registered sockets");
       check_consistency();
       _timeout.cancel();
       if (_queries.empty()) return _registered_sockets.clear();
 
-      // Deliver outstanding responses.
-
-      for (;;)
-      {
-        answer          ans;
-        callback        f;
-        adns_query      qid(0);
-        adns_answer *   a(0);
-        int const       rc( adns_check(_state, &qid, &a, 0) );
-        IOXX_TRACE_MSG("adns_check() returned " << rc);
-        if (rc == EINTR)        continue;
-        else if (rc == ESRCH)   { BOOST_ASSERT(_queries.empty()); return _registered_sockets.clear(); }
-        else if (rc == EAGAIN)  { BOOST_ASSERT(!_queries.empty()); break; }
-        else if (rc != 0)       { system_error err(rc, "adns_check()"); throw err; }
-        BOOST_ASSERT(rc == 0);
-        BOOST_ASSERT(a);
-        ans.reset(a, &::free);
-        IOXX_TRACE_MSG("deliver ADNS query " << qid);
-        typename query_set::iterator const i( _queries.find(qid) );
-        BOOST_ASSERT(i != _queries.end());
-        std::swap(f, i->second);
-        _queries.erase(i);
-        f(ans);
-      }
-      BOOST_ASSERT(!_queries.empty());
-      check_consistency();
-
       // Determine the file descriptors we have to probe for.
 
-      int timeout;
       int nfds( _pfds.size() );
-      for (int rc( ERANGE ); rc == ERANGE; /**/)
+      for (;;)
       {
-        timeout = -1;
-        rc = adns_beforepoll(_state, &_pfds[0], &nfds, &timeout, &_now);
-        switch(rc)
+        int timeout( -1 );
+        int const rc( adns_beforepoll(_state, &_pfds[0], &nfds, &timeout, &_now) );
+        if (rc == ERANGE)
         {
-          case ERANGE:  BOOST_ASSERT(nfds > 0); _pfds.resize(nfds); break;
-          case 0:       break;
-          default:      { system_error err(rc, "adns_beforepoll()"); throw err; }
+          IOXX_TRACE_MSG("reallocate pfd from " << _pfds.size() << " to " << nfds << " entries");
+          BOOST_ASSERT(nfds > 0);
+          _pfds.resize(nfds);
+        }
+        else if (rc != 0)
+        {
+          system_error err(rc, "adns_beforepoll()");
+          throw err;
+        }
+        else
+        {
+          IOXX_TRACE_MSG("adns_beforepoll() returned " << nfds << " sockets; timeout = " << timeout);
+          BOOST_ASSERT(timeout >= 0);
+          if (timeout == 0)
+          {
+            IOXX_TRACE_MSG("process timeouts now; then ask adns_beforepoll() again");
+            process_timeout();
+          }
+          else
+          {
+            seconds_t to( timeout / 1000 );
+            if (timeout % 1000) ++to;
+            _timeout.in(to, boost::bind(&adns::process_timeout, this));
+            break;
+          }
         }
       }
       BOOST_ASSERT(nfds >= 0);
-      IOXX_TRACE_MSG("adns_beforepoll() returned " << nfds << " sockets; timeout = " << timeout);
-
-      // Set new timeout.
-
-      if (timeout == 0) adns_processtimeouts(_state, &_now);
-      else if (timeout > 0)
-      {
-        seconds_t to( timeout / 1000 );
-        if (timeout % 1000) ++to;
-        _timeout.in(to, boost::bind(&adns_processtimeouts, _state, &_now));
-      }
 
       // Re-register the descriptors in dispatch.
 
@@ -259,6 +242,34 @@ namespace ioxx { namespace detail
     typedef typename Allocator::template rebind<pollfd>::other                                  pfd_allocator;
     std::vector<pollfd,pfd_allocator>   _pfds;
 
+    void deliver_responses()
+    {
+      for (;;)
+      {
+        answer          ans;
+        callback        f;
+        adns_query      qid(0);
+        adns_answer *   a(0);
+        int const       rc( adns_check(_state, &qid, &a, 0) );
+        IOXX_TRACE_MSG("adns_check() returned " << rc);
+        if (rc == EINTR)        continue;
+        else if (rc == ESRCH)   { BOOST_ASSERT(_queries.empty()); return _registered_sockets.clear(); }
+        else if (rc == EAGAIN)  { BOOST_ASSERT(!_queries.empty()); break; }
+        else if (rc != 0)       { system_error err(rc, "adns_check()"); throw err; }
+        BOOST_ASSERT(rc == 0);
+        BOOST_ASSERT(a);
+        ans.reset(a, &::free);
+        IOXX_TRACE_MSG("deliver ADNS query " << qid);
+        typename query_set::iterator const i( _queries.find(qid) );
+        BOOST_ASSERT(i != _queries.end());
+        std::swap(f, i->second);
+        _queries.erase(i);
+        f(ans);
+      }
+      BOOST_ASSERT(!_queries.empty());
+      check_consistency();
+    }
+
     void check_consistency() const
     {
 #ifndef NDEBUG
@@ -305,7 +316,14 @@ namespace ioxx { namespace detail
       if (ev & socket::readable) throw_rc_if_not_zero(adns_processreadable(_state, fd, &_now), "adns_processreadable");
       if (ev & socket::writable) throw_rc_if_not_zero(adns_processwriteable(_state, fd, &_now), "adns_processwriteable");
       if (ev & socket::pridata)  throw_rc_if_not_zero(adns_processexceptional(_state, fd, &_now), "adns_processexceptional");
-      check_consistency();
+      deliver_responses();
+    }
+
+    void process_timeout()
+    {
+      IOXX_TRACE_MSG("process adns timeouts");
+      adns_processtimeouts(_state, &_now);
+      deliver_responses();
     }
 
     static void handleA(answer a, a_handler h)
