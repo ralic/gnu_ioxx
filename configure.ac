@@ -3,7 +3,7 @@ dnl ~/configure.ac -- see http://ioxx.cryp.to/
 AC_INIT([ioxx], [0.1], [simons@cryp.to])
 AC_CONFIG_SRCDIR([include/ioxx.hpp])
 AC_CONFIG_AUX_DIR([build-aux])
-AM_INIT_AUTOMAKE([-Wall gnu std-options filename-length-max=99])
+AM_INIT_AUTOMAKE([-Wall 1.10 gnu std-options filename-length-max=99])
 AC_CONFIG_MACRO_DIR([build-aux])
 
 AC_COPYRIGHT([dnl
