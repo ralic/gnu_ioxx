@@ -276,9 +276,9 @@ namespace ioxx { namespace detail
       adns_forallqueries_begin(_state);
       for (adns_query qid; /**/; /**/)
       {
-        IOXX_TRACE_MSG("check that ADNS query " << qid << " has a registered handler");
         qid = adns_forallqueries_next(_state, 0);
         if (qid == 0) break;
+        IOXX_TRACE_MSG("check that ADNS query " << qid << " has a registered handler");
         adns_checkconsistency(_state, qid);
         BOOST_ASSERT(_queries.find(qid) != _queries.end());
       }
