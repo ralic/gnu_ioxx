@@ -72,6 +72,7 @@ BOOST_AUTO_TEST_CASE( test_dns_resolver )
   for (;;)
   {
     dispatch.run();
+    schedule.run();             // TODO: Bah! dns::cun() should return a second_t.
     dns.run();
     ioxx::seconds_t timeout( schedule.run() );
     if (schedule.empty())
