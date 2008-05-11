@@ -78,10 +78,8 @@ BOOST_AUTO_TEST_CASE( test_echo_handler )
   ioxx::throw_errno_if(boost::bind(std::equal_to<sighandler_t>(), _1, SIG_ERR), "signal(2)", bind(&::signal, SIGINT, &stop_service_hook));
   ioxx::throw_errno_if(boost::bind(std::equal_to<sighandler_t>(), _1, SIG_ERR), "signal(2)", bind(&::signal, SIGTERM, &stop_service_hook));
   io.in(5u, bind(&stop_service_hook, 0));
-  while (!stop_service)
+  for (ioxx::seconds_t timeout( io.run() ); !stop_service; timeout = io.run())
   {
-    ioxx::seconds_t timeout( io.run() );
-    if (!timeout) break;
     io.wait(timeout);
   }
 }
