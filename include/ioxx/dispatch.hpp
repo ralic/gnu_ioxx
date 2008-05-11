@@ -115,7 +115,7 @@ namespace ioxx
       event_set ev;
       while (pop_event(s, ev))
       {
-        IOXX_TRACE_SOCKET(s, "deliver events " << ev);
+        IOXX_TRACE_MSG("deliver events " << ev << " on socket " << s);
         BOOST_ASSERT(s >= 0);
         BOOST_ASSERT(ev != socket::no_events);
         iterator const i( _handlers.find(s) );
@@ -128,7 +128,11 @@ namespace ioxx
       }
     }
 
-    void wait(seconds_t timeout) { demux::wait(timeout); }
+    void wait(seconds_t timeout)
+    {
+      IOXX_TRACE_MSG("wait on " << _handlers.size() << " sockets for at most " << timeout << " seconds");
+      demux::wait(timeout);
+    }
 
   private:
     handler_map    _handlers;
