@@ -47,6 +47,8 @@ namespace ioxx
     seconds_t run()
     {
       dispatch::run();
+      schedule::run();
+      dns::run();
       seconds_t timeout( schedule::run() );
       if (schedule::empty())
       {
