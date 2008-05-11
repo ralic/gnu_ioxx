@@ -151,13 +151,14 @@ namespace ioxx { namespace detail
       _current    = 0u;
     }
 
+  protected:
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
+
   private:
     native_socket_t     _epoll_fd;
     epoll_event         _events[128];
     size_t              _n_events;
     size_t              _current;
-
-    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
   };
 
 }} // namespace ioxx::detail

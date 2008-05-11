@@ -180,14 +180,15 @@ namespace ioxx { namespace detail
       _current = 0;
     }
 
+  protected:
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
+
   private:
     fd_set              _req_read_fds, _req_write_fds, _req_except_fds;
     fd_set              _recv_read_fds, _recv_write_fds, _recv_except_fds;
     native_socket_t     _max_fd;
     native_socket_t     _current;
     size_t              _n_events;
-
-    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
   };
 
 }} // namespace ioxx::detail

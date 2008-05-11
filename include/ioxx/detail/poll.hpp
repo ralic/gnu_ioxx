@@ -107,6 +107,7 @@ namespace ioxx { namespace detail
 
       void request(event_set ev)
       {
+        IOXX_TRACE_MSG("socket " << as_native_socket_t() << " requests events " << ev);
         check_consistency();
         _poll._pfd[_iter->second].events = ev;
       }
@@ -158,6 +159,7 @@ namespace ioxx { namespace detail
 
     void wait(seconds_t timeout)
     {
+      IOXX_TRACE_MSG("wait on " << _pfd.size() << " sockets for at most " << timeout << " seconds");
       BOOST_ASSERT(timeout <= max_timeout());
       BOOST_ASSERT(!_n_events);
 #if defined(IOXX_HAVE_PPOLL) && IOXX_HAVE_PPOLL
@@ -183,13 +185,14 @@ namespace ioxx { namespace detail
       _current = 0u;
     }
 
+  protected:
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
+
   private:
     pfd_array _pfd;
     index_map _indices;
     size_type _n_events;
     size_type _current;
-
-    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
   };
 
 }} // namespace ioxx::detail
