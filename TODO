@@ -1,295 +1,292 @@
 #+TITLE: ioxx                               -*- mode: org; fill-column: 79; -*-
+#+STARTUP: hidestars odd
 
 * Design
 
-** DONE Should there be such a thing as an invalid =ioxx::socket=?
+*** DONE Should there be such a thing as an invalid =ioxx::socket=?
 
-   The design could enforce that a =socket= is always valid, i.e. there would
-   be no default constructor and no =release()= method. Is that desirable? Or
-   is the additional flexibility of a stateful =socket= implementing =reset()=,
-   =swap()=, and =release()= all over the place?
+    The design could enforce that a =socket= is always valid, i.e. there would
+    be no default constructor and no =release()= method. Is that desirable? Or
+    is the additional flexibility of a stateful =socket= implementing
+    =reset()=, =swap()=, and =release()= all over the place?
 
-   [2008-04-27 Sun]: The answer is *no*. A =socket= is always valid; any
-   attempt to construct an invalid socket throws an exception. A stateful
-   socket can be readily emulated by using a socket pointer, i.e. a
-   scoped_ptr<socket> or shared_ptr<socket>.
+    [2008-04-27 Sun]: The answer is *no*. A =socket= is always valid; any
+    attempt to construct an invalid socket throws an exception. A stateful
+    socket can be readily emulated by using a socket pointer, i.e. a
+    scoped_ptr<socket> or shared_ptr<socket>.
 
-** DONE Will ioxx have a link library?
+*** DONE Will ioxx have a link library?
 
-   Link libraries are a pain in the ass once different kinds of variants are
-   involved. At the same time, a lot of socket code can be put into a link
-   library just fine; including all those system headers everywhere is plain
-   unnecessary.
+    Link libraries are a pain in the ass once different kinds of variants are
+    involved. At the same time, a lot of socket code can be put into a link
+    library just fine; including all those system headers everywhere is plain
+    unnecessary.
 
-   [2008-05-10 Sat]: No link library, we try to be header-only.
+    [2008-05-10 Sat]: No link library, we try to be header-only.
 
 * Known Bugs and Portability Problems
 
-** DONE Specialization for =size(iovec const &)= doesn't compile with ICC 9.11.
+*** DONE Specialization for =size(iovec const &)= doesn't compile with ICC 9.11.
 
-   Boost 1.35 defines that function to return =range_difference<T>::type= --
-   the signed type =byte_offset= for us --, but the current specialization
-   returns =byte_size=, which is unsigned.
+    Boost 1.35 defines that function to return =range_difference<T>::type= --
+    the signed type =byte_offset= for us --, but the current specialization
+    returns =byte_size=, which is unsigned.
 
-** TODO Boost libraries don't compile on AIX.
+*** TODO Boost libraries don't compile on AIX.
 
-   The header-only libraries probably work, but Boost.Build doesn't seem to
-   know about the IBM xlC++ compiler. Is it a good idea to use Boost.System
-   after all? It's the only link library ioxx really needs at this point. The
-   unit tests also need the unit_test_framework, naturally, but not being able
-   to build those is a smaller problem than not being able to build the actual
-   library. A simple replacement class for =system_error= might make things a
-   lot easier.
+    The header-only libraries probably work, but Boost.Build doesn't seem to
+    know about the IBM xlC++ compiler. Is it a good idea to use Boost.System
+    after all? It's the only link library ioxx really needs at this point. The
+    unit tests also need the unit_test_framework, naturally, but not being able
+    to build those is a smaller problem than not being able to build the actual
+    library. A simple replacement class for =system_error= might make things a
+    lot easier.
 
-   [2008-05-02 Fri]: ioxx no longer depends on any boost link libraries;
-   everything is header-only.
+    [2008-05-02 Fri]: ioxx no longer depends on any boost link libraries;
+    everything is header-only.
 
-   [2008-05-09 Fri]: Test programs *do* depend on link libraries. However, the
-   build should be able to fall back to header-only by including the special
-   version of boost_unit_test.
+    [2008-05-09 Fri]: Test programs *do* depend on link libraries. However, the
+    build should be able to fall back to header-only by including the special
+    version of boost_unit_test.
 
-** DONE Demuxer sockets support no =release()=, =swap()=, or =reset()=.
+*** TODO All non-copiable classes should support =swap()=.
 
-   The methods are publicly available through inheritance, but at attempt to
-   actually use them will break things.
+*** DONE Add a scoped task class to =schedule=.
 
-   Related to [[*Should there be such a thing as an invalid =ioxx::socket=?]].
+    The standard =task_id= is not scoped, i.e. the task is not cancelled on
+    destruction. A common use case for scheduled tasks, however, are timeouts,
+    and those tasks will exist only for a certain scope, namely the time the
+    application is waiting for the i/o operation to complete.
 
-   [2008-04-27 Sun]: It won't have to.
+    [2008-05-02 Fri]: Added =schedule<>::timeout=.
 
-** DONE Add a scoped task class to =schedule=.
+*** DONE =dispatch::run()= is insufficient
 
-   The standard =task_id= is not scoped, i.e. the task is not cancelled on
-   destruction. A common use case for scheduled tasks, however, are timeouts,
-   and those tasks will exist only for a certain scope, namely the time the
-   application is waiting for the i/o operation to complete.
+    The function calls =deliver_events()= directly after waiting. This means
+    that the active handlers will run with a -- potentially -- screwed up
+    notion of 'now' because the user had no chance to update the system timer.
+    There are two ways out of this:
 
-   [2008-05-02 Fri]: Added =schedule<>::timeout=.
+    - Split =wait()= out of =run()=, like it is in =demux=.
+    - Pass a reference to =time= so that our loop can call =update()=.
 
-** DONE =dispatch::run()= is insufficient
+*** TODO Demux and dispatcher sockets need constructors for weak ownership.
 
-   The function calls =deliver_events()= directly after waiting. This means
-   that the active handlers will run with a -- potentially -- screwed up notion
-   of 'now' because the user had no chance to update the system timer. There
-   are two ways out of this:
+    The demuxers don't forward the dont-close-on-destruction constructor. The
+    concept check test should proably enforce that.
 
-   - Split =wait()= out of =run()=, like it is in =demux=.
-   - Pass a reference to =time= so that our loop can call =update()=.
+*** DONE All our classes must accept an allocators object at construction.
 
-** TODO Demux and dispatcher sockets need constructors for weak ownership.
+    Having a template parameter is nice, but it must be possible to pass a
+    concrete instance.
 
-   The demuxers don't forward the dont-close-on-destruction constructor. The
-   concept check test should proably enforce that.
+    [2008-05-09 Fri]: It turns out that most STL classes don't accept an
+    allocator at construction! So this is probably a nice-to-have but not
+    important feature.
 
-** DONE All our classes must accept an allocators object at construction.
+*** DONE The =AX_WITH_PROG= macro has some screwed up documentation.
 
-   Having a template parameter is nice, but it must be possible to pass a
-   concrete instance.
+    [2008-04-30 Wed]: [[gnus:nnml:mail.archive#8089][Asked Francesco.]]
+    [2008-05-02 Fri]: Fixed.
 
-   [2008-05-09 Fri]: It turns out that most STL classes don't accept an
-   allocator at construction! So this is probably a nice-to-have but not
-   important feature.
+*** DONE Try linking =adns_init()= without =-ladns= first.
 
-** DONE The =AX_WITH_PROG= macro has some screwed up documentation.
+    The user may want to specify an entirely different library in =$LIBS=. If
+    that is the case, then linking =-ladns= might break a link that would have
+    succeeded otherwise.
 
-   [2008-04-30 Wed]: [[gnus:nnml:mail.archive#8089][Asked Francesco.]]
-   [2008-05-02 Fri]: Fixed.
+    [2008-05-02 Fri]: Implemented in AX_HAVE_ADNS.
 
-** DONE Try linking =adns_init()= without =-ladns= first.
+*** TODO Add a dummy DNS server we can use is case ADNS isn't available.
 
-   The user may want to specify an entirely different library in =$LIBS=. If
-   that is the case, then linking =-ladns= might break a link that would have
-   succeeded otherwise.
+*** DONE Fix comments in =AX_HAVE_POLL_PWAIT=.
 
-   [2008-05-02 Fri]: Implemented in AX_HAVE_ADNS.
+*** TODO Don't assume to know the =msghdr= layout.
 
-** TODO Add a dummy DNS server we can use is case ADNS isn't available.
+    On Solaris, the structure doesn't have the layout it does on Linux, so our
+    all-in-one initialization style fails to compile =socket::sendmsg()=, etc.
 
-** DONE Fix comments in =AX_HAVE_POLL_PWAIT=.
+*** TODO The SUN compiler has no real std::reverse_iterator.
 
-** TODO Don't assume to know the =msghdr= layout.
+    The boost libraries fail to compile as much as our own iovec
+    specializations do. Not sure how this can be remedied at all.
 
-   On Solaris, the structure doesn't have the layout it does on Linux, so our
-   all-in-one initialization style fails to compile =socket::sendmsg()=, etc.
+*** TODO Don't rely on the compiler to deduce return type of bind().
 
-** TODO The SUN compiler has no real std::reverse_iterator.
+    When binding function pointers, older compilers cannot determine the return
+    type. The SUN compiler doesn't even understand bind<T>() syntax; so we need
+    to use bind(type<T>(), ...) instead.
 
-   The boost libraries fail to compile as much as our own iovec specializations
-   do. Not sure how this can be remedied at all.
+    [2008-05-09 Fri]: Most bind() calls have been fixed.
 
-** TODO Don't rely on the compiler to deduce return type of bind().
+*** TODO Link boost_unit_test shared library correctly.
 
-   When binding function pointers, older compilers cannot determine the return
-   type. The SUN compiler doesn't even understand bind<T>() syntax; so we need
-   to use bind(type<T>(), ...) instead.
+    To link that bloody library, binaries need to be compiled with
+    =BOOST_TEST_DYN_LINK= defined.
 
-   [2008-05-09 Fri]: Most bind() calls have been fixed.
+    [2008-05-09 Fri]: Added macro that recognizes this problem, but it's still
+    very hacky and needs to be improved. Particularly, the macro should guess
+    the library's name too, meaning it shouldn't depend on BOOST_SUFFIX to be
+    set.
 
-** TODO Link boost_unit_test shared library correctly.
+    Related to [[*Boost libraries don t compile on AIX]].
 
-   To link that bloody library, binaries need to be compiled with
-   =BOOST_TEST_DYN_LINK= defined.
+*** TODO NetBSD doesn't have sighandler_t type.
 
-   [2008-05-09 Fri]: Added macro that recognizes this problem, but it's still
-   very hacky and needs to be improved. Particularly, the macro should guess
-   the library's name too, meaning it shouldn't depend on BOOST_SUFFIX to be
-   set.
+*** TODO Add a DNS test case with an unreachable server.
 
-   Related to [[*Boost libraries don t compile on AIX]].
+*** TODO Implement a real test case for the i/o dispatcher.
 
-** TODO NetBSD doesn't have sighandler_t type.
+    Create a large number of pipes and chain them together using some
+    to-be-written forwarder class so that they become a kind of loop:
 
-** TODO Add a DNS test case with an unreachable server.
-** TODO Implement a real test case for the i/o dispatcher.
+    : p1i --> ... --> p1o --> p2i --> ... --> p2o --> p2i --> ... +
+    :                                                             |
+    : p9o <-- ... <-- p9i <-- p8o <-- ... --> p8i <-- p7o <-- ... +
 
-   Create a large number of pipes and chain them together using some
-   to-be-written forwarder class so that they become a kind of loop:
+    Simply put: what is written to the first pipe's input end, comes out at the
+    last pipe's output end. The test forwarder can do funky stuff like writing
+    random block sizes or simulate network delays by writing by means of a
+    scheduled task, etc. Verification can take place by CRCing the (random)
+    data stream.
 
-      p1i --> ... --> p1o --> p2i --> ... --> p2o --> p2i --> ... +
-                                                                  |
-      p9o <-- ... <-- p9i <-- p8o <-- ... --> p8i <-- p7o <-- ... +
+*** TODO =Schedule::run()= shouldn't be called twice per loop in =test/dns.cpp=.
 
-   Simply put: what is written to the first pipe's input end, comes out at the
-   last pipe's output end. The test forwarder can do funky stuff like writing
-   random block sizes or simulate network delays by writing by means of a
-   scheduled task, etc. Verification can take place by CRCing the (random) data
-   stream or something.
+    See commit bfde4809d49c739b29f7de252e972c4f8ab0546b for details. The same
+    problem exists in =core::run()=.
 
-** TODO =Schedule::run()= shouldn't be called twice per loop in =test/dns.cpp=.
+*** TODO =adns= must use an allocator to get new sockets, not =operator new()=.
 
-   See commit bfde4809d49c739b29f7de252e972c4f8ab0546b for details.
-   The same problem exists in =core::run()=.
+*** TODO Enable optional use of =boost::system::system_error=.
 
-** TODO =adns= must use an allocator to get new sockets, not =operator new=.
+    Autoconf can detect whether it's available and enable optional support.
+
+*** TODO Use strerror_r() if available.
 
 * Documentation
 
-** What is ioxx?
+*** What is ioxx?
 
-   The ioxx library provides primitives for asynchronous i/o in C++. That kind
-   of thing is typically useful for people who would like to implement a highly
-   concurrent network service, i.e. an application that performs input/output
-   simultaneously on a great number of sockets. The library's main components
-   are a socket event dispatcher, a time event dispatcher, and an asynchronous
-   DNS resolver. There is also a convenient class interface to socket
-   programming that offers wonders of modern C++ such as exception-style error
-   reporting, automatic resource management through construction/destruction,
-   type-safety, and support for custom allocators. Ioxx is thread-safe in the
-   sense that it is fully re-entrant. The code runs on any POSIX-compliant
-   operating system, most notably Linux, NetBSD, Solaris, AIX, HP/UX, and
-   Windows.
+    The ioxx library provides primitives for asynchronous i/o in C++. That kind
+    of thing is typically useful for people who would like to implement a
+    highly concurrent network service, i.e. an application that performs
+    input/output simultaneously on a great number of sockets. The library's
+    main components are a socket event dispatcher, a time event dispatcher, and
+    an asynchronous DNS resolver. There is also a class interface to socket
+    programming that offers those wonders of modern C++ such as exception-style
+    error reporting, transparent resource management, type-safety, and support
+    for custom memory allocation strategies. Ioxx is thread-safe in the sense
+    that it is fully re-entrant. The code runs on any POSIX-compliant operating
+    system, most notably Linux, NetBSD, Solaris, AIX, HP/UX, and Windows.
 
-*** How to download the latest version
+***** How to download the latest version
 
-    * Stable release: [[http://ioxx.cryp.to/ioxx-0.1.tar.gz][ioxx-0.1.tar.gz]]
+******* Stable release: [[http://ioxx.cryp.to/ioxx-0.1.tar.gz][ioxx-0.1.tar.gz]]
 
-      Ioxx depends mandatorily on the excellent [[http://boost.org/][Boost libraries]]. The optional
-      asynchronous DNS resolver depends on [[http://www.chiark.greenend.org.uk/~ian/adns/][GNU ADNS]] version 1.4 (or later).
-      Optional logging support is enabled if the [[http://logxx.cryp.to/][logxx]] library is available.
-      The reference documentation can be re-built with [[http://www.doxygen.org/][doxygen]].
+        Ioxx depends mandatorily on the excellent [[http://boost.org/][Boost libraries]]. The optional
+        asynchronous DNS resolver depends on [[http://www.chiark.greenend.org.uk/~ian/adns/][GNU ADNS]] version 1.4 (or later).
+        Optional logging support is enabled if the [[http://logxx.cryp.to/][logxx]] library is available.
+        The reference documentation can be re-built with [[http://www.doxygen.org/][doxygen]].
 
-    * Development snapshot: [[http://git.cryp.to/%3Fp%3Dioxx%3Ba%3Dsnapshot%3Bh%3DHEAD][ioxx-HEAD.tar.gz]]
+******* Development snapshot: [[http://git.cryp.to/%3Fp%3Dioxx%3Ba%3Dsnapshot%3Bh%3DHEAD][ioxx-HEAD.tar.gz]]
 
-      The most current development snapshot comes directly from the source code
-      management repository, which can be [[http://git.cryp.to/%3Fp%3Dioxx][browsed online]] to see the change
-      history, etc. Users of the [[http://git.or.cz/][git]] utility can also download that repository
-      to their local machines:
+        The most current development snapshot comes directly from the source
+        code management repository, which can be [[http://git.cryp.to/%3Fp%3Dioxx][browsed online]] to see the
+        change history, etc. Users of the [[http://git.or.cz/][git]] utility can also download that
+        repository to their local machines:
 
-      : git clone http://git.cryp.to/ioxx/
+        : git clone http://git.cryp.to/ioxx/
 
-      Note that unlike the stable releases, development snapshots do not
-      contain the whole zoo of build scripts necessary to compile the code --
-      like =configure=. Those scripts can be generated with the command
-      =autoreconf -i= if [[http://www.gnu.org/software/autoconf/][Autoconf]] 2.61 and [[http://sources.redhat.com/automake/][Automake]] 1.10 (or later versions)
-      are available.
+        Note that unlike the stable releases, development snapshots do not
+        contain the whole zoo of build scripts necessary to compile the code --
+        like =configure=. Those scripts can be generated with the command
+        =autoreconf -i= if [[http://www.gnu.org/software/autoconf/][Autoconf]] 2.61 and [[http://sources.redhat.com/automake/][Automake]] 1.10 (or later versions)
+        are available.
 
-    If you want to be notified whenever a new version comes out, you might want
-    to subscribe to the ioxx [[http://git.cryp.to/%3Fp%3Dioxx%3Ba%3Drss][RSS feed]] or [[http://git.cryp.to/%3Fp%3Dioxx%3Ba%3Datom][ATOM log]].
+***** How to be notified of new versions
 
-*** How to configure, compile, and install this library
+      If you would like to be notified whenever a new version becomes
+      available, subscribe to the ioxx [[http://git.cryp.to/%3Fp%3Dioxx%3Ba%3Drss][RSS feed]] or [[http://git.cryp.to/%3Fp%3Dioxx%3Ba%3Datom][ATOM log]].
 
-    For the impatient: =./configure && make check && make install=
+***** How to configure, compile, and install this library
 
-    Ioxx is a header-only library that does not require any compilation -- with
-    the exception of the test suite. The standard Autoconf installation
-    procedure is described at great length in the distributed file =INSTALL=.
-    In addition to the usual standard options, ioxx can be configured with a
-    number of additional switches. If those options are left unspecified, ioxx
-    tries to auto-detect whether those features are available or not.
-    Specifying these options is usually unnecessary. A status summary will be
-    output at the end of the configure run.
+      For the impatient: =./configure && make check && make install=
 
-    * =--enable-logging=
+      Ioxx is a header-only library that does not require any compilation --
+      with the exception of the test suite. The standard Autoconf installation
+      procedure is described at great length in the distributed file =INSTALL=.
+      In addition to the usual standard options, ioxx can be configured with a
+      number of additional switches. If those options are left unspecified,
+      ioxx tries to auto-detect whether those features are available or not.
+      Specifying these options is usually unnecessary. A status summary will be
+      output at the end of the configure run.
 
-      Enable support the [[http://logxx.cryp.to/][logxx]] library. This might require additional =-I=
-      flags in =CPPFLAGS= to help the compiler finding the =logxx.hpp= header.
-      If this feature is disabled, ioxx won't produce any log file.
+      * =--enable-logging=
 
-    * =--enable-epoll=, =--enable-epoll-pwait=
+        Enable support the [[http://logxx.cryp.to/][logxx]] library. This might require additional =-I=
+        flags in =CPPFLAGS= to help the compiler finding the =logxx.hpp=
+        header. If this feature is disabled, ioxx won't produce any log file.
 
-      Enable support for the Linux-specific =epoll= family of system calls.
+      * =--enable-epoll=, =--enable-epoll-pwait=
 
-    * =--enable-poll=, =--enable-ppoll=
+        Enable support for the Linux-specific =epoll= family of system calls.
 
-      Enable support for the POSIX call =poll()= and/or the non-standard
-      extension =ppoll()=.
+      * =--enable-poll=, =--enable-ppoll=
 
-    * =--enable-select=, =--enable-pselect=
+        Enable support for the POSIX call =poll()= and/or the non-standard
+        extension =ppoll()=.
 
-      Enable support for the POSIX call =select()= and/or the non-standard
-      extension =pselect()=.
+      * =--enable-select=, =--enable-pselect=
 
-    * =--enable-adns=
+        Enable support for the POSIX call =select()= and/or the non-standard
+        extension =pselect()=.
 
-      Enable asynchronous DNS resolving with [[http://www.chiark.greenend.org.uk/~ian/adns/][GNU ADNS]] version 1.4 (or later).
-      This might require additional =-I= flags in =CPPFLAGS= and =-L= flags in
-      =LDFLAGS=.
+      * =--enable-adns=
 
-    * =--enable-internal-docs=  Include internal classes in doxygen documentation.
+        Enable asynchronous DNS resolving with [[http://www.chiark.greenend.org.uk/~ian/adns/][GNU ADNS]] version 1.4 (or later).
+        This might require additional =-I= flags in =CPPFLAGS= and =-L= flags
+        in =LDFLAGS=.
 
-      When re-building the reference documentation, include classes that are
-      documented as internal. The default is not to include those classes.
+      * =--enable-internal-docs= Include internal classes in doxygen
+        documentation.
 
-    * =--with-doxygen=PATH=, =--with-dot=PATH=, =--with-perl=PATH=
+        When re-building the reference documentation, include classes that are
+        documented as internal. The default is not to include those classes.
 
-      Use these flags to specify the absolute paths to the corresponding
-      binaries. Alternatively, the variables =DOXYGEN=, =DOT=, and =PERL= can
-      be assigned on the =configure= command-line. These options concern only
-      the reference documentation generated with [[http://www.doxygen.org/][doxygen]].
+      * =--with-doxygen=PATH=, =--with-dot=PATH=, =--with-perl=PATH=
 
-*** How to get help, submit patches, or report bugs
+        Use these flags to specify the absolute paths to the corresponding
+        binaries. Alternatively, the variables =DOXYGEN=, =DOT=, and =PERL= can
+        be assigned on the =configure= command-line. These options concern only
+        the reference documentation generated with [[http://www.doxygen.org/][doxygen]].
 
-    Please direct any correspondence to me [[mailto:simons@cryp.to][via e-mail]]. The library is still
-    fairly new and I'm particularly interested in hearing about portability
-    problems, i.e. platforms on which ioxx doesn't compile or fails the test
-    suite. Patches and suggestions for improvement are always welcome, of
-    course.
+***** How to get help, submit patches, or report bugs
 
-** How to write network services with ioxx
+      Please direct any correspondence to me [[mailto:simons@cryp.to][via e-mail]]. The library is still
+      fairly new and I'm particularly interested in hearing about portability
+      problems, i.e. platforms on which ioxx doesn't compile or fails the test
+      suite. Patches and suggestions for improvement are always welcome, of
+      course.
 
-*** Signal Handling
+*** How to write network services with ioxx
 
-*** Example: daytime server
+***** Example: daytime server
 
-*** Example: echo server
+***** Example: echo server
 
-*** Example: http client
+***** Example: http client
 
-** Licensing
+*** Licensing
 
-   The ioxx library is distributed under the terms of the [[http://www.gnu.org/licenses/][GNU Lesser General
-   Public License]] version 3 or, at your option, any later version. This choice
-   is mostly a consequence of ioxx's dependency on GNU ADNS, which dictates
-   those terms. However, only a fraction of the code distributed as part of
-   ioxx actually depends on ADNS, meaning that most files include the =adns.h=
-   header neither directly nor indirectly. When used on their own, these files
-   are available under an all-permissive license, which means that you can do
-   with them, basically, whatever you want.
+    The ioxx library is distributed under the terms of the [[http://www.gnu.org/licenses/][GNU Lesser General
+    Public License]] version 3 or, at your option, any later version. This choice
+    is mostly a consequence of ioxx's dependency on GNU ADNS, which dictates
+    those terms. However, only a fraction of the code distributed as part of
+    ioxx actually depends on ADNS, meaning that most files include the =adns.h=
+    header neither directly nor indirectly. When used on their own, these files
+    are available under an all-permissive license, which means that you can do
+    with them, basically, whatever you want.
 
-   Ioxx is distributed in the hope that it will be useful, but WITHOUT ANY
-   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-   FOR A PARTICULAR PURPOSE.
-
-** References
-
-   * Boost Libraries: http://boost.org/
+    Ioxx is distributed in the hope that it will be useful, but WITHOUT ANY
+    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+    FOR A PARTICULAR PURPOSE.
