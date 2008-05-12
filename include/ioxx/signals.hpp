@@ -23,20 +23,22 @@ namespace ioxx
   public:
     block_signals()
     {
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.signal");
       sigset_t block_all;
       throw_errno_if_minus1("sigfillset(3)", boost::bind(boost::type<int>(), &::sigfillset, &block_all));
       throw_errno_if_minus1("sigprocmask(2)", boost::bind(boost::type<int>(), &::sigprocmask, SIG_SETMASK, &block_all, &_orig_mask));
-      IOXX_TRACE_MSG("block all signals");
+      LOGXX_TRACE("block all");
     }
 
     ~block_signals()
     {
       throw_errno_if_minus1("sigprocmask(2)", boost::bind(boost::type<int>(), &::sigprocmask, SIG_SETMASK, &_orig_mask, static_cast<sigset_t*>(0)));
-      IOXX_TRACE_MSG("cancel blocking of all signals");
+      LOGXX_TRACE("cancel block all");
     }
 
   private:
     sigset_t _orig_mask;
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
   };
 
   class unblock_signals : private boost::noncopyable
@@ -44,20 +46,22 @@ namespace ioxx
   public:
     unblock_signals()
     {
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.signal");
       sigset_t unblock_all;
       throw_errno_if_minus1("sigemptyset(3)", boost::bind(boost::type<int>(), &::sigemptyset, &unblock_all));
       throw_errno_if_minus1("sigprocmask(2)", boost::bind(boost::type<int>(), &::sigprocmask, SIG_SETMASK, &unblock_all, &_orig_mask));
-      IOXX_TRACE_MSG("unblock all signals");
+      LOGXX_TRACE("unblock all");
     }
 
     ~unblock_signals()
     {
       throw_errno_if_minus1("sigprocmask(2)", boost::bind(boost::type<int>(), &::sigprocmask, SIG_SETMASK, &_orig_mask, static_cast<sigset_t*>(0)));
-      IOXX_TRACE_MSG("cancel unblocking of all signals");
+      LOGXX_TRACE("cancel unblock all");
     }
 
   private:
     sigset_t _orig_mask;
+    LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
   };
 
 } // namespace ioxx

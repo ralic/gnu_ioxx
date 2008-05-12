@@ -82,7 +82,7 @@ namespace ioxx { namespace detail
       flags |= adns_if_debug | adns_if_checkc_freq;
 #endif
       throw_rc_if_not_zero(adns_init(&_state, flags, static_cast<FILE*>(0)), "cannot initialize adns");
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.adns." + show(_state));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.adns." + detail::show(_state));
       BOOST_ASSERT(_state);
     }
 
@@ -94,35 +94,35 @@ namespace ioxx { namespace detail
 
     void query_a(char const * owner, a_handler const & h)
     {
-      IOXX_TRACE_MSG("request A record for " << owner);
+      LOGXX_TRACE("request A record for " << owner);
       BOOST_ASSERT(h);
       submit(owner, adns_r_a, adns_qf_none, boost::bind(handleA, _1, h));
     }
 
     void query_a_no_cname(char const * owner, a_handler const & h)
     {
-      IOXX_TRACE_MSG("request A record for " << owner << " (no cname)");
+      LOGXX_TRACE("request A record for " << owner << " (no cname)");
       BOOST_ASSERT(h);
       submit(owner, adns_r_a, adns_qf_cname_forbid, boost::bind(handleA, _1, h));
     }
 
     void query_mx(char const * owner, mx_handler const & h)
     {
-      IOXX_TRACE_MSG("request MX record for " << owner);
+      LOGXX_TRACE("request MX record for " << owner);
       BOOST_ASSERT(h);
       submit(owner, adns_r_mx, adns_qf_none, boost::bind(handleMX, _1, h));
     }
 
     void query_ptr(char const * owner, ptr_handler const & h)
     {
-      IOXX_TRACE_MSG("request PTR record for " << owner);
+      LOGXX_TRACE("request PTR record for " << owner);
       BOOST_ASSERT(h);
       submit(owner, adns_r_ptr, adns_qf_none, boost::bind(handlePTR, _1, h));
     }
 
     void run()
     {
-      IOXX_TRACE_MSG(  "run() has " << _queries.size() << " open queries and "
+      LOGXX_TRACE(  "run() has " << _queries.size() << " open queries and "
                     << _registered_sockets.size() << " registered sockets");
       check_consistency();
       _timeout.cancel();
@@ -137,7 +137,7 @@ namespace ioxx { namespace detail
         int const rc( adns_beforepoll(_state, &_pfds[0], &nfds, &timeout, &_now) );
         if (rc == ERANGE)
         {
-          IOXX_TRACE_MSG("reallocate pfd from " << _pfds.size() << " to " << nfds << " entries");
+          LOGXX_TRACE("reallocate pfd from " << _pfds.size() << " to " << nfds << " entries");
           BOOST_ASSERT(nfds > 0);
           _pfds.resize(nfds);
         }
@@ -148,11 +148,11 @@ namespace ioxx { namespace detail
         }
         else
         {
-          IOXX_TRACE_MSG("adns_beforepoll() returned " << nfds << " sockets; timeout = " << timeout);
+          LOGXX_TRACE("adns_beforepoll() returned " << nfds << " sockets; timeout = " << timeout);
           BOOST_ASSERT(timeout >= 0);
           if (timeout == 0)
           {
-            IOXX_TRACE_MSG("process timeouts now; then ask adns_beforepoll() again");
+            LOGXX_TRACE("process timeouts now; then ask adns_beforepoll() again");
             process_timeout();
           }
           else
@@ -177,25 +177,25 @@ namespace ioxx { namespace detail
       {
         if (req == req_end)
         {
-          IOXX_TRACE_MSG("no more requested fds; erase " << std::distance(reg, reg_end) << " registered sockets");
+          LOGXX_TRACE("no more requested fds; erase " << std::distance(reg, reg_end) << " registered sockets");
           _registered_sockets.erase(reg, reg_end);
           break;
         }
         else if (reg == reg_end)
         {
-          IOXX_TRACE_MSG("no more registered fds; add " << req_end - req << " new ones sockets");
+          LOGXX_TRACE("no more registered fds; add " << req_end - req << " new ones sockets");
           std::for_each(req, req_end, boost::bind(&adns::register_fd, this, _1));
           break;
         }
         else if (req->fd < (*reg)->as_native_socket_t())
         {
-          IOXX_TRACE_MSG("requested socket " << req->fd << " is new");
+          LOGXX_TRACE("requested socket " << req->fd << " is new");
           register_fd(*req);
           ++req;
         }
         else if (req->fd == (*reg)->as_native_socket_t())
         {
-          IOXX_TRACE_MSG("socket " << req->fd << " must be modified");
+          LOGXX_TRACE("socket " << req->fd << " must be modified");
           (*reg)->request( req->events & POLLIN  ? socket::readable : socket::no_events
                          | req->events & POLLOUT ? socket::writable : socket::no_events
                          | req->events & POLLPRI ? socket::pridata  : socket::no_events
@@ -205,7 +205,7 @@ namespace ioxx { namespace detail
         else
         {
           BOOST_ASSERT(req->fd > (*reg)->as_native_socket_t());
-          IOXX_TRACE_MSG("registered socket " << *reg << " is no longer required");
+          LOGXX_TRACE("registered socket " << *reg << " is no longer required");
           _registered_sockets.erase(reg++);
         }
       }
@@ -251,7 +251,7 @@ namespace ioxx { namespace detail
         adns_query      qid(0);
         adns_answer *   a(0);
         int const       rc( adns_check(_state, &qid, &a, 0) );
-        IOXX_TRACE_MSG("adns_check() returned " << rc);
+        LOGXX_TRACE("adns_check() returned " << rc);
         if (rc == EINTR)        continue;
         else if (rc == ESRCH)   { BOOST_ASSERT(_queries.empty()); return _registered_sockets.clear(); }
         else if (rc == EAGAIN)  { BOOST_ASSERT(!_queries.empty()); break; }
@@ -259,7 +259,7 @@ namespace ioxx { namespace detail
         BOOST_ASSERT(rc == 0);
         BOOST_ASSERT(a);
         ans.reset(a, &::free);
-        IOXX_TRACE_MSG("deliver ADNS query " << qid);
+        LOGXX_TRACE("deliver ADNS query " << qid);
         typename query_set::iterator const i( _queries.find(qid) );
         BOOST_ASSERT(i != _queries.end());
         std::swap(f, i->second);
@@ -278,7 +278,7 @@ namespace ioxx { namespace detail
       {
         qid = adns_forallqueries_next(_state, 0);
         if (qid == 0) break;
-        IOXX_TRACE_MSG("check that ADNS query " << qid << " has a registered handler");
+        LOGXX_TRACE("check that ADNS query " << qid << " has a registered handler");
         adns_checkconsistency(_state, qid);
         BOOST_ASSERT(_queries.find(qid) != _queries.end());
       }
@@ -295,7 +295,7 @@ namespace ioxx { namespace detail
 
     void register_fd(pollfd const & pfd)
     {
-      IOXX_TRACE_MSG("register new adns socket " << pfd.fd);
+      LOGXX_TRACE("register new adns socket " << pfd.fd);
       BOOST_ASSERT(pfd.fd >= 0);
       BOOST_ASSERT(pfd.events != 0);
       shared_socket s;
@@ -312,7 +312,7 @@ namespace ioxx { namespace detail
 
     void process_fd(native_socket_t fd, typename socket::event_set ev)
     {
-      IOXX_TRACE_SOCKET(fd, "process adns events " << ev);
+      LOGXX_TRACE("process adns events " << ev << " on socket " << fd);
       if (ev & socket::readable) throw_rc_if_not_zero(adns_processreadable(_state, fd, &_now), "adns_processreadable");
       if (ev & socket::writable) throw_rc_if_not_zero(adns_processwriteable(_state, fd, &_now), "adns_processwriteable");
       if (ev & socket::pridata)  throw_rc_if_not_zero(adns_processexceptional(_state, fd, &_now), "adns_processexceptional");
@@ -321,7 +321,7 @@ namespace ioxx { namespace detail
 
     void process_timeout()
     {
-      IOXX_TRACE_MSG("process adns timeouts");
+      LOGXX_TRACE("process adns timeouts");
       adns_processtimeouts(_state, &_now);
       deliver_responses();
     }

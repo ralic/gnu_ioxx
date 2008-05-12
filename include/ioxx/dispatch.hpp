@@ -115,13 +115,12 @@ namespace ioxx
       event_set ev;
       while (pop_event(s, ev))
       {
-        IOXX_TRACE_MSG("deliver events " << ev << " on socket " << s);
         BOOST_ASSERT(s >= 0);
         BOOST_ASSERT(ev != socket::no_events);
         iterator const i( _handlers.find(s) );
         if (i == _handlers.end())
         {
-          IOXX_TRACE_SOCKET(s, "ignore events; handler for this socket does no longer exist");
+          LOGXX_MSG_TRACE(this->LOGXX_SCOPE_NAME, "ignore events; handler for socket " << s << " does no longer exist");
           continue;
         }
         i->second(ev);         // this is dangerous in case of suicides
@@ -130,7 +129,6 @@ namespace ioxx
 
     void wait(seconds_t timeout)
     {
-      IOXX_TRACE_MSG("wait on " << _handlers.size() << " sockets for at most " << timeout << " seconds");
       demux::wait(timeout);
     }
 

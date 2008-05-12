@@ -107,7 +107,7 @@ namespace ioxx { namespace detail
 
       void request(event_set ev)
       {
-        IOXX_TRACE_MSG("socket " << as_native_socket_t() << " requests events " << ev);
+        LOGXX_TRACE("socket " << as_native_socket_t() << " requests events " << ev);
         check_consistency();
         _poll._pfd[_iter->second].events = ev;
       }
@@ -136,7 +136,7 @@ namespace ioxx { namespace detail
 
     poll() : _n_events(0u), _current(0u)
     {
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.poll." + show(this));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.poll." + detail::show(this));
     }
 
     bool empty() const { return _n_events == 0u; }
@@ -145,13 +145,14 @@ namespace ioxx { namespace detail
     {
       while (_n_events)
       {
-        IOXX_TRACE_MSG("pop_event() has " << _n_events << " events to deliver; _current = " << _current);
+        LOGXX_TRACE("pop_event() has " << _n_events << " events to deliver; _current = " << _current);
         pollfd const & pfd( _pfd[_current++] );
         BOOST_ASSERT(pfd.fd >= 0);
         if (!pfd.revents) continue;
         --_n_events;
         sock = pfd.fd;
         ev   = static_cast<typename socket::event_set>(pfd.revents);
+        LOGXX_TRACE("deliver events " << ev << " on socket " << sock);
         return true;
       }
       return false;
@@ -159,7 +160,7 @@ namespace ioxx { namespace detail
 
     void wait(seconds_t timeout)
     {
-      IOXX_TRACE_MSG("wait on " << _pfd.size() << " sockets for at most " << timeout << " seconds");
+      LOGXX_TRACE("wait on " << _pfd.size() << " sockets for at most " << timeout << " seconds");
       BOOST_ASSERT(timeout <= max_timeout());
       BOOST_ASSERT(!_n_events);
 #if defined(IOXX_HAVE_PPOLL) && IOXX_HAVE_PPOLL
@@ -174,7 +175,7 @@ namespace ioxx { namespace detail
         rc = ::poll(&_pfd[0], _pfd.size(), static_cast<int>(timeout) * 1000);
       }
 #endif
-      IOXX_TRACE_MSG("wait() returned " << rc);
+      LOGXX_TRACE("wait() returned " << rc);
       if (rc < 0)
       {
         if (errno == EINTR) return;

@@ -90,7 +90,7 @@ namespace ioxx { namespace detail
             else
               --_select._max_fd;
           }
-          IOXX_TRACE_MSG("select: new _max_fd is " << _select._max_fd);
+          LOGXX_TRACE("select: new _max_fd is " << _select._max_fd);
         }
         else
           BOOST_ASSERT(s < _select._max_fd);
@@ -110,7 +110,7 @@ namespace ioxx { namespace detail
 
     select() : _max_fd(-1), _current(0), _n_events(0u)
     {
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.select." + show(this));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.select." + detail::show(this));
       FD_ZERO(&_req_read_fds);
       FD_ZERO(&_req_write_fds);
       FD_ZERO(&_req_except_fds);
@@ -122,7 +122,7 @@ namespace ioxx { namespace detail
     {
       while (_n_events)
       {
-        IOXX_TRACE_MSG("pop_event() has " << _n_events << " events to deliver; _max_fd = " << _max_fd << "; _current = " << _current);
+        LOGXX_TRACE("pop_event() has " << _n_events << " events to deliver; _max_fd = " << _max_fd << "; _current = " << _current);
         BOOST_ASSERT(_current <= _max_fd);
         sock = _current++;
         BOOST_ASSERT(sock >= 0);
@@ -130,7 +130,11 @@ namespace ioxx { namespace detail
         if (FD_ISSET(sock, &_recv_read_fds))   { --_n_events; ev |= socket::readable; }
         if (FD_ISSET(sock, &_recv_write_fds))  { --_n_events; ev |= socket::writable; }
         if (FD_ISSET(sock, &_recv_except_fds)) { --_n_events; ev |= socket::pridata; }
-        if (ev != socket::no_events) return true;
+        if (ev != socket::no_events)
+        {
+          LOGXX_TRACE("deliver events " << ev << " on socket " << sock);
+          return true;
+        }
       }
       return false;
     }
@@ -169,7 +173,7 @@ namespace ioxx { namespace detail
         rc = ::select(_max_fd + 1, &_recv_read_fds, &_recv_write_fds, &_recv_except_fds, &tv);
       }
 #endif
-      IOXX_TRACE_MSG("wait() returned " << rc);
+      LOGXX_TRACE("wait() returned " << rc);
       if (rc < 0)
       {
         if (errno == EINTR) return;

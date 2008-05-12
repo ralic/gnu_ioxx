@@ -97,7 +97,7 @@ namespace ioxx { namespace detail
     {
       size_hint = std::min(size_hint, static_cast<unsigned int>(std::numeric_limits<int>::max()));
       _epoll_fd = throw_errno_if_minus1("create epoll socket", boost::bind(boost::type<int>(), &epoll_create, static_cast<int>(size_hint)));
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.epoll." + show(_epoll_fd));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.epoll." + detail::show(_epoll_fd));
     }
 
     ~epoll()
@@ -109,12 +109,13 @@ namespace ioxx { namespace detail
 
     bool pop_event(native_socket_t & sock, socket::event_set & ev)
     {
-      IOXX_TRACE_MSG("pop_event() has " << _n_events << " events to deliver");
+      LOGXX_TRACE("pop_event() has " << _n_events << " events to deliver");
       if (!_n_events) return false;
       sock = _events[_current].data.fd;
       ev   = static_cast<socket::event_set>(_events[_current].events);
       BOOST_ASSERT(ev != socket::no_events);
       --_n_events; ++_current;
+      LOGXX_TRACE("deliver events " << ev << " on socket " << sock);
       return true;
    }
 
@@ -140,7 +141,7 @@ namespace ioxx { namespace detail
                        );
       }
 #endif
-      IOXX_TRACE_MSG("wait() returned " << rc);
+      LOGXX_TRACE("wait() returned " << rc);
       if (rc < 0)
       {
         if (errno == EINTR) return;

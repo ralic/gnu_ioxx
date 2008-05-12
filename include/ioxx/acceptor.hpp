@@ -40,12 +40,12 @@ namespace ioxx
     : _ls(disp, addr.create(), boost::bind(&acceptor::run, this), socket::readable)
     , _f(f)
     {
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.acceptor." + show(_ls.as_native_socket_t()));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.acceptor." + detail::show(_ls.as_native_socket_t()));
       _ls.set_nonblocking();
       _ls.reuse_bind_address();
       _ls.bind(addr);
       _ls.listen(16u);
-      IOXX_TRACE_MSG("accepting connections on " << addr);
+      LOGXX_TRACE("accepting connections on " << addr);
     }
 
   protected:
@@ -62,7 +62,7 @@ namespace ioxx
       while(_ls.accept(s, addr))
       {
         system_socket new_socket(s); // act as scope guard
-        IOXX_TRACE_MSG("accepted connection from " << addr << " on " << new_socket);
+        LOGXX_TRACE("accepted connection from " << addr << " on " << new_socket);
         new_socket.set_nonblocking();
         new_socket.set_linger_timeout(0);
         _f(s, addr);

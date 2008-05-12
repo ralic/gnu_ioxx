@@ -14,6 +14,7 @@
 #define IOXX_SOCKET_HPP_INCLUDED_2008_04_20
 
 #include <ioxx/detail/logging.hpp>
+#include <ioxx/detail/show.hpp>
 #include <ioxx/error.hpp>
 #include <boost/noncopyable.hpp>
 #include <iosfwd>
@@ -122,21 +123,21 @@ namespace ioxx
 
     explicit system_socket(native_socket_t sock, ownership_type_tag owner = take_ownership) : _sock(sock)
     {
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.socket." + show(_sock));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.socket." + detail::show(_sock));
       if (_sock < 0) throw std::invalid_argument("cannot construct an invalid ioxx::socket");
       close_on_destruction(owner == take_ownership);
     }
 
     ~system_socket()
     {
-      IOXX_TRACE_MSG((_close_on_destruction ? "close and " : "") << "destruct ");
+      LOGXX_TRACE((_close_on_destruction ? "close and " : "") << "destruct ");
       if (_close_on_destruction)
         throw_errno_if_minus1("close(2)", boost::bind(boost::type<int>(), &::close, _sock));
     }
 
     void close_on_destruction(bool enable = true)
     {
-      IOXX_TRACE_MSG((enable ? "enable" : "disable") << " close-on-destruction semantics");
+      LOGXX_TRACE((enable ? "enable" : "disable") << " close-on-destruction semantics");
       _close_on_destruction = enable;
     }
 
@@ -147,7 +148,7 @@ namespace ioxx
 
     void set_nonblocking(bool enable = true)
     {
-      IOXX_TRACE_MSG((enable ? "enable" : "disable") << " nonblocking mode");
+      LOGXX_TRACE((enable ? "enable" : "disable") << " nonblocking mode");
       int const rc( throw_errno_if_minus1("cannot obtain socket flags", boost::bind<int>(&::fcntl, _sock, F_GETFL, 0)) );
       int const flags( enable ? rc | O_NONBLOCK : rc & ~O_NONBLOCK );
       if (rc != flags)
@@ -189,13 +190,13 @@ namespace ioxx
 
     char * read(char * begin, char const * end)
     {
-      IOXX_TRACE_MSG("read up to " << end - begin << " bytes");
+      LOGXX_TRACE("read up to " << end - begin << " bytes");
       BOOST_ASSERT(begin < end);
       ssize_t const rc( throw_errno_if( not_ewould_block()
                                       , "read(2)"
                                       , boost::bind(boost::type<ssize_t>(), & ::read, _sock, begin, static_cast<size_t>(end - begin))
                                       ));
-      IOXX_TRACE_MSG("read(2) received " << rc << " bytes");
+      LOGXX_TRACE("read(2) received " << rc << " bytes");
       switch (rc)
       {
         case -1:  BOOST_ASSERT(errno == EWOULDBLOCK || errno == EAGAIN); return begin;
@@ -206,13 +207,13 @@ namespace ioxx
 
     char const * write(char const * begin, char const * end)
     {
-      IOXX_TRACE_MSG("write up to " << end - begin << " bytes");
+      LOGXX_TRACE("write up to " << end - begin << " bytes");
       BOOST_ASSERT(begin < end);
       ssize_t const rc( throw_errno_if( not_ewould_block()
                                       , "write(2)"
                                       , boost::bind(boost::type<ssize_t>(), & ::write, _sock, begin, static_cast<size_t>(end - begin))
                                       ));
-      IOXX_TRACE_MSG("write(2) sent " << rc << " bytes");
+      LOGXX_TRACE("write(2) sent " << rc << " bytes");
       switch (rc)
       {
         case -1:  BOOST_ASSERT(errno == EWOULDBLOCK || errno == EAGAIN); return begin;
@@ -228,7 +229,7 @@ namespace ioxx
                                       , "readv(2)"
                                       , boost::bind(boost::type<ssize_t>(), & ::readv, _sock, begin, static_cast<int>(end - begin))
                                       ));
-      IOXX_TRACE_MSG("readv(2) received " << rc << " bytes");
+      LOGXX_TRACE("readv(2) received " << rc << " bytes");
       return rc;
     }
 
@@ -239,7 +240,7 @@ namespace ioxx
                                       , "writev(2)"
                                       , boost::bind(boost::type<ssize_t>(), & ::writev, _sock, begin, static_cast<int>(end - begin))
                                       ));
-      IOXX_TRACE_MSG("writev(2) wrote " << rc << " bytes");
+      LOGXX_TRACE("writev(2) wrote " << rc << " bytes");
       return rc;
     }
 
@@ -259,7 +260,7 @@ namespace ioxx
                                       , "recvmsg(2)"
                                       , boost::bind(boost::type<ssize_t>(), & ::recvmsg, _sock, &msg, static_cast<int>(MSG_DONTWAIT))
                                       ));
-      IOXX_TRACE_MSG("recvmsg(2) received " << rc << " bytes");
+      LOGXX_TRACE("recvmsg(2) received " << rc << " bytes");
       from.as_socklen_t() = msg.msg_namelen;
       return rc;
     }

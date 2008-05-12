@@ -10,12 +10,20 @@
  * this notice are preserved.
  */
 
-#include <ioxx/socket.hpp>
+#ifndef IOXX_DETAIL_SHOW_HPP_INCLUDED_2008_04_20
+#define IOXX_DETAIL_SHOW_HPP_INCLUDED_2008_04_20
 
-#define BOOST_TEST_MAIN
-#include <boost/test/unit_test.hpp>
+#include <sstream>
 
-BOOST_AUTO_TEST_CASE( cannot_construct_invalid_system_socket )
+namespace ioxx { namespace detail
 {
-  BOOST_REQUIRE_THROW(ioxx::system_socket(-1), std::invalid_argument);
-}
+  template <class T>
+  inline std::string show(T const & val)
+  {
+    std::ostringstream os;
+    os << val;
+    return os.str();
+  }
+}}
+
+#endif // IOXX_DETAIL_SHOW_HPP_INCLUDED_2008_04_20

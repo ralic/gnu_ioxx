@@ -41,16 +41,4 @@
 #  define LOGXX_TRACE(msg)
 #endif
 
-#ifndef NDEBUG
-#  define IOXX_TRACE_MSG(msg) LOGXX_TRACE(msg)
-#else
-#  define IOXX_TRACE_MSG(msg) static_cast<void>(0)
-#endif
-#define IOXX_TRACE_SOCKET(s,msg) IOXX_TRACE_MSG("socket " << s << ": " << msg)
-
-namespace ioxx
-{
-  LOGXX_SCOPE("ioxx");
-}
-
 #endif // IOXX_DETAIL_LOGGING_HPP_INCLUDED_2008_04_20
