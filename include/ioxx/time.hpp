@@ -27,7 +27,8 @@
 namespace ioxx
 {
   /**
-   * The current time of day in seconds since the epoch.
+   * The current time of day, represented in seconds since 1970-01-01 00:00:00
+   * UTC.
    */
   typedef std::time_t time_t;
 
@@ -64,7 +65,9 @@ namespace ioxx
   class time : private boost::noncopyable
   {
   public:
-    /// A default-constructed \c time object has the accurate time of day.
+    /**
+     * A default-constructed object has the accurate time of day.
+     */
     time()                              { update(); }
 
     /**
