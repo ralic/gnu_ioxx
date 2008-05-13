@@ -70,6 +70,7 @@ namespace ioxx
     {
     public:
       typedef typename demux::socket::event_set event_set;
+      typedef typename dispatch::handler        handler;
 
       socket(dispatch & disp, native_socket_t sock, handler const & f = handler(), event_set ev = demux::socket::no_events)
       : demux::socket(disp, sock, ev)
