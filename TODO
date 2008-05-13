@@ -162,6 +162,68 @@
     Autoconf can detect whether it's available and enable optional support.
 
 *** TODO Use strerror_r() if available.
+*** TODO Clean up handling of =event_set= flags in =poll= and =epoll=.
+
+    Currently, we map them to readable, writable, and pridata without exposing
+    that they were ever set, but the code is clumsy. Relevant for [[file:include/ioxx/detail/poll.hpp::ev%20socket%20readable%20socket%20writable%20socket%20pridata][poll.hpp]] and
+    [[file:include/ioxx/detail/epoll.hpp::ev%20socket%20readable%20socket%20writable%20socket%20pridata][epoll.hpp]]. Here is what POSIX has to say about the meaning of those flags:
+
+***** =POLLIN=
+
+      Data other than high-priority data may be read without blocking. For
+      STREAMS, this flag is set in revents even if the message is of zero
+      length. This flag shall be equivalent to =POLLRDNORM | POLLRDBAND=.
+
+    * =POLLRDNORM=
+
+      Normal data may be read without blocking. For STREAMS, data on priority
+      band 0 may be read without blocking. This flag is set in revents even if
+      the message is of zero length.
+
+***** =POLLRDBAND=
+
+      Priority data may be read without blocking. For STREAMS, data on priority
+      bands greater than 0 may be read without blocking. This flag is set in
+      revents even if the message is of zero length.
+
+***** =POLLPRI=
+
+      High-priority data may be read without blocking. For STREAMS, this flag
+      is set in revents even if the message is of zero length.
+
+***** =POLLOUT=
+
+      Normal data may be written without blocking. For STREAMS, data on
+      priority band 0 may be written without blocking.
+
+***** =POLLWRNORM=
+
+      Equivalent to POLLOUT.
+
+***** =POLLWRBAND=
+
+      Priority data may be written. For STREAMS, data on priority bands greater
+      than 0 may be written without blocking. If any priority band has been
+      written to on this STREAM, this event only examines bands that have been
+      written to at least once.
+
+***** =POLLERR=
+
+      An error has occurred on the device or stream. This flag is only valid in
+      the revents bitmask; it shall be ignored in the events member.
+
+***** =POLLHUP=
+
+      The device has been disconnected. This event and =POLLOUT= are
+      mutually-exclusive; a stream can never be writable if a hangup has
+      occurred. However, this event and =POLLIN=, =POLLRDNORM=, =POLLRDBAND=,
+      or =POLLPRI= are not mutually-exclusive. This flag is only valid in the
+      revents bitmask; it shall be ignored in the events member.
+
+***** =POLLNVAL=
+
+      The specified fd value is invalid. This flag is only valid in the revents
+      member; it shall ignored in the events member.
 
 * Documentation
 

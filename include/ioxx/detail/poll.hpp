@@ -152,6 +152,10 @@ namespace ioxx { namespace detail
         --_n_events;
         sock = pfd.fd;
         ev   = static_cast<typename socket::event_set>(pfd.revents);
+        ev  |= ev & POLLRDNORM ? socket::readable : socket::no_events; // weird, redundant extensions
+        ev  |= ev & POLLRDBAND ? socket::pridata  : socket::no_events;
+        ev  |= ev & POLLWRNORM ? socket::writable : socket::no_events;
+        ev  &= socket::readable | socket::writable | socket::pridata;
         LOGXX_TRACE("deliver events " << ev << " on socket " << sock);
         return true;
       }

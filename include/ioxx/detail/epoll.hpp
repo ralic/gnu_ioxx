@@ -62,6 +62,7 @@ namespace ioxx { namespace detail
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = ev;
+        LOGXX_MSG_TRACE(context().LOGXX_SCOPE_NAME, "register socket " << e.data.fd  << " events " << ev);
         throw_errno_if_minus1("add socket into epoll", boost::bind(boost::type<int>(), &epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_ADD, as_native_socket_t(), &e));
       }
 
@@ -70,6 +71,7 @@ namespace ioxx { namespace detail
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = 0;
+        LOGXX_MSG_TRACE(context().LOGXX_SCOPE_NAME, "unregister socket " << e.data.fd);
         throw_errno_if_minus1("del socket from epoll", boost::bind(boost::type<int>(), &epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_DEL, as_native_socket_t(), &e));
       }
 
@@ -78,6 +80,7 @@ namespace ioxx { namespace detail
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = ev;
+        LOGXX_MSG_TRACE(context().LOGXX_SCOPE_NAME, "modify socket " << e.data.fd << " events " << ev);
         throw_errno_if_minus1("modify socket in epoll", boost::bind(boost::type<int>(), &epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_MOD, as_native_socket_t(), &e));
       }
 
@@ -113,6 +116,10 @@ namespace ioxx { namespace detail
       if (!_n_events) return false;
       sock = _events[_current].data.fd;
       ev   = static_cast<socket::event_set>(_events[_current].events);
+      ev  |= ev & EPOLLRDNORM ? socket::readable : socket::no_events; // weird, redundant extensions
+      ev  |= ev & EPOLLRDBAND ? socket::pridata  : socket::no_events;
+      ev  |= ev & EPOLLWRNORM ? socket::writable : socket::no_events;
+      ev  &= socket::readable | socket::writable | socket::pridata;
       BOOST_ASSERT(ev != socket::no_events);
       --_n_events; ++_current;
       LOGXX_TRACE("deliver events " << ev << " on socket " << sock);
