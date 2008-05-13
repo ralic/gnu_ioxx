@@ -35,10 +35,47 @@ namespace ioxx
   public:
     typedef Allocator                           allocator;
     typedef schedule<allocator>                 schedule;
-    typedef typename schedule::timeout          timeout;
     typedef dispatch<allocator>                 dispatch;
-    typedef typename dispatch::socket           socket;
     typedef detail::adns<allocator>             dns;
+
+    class socket : public dispatch::socket
+    {
+    public:
+      typedef typename dispatch::socket::event_set event_set;
+      typedef typename dispatch::socket::handler   handler;
+
+      socket(core & io, native_socket_t sock, handler const & f = handler(), event_set ev = dispatch::socket::no_events)
+      : dispatch::socket(io, sock, f, ev)
+      {
+      }
+
+      core &         get_core()         { return context(); }
+      core const &   get_core() const   { return context(); }
+
+    protected:
+      core & context() { return static_cast<core &>(dispatch::socket::context()); }
+    };
+
+    class timeout : public schedule::timeout
+    {
+    public:
+      typedef typename schedule::task task;
+
+      timeout(core & sched) : schedule::timeout(sched)
+      {
+      }
+
+      timeout(core & sched, time_t ts, task const & f) : schedule::timeout(sched, ts, f)
+      {
+      }
+
+      timeout(core & sched, seconds_t to, task const & f) : schedule::timeout(sched, to, f)
+      {
+      }
+
+      core &        get_core()          { return static_cast<core &>(schedule::timeout::get_schedule()); }
+      core const &  get_core() const    { return static_cast<core const &>(schedule::timeout::get_schedule()); }
+    };
 
     core() : schedule(time::as_time_t()), dns(*this, *this, time::as_timeval())
     {
