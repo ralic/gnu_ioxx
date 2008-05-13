@@ -31,6 +31,8 @@ namespace ioxx { namespace detail
    * \internal
    *
    * \brief I/O demultiplexer implementation based on \c poll(2).
+   *
+   * \sa http://www.opengroup.org/onlinepubs/009695399/functions/poll.html
    */
   template < class VectorAllocator = std::allocator<pollfd>
            , class MapAllocator    = std::allocator< std::pair<native_socket_t const, typename std::vector<pollfd,VectorAllocator>::size_type> >

@@ -29,6 +29,8 @@ namespace ioxx { namespace detail
    * \internal
    *
    * \brief I/O demultiplexer implementation based on \c select(2).
+   *
+   * \sa http://www.opengroup.org/onlinepubs/009695399/functions/select.html
    */
   class select : private boost::noncopyable
   {
