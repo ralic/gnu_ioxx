@@ -130,6 +130,7 @@ namespace ioxx
 
     void wait(seconds_t timeout)
     {
+      LOGXX_MSG_TRACE(this->LOGXX_SCOPE_NAME, "probe " << _handlers.size() << " sockets; time out after " << timeout << " seconds");
       demux::wait(timeout);
     }
 
