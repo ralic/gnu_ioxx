@@ -11,6 +11,7 @@
  */
 
 #include <ioxx/core.hpp>
+#include <ioxx/acceptor.hpp>
 #include "daytime.hpp"
 
 #define BOOST_TEST_MAIN
