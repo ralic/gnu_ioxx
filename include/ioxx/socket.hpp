@@ -102,7 +102,6 @@ namespace ioxx
         BOOST_ASSERT(!addr->ai_addrlen <= sizeof(sockaddr));
         _addr     = *addr->ai_addr;
         _len      = addr->ai_addrlen;
-        _domain   = addr->ai_family;
         _socktype = addr->ai_socktype;
         _protocol = addr->ai_protocol;
         freeaddrinfo(addr);
@@ -110,11 +109,10 @@ namespace ioxx
 
       native_socket_t create() const
       {
-        return throw_errno_if_minus1("socket(2)", boost::bind(boost::type<int>(), &::socket, _domain, _socktype, _protocol));
+        return throw_errno_if_minus1("socket(2)", boost::bind(boost::type<int>(), &::socket, as_sockaddr().sa_family, _socktype, _protocol));
       }
 
     protected:
-      int       _domain;
       int       _socktype;
       int       _protocol;
     };
