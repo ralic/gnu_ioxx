@@ -68,10 +68,11 @@ namespace ioxx { namespace detail
 
       ~socket()
       {
+        LOGXX_MSG_TRACE(context().LOGXX_SCOPE_NAME, "unregister " << *this);
+        if (close_on_destruction()) return;
         epoll_event e;
         e.data.fd = as_native_socket_t();
         e.events  = 0;
-        LOGXX_MSG_TRACE(context().LOGXX_SCOPE_NAME, "unregister socket " << e.data.fd);
         throw_errno_if_minus1("del socket from epoll", boost::bind(boost::type<int>(), &epoll_ctl, _epoll._epoll_fd, EPOLL_CTL_DEL, as_native_socket_t(), &e));
       }
 
