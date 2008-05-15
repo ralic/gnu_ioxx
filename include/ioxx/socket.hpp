@@ -123,7 +123,7 @@ namespace ioxx
 
     explicit system_socket(native_socket_t sock, ownership_type_tag owner = take_ownership) : _sock(sock)
     {
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.socket." + detail::show(_sock));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.socket(" + detail::show(this) + ',' + detail::show(_sock) + ')');
       if (_sock < 0) throw std::invalid_argument("cannot construct an invalid ioxx::socket");
       close_on_destruction(owner == take_ownership);
     }
