@@ -100,7 +100,7 @@ namespace ioxx { namespace detail
     {
       size_hint = std::min(size_hint, static_cast<unsigned int>(std::numeric_limits<int>::max()));
       _epoll_fd = throw_errno_if_minus1("create epoll socket", boost::bind(boost::type<int>(), &epoll_create, static_cast<int>(size_hint)));
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.epoll." + detail::show(_epoll_fd));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.epoll(" + detail::show(_epoll_fd) + ')');
     }
 
     ~epoll()

@@ -82,7 +82,7 @@ namespace ioxx { namespace detail
       flags |= adns_if_debug | adns_if_checkc_freq;
 #endif
       throw_rc_if_not_zero(adns_init(&_state, flags, static_cast<FILE*>(0)), "cannot initialize adns");
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.adns." + detail::show(_state));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.adns(" + detail::show(_state) + ')');
       BOOST_ASSERT(_state);
     }
 

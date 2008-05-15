@@ -138,7 +138,7 @@ namespace ioxx { namespace detail
 
     poll() : _n_events(0u), _current(0u)
     {
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.poll." + detail::show(this));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.poll(" + detail::show(this) + ')');
     }
 
     bool empty() const { return _n_events == 0u; }

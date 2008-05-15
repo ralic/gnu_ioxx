@@ -112,7 +112,7 @@ namespace ioxx { namespace detail
 
     select() : _max_fd(-1), _current(0), _n_events(0u)
     {
-      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.select." + detail::show(this));
+      LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.select(" + detail::show(this) + ')');
       FD_ZERO(&_req_read_fds);
       FD_ZERO(&_req_write_fds);
       FD_ZERO(&_req_except_fds);
