@@ -106,8 +106,6 @@ namespace ioxx
 
     static seconds_t max_timeout() { return demux::max_timeout(); }
 
-    dispatch() { }
-
     bool empty() const { return _handlers.empty(); }
 
     void run()
