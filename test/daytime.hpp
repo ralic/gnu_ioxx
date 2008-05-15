@@ -14,7 +14,7 @@
 #define IOXX_TEST_DAYTIME_HPP_INCLUDED_2008_04_14
 
 #include <ioxx/core.hpp>
-#include <ioxx/acceptor.hpp>
+#include <ioxx/iovec.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/array.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -35,18 +35,53 @@ public:
   static void accept(io_core & io, native_socket_t s, address const & peer)
   {
     boost::shared_ptr<daytime> p;
-    p.reset(new daytime(io, s));
-    p->_sock->modify(boost::bind(&daytime::run, p, _1), socket::writable);;
-    p->_timeout.in(10u, boost::bind(&daytime::shutdown, p));
+    p.reset(new daytime(io, s, peer));
+    io.query_ptr(peer, boost::bind(&daytime::start, p, _1));
   }
 
 private:
-  LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
-
-  daytime(io_core & io, native_socket_t s)
-  : _sock(new socket(io, s)), _timeout(io), _data_begin(0), _data_end(0)
+  daytime(io_core & io, native_socket_t s, address const & addr)
+  : _sock(new socket(io, s)), _timeout(io), _peer(addr)
   {
     LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.daytime(" + ioxx::detail::show(s) + ')');
+    LOGXX_TRACE("received daytime request from " << addr);
+    tm tstamp;
+    localtime_r(&io.as_time_t(), &tstamp);
+    size_t const len( strftime( &_buf[0], _buf.size()
+                              , "%d %b %Y %H:%M:%S %Z\r\n"
+                              , &tstamp
+                              ));
+    BOOST_ASSERT(len > 0);
+    _data_begin = _buf.begin();
+    _data_end   = _data_begin + len;
+  }
+
+  void start(typename io_core::hostname * peer)
+  {
+    LOGXX_INFO("peer " << _peer << " resolves to \"" << (peer ? *peer : "NONE") << '"');
+    _sock->modify(boost::bind(&daytime::run, this->shared_from_this(), _1), socket::writable);;
+    _timeout.in(10u, boost::bind(&daytime::shutdown, this->shared_from_this()));
+  }
+
+  void run(event_set ev)
+  {
+    try
+    {
+      BOOST_ASSERT(ev == socket::writable);
+      BOOST_ASSERT(_data_begin != _data_end);
+      ioxx::iovec iov( ioxx::make_iovec(_data_begin, _data_end) );
+      ssize_t const rc( _sock->send_to(&iov, &iov + 1, _peer) );
+      if (rc < 0) return shutdown(); // connection reset by peer
+      _data_begin += rc;
+      BOOST_ASSERT(_data_begin <= _data_end);
+      if (_data_begin == _data_end) return shutdown();
+      _timeout.in(10u, boost::bind(&daytime::shutdown, this->shared_from_this()));
+    }
+    catch(std::exception const & e)
+    {
+      LOGXX_ERROR(e.what());
+      shutdown();
+    }
   }
 
   void shutdown()
@@ -56,50 +91,15 @@ private:
     _sock.reset();
   }
 
-  void run(event_set ev)
-  {
-    LOGXX_TRACE("run with events " << ev);
-    try
-    {
-      BOOST_ASSERT(ev == socket::writable);
-      if (!_data_begin)
-      {
-        tm tstamp;
-        localtime_r(&_sock->get_core().as_time_t(), &tstamp);
-        size_t const len( strftime( &_buf[0], _buf.size()
-                                  , "%d %b %Y %H:%M:%S %Z\r\n"
-                                  , &tstamp
-                                  ));
-        BOOST_ASSERT(len > 0);
-        _data_begin = _buf.begin();
-        _data_end   = _data_begin + len;
-      }
-
-      if (_data_begin != _data_end)
-      {
-        char const * const p( _sock->write(_data_begin, _data_end) );
-        if (!p) return shutdown();
-        BOOST_ASSERT(p <= _data_end);
-        _data_begin = p;
-        _timeout.in(10u, boost::bind(&daytime::shutdown, this->shared_from_this()));
-      }
-
-      if (_data_begin == _data_end)
-        return shutdown();
-    }
-    catch(std::exception const & e)
-    {
-      LOGXX_ERROR(e.what());
-      shutdown();
-    }
-  }
-
   socket_ptr                    _sock;
   timeout                       _timeout;
+  address                       _peer;
 
   boost::array<char, 64u>       _buf;
   char const *                  _data_begin;
   char const *                  _data_end;
+
+  LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
 };
 
 #endif // IOXX_TEST_DAYTIME_HPP_INCLUDED_2008_04_14
