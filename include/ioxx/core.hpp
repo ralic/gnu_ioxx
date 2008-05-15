@@ -26,8 +26,8 @@ namespace ioxx
 {
   template < class Allocator = std::allocator<void> >
   class core : public time
-             , public schedule<Allocator>
              , public dispatch<Allocator>
+             , public schedule<Allocator>
 #if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
              , public detail::adns<Allocator>
 #endif
