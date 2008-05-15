@@ -59,6 +59,7 @@ namespace ioxx { namespace detail
 
     typedef Dispatch                                    dispatch;
     typedef typename dispatch::socket                   socket;
+    typedef typename socket::address                    address;
 
     typedef std::string                                 hostname;
     typedef std::vector<hostname>                       hostname_list;
@@ -89,6 +90,7 @@ namespace ioxx { namespace detail
     ~adns()
     {
       BOOST_ASSERT(_state);
+      _registered_sockets.clear();
       adns_finish(_state);
     }
 
@@ -118,6 +120,14 @@ namespace ioxx { namespace detail
       LOGXX_TRACE("request PTR record for " << owner);
       BOOST_ASSERT(h);
       submit(owner, adns_r_ptr, adns_qf_none, boost::bind(handlePTR, _1, h));
+    }
+
+    void query_ptr(address const & addr, ptr_handler const & h)
+    {
+      adns_query qid;
+      throw_rc_if_not_zero(adns_submit_reverse(_state, &addr.as_sockaddr(), adns_r_ptr, adns_qf_none, static_cast<void*>(0), &qid), "adns_submit_reverse()");
+      _queries[qid] = boost::bind(handlePTR, _1, h);
+      check_consistency();
     }
 
     void run()
@@ -288,7 +298,7 @@ namespace ioxx { namespace detail
     void submit(char const * owner, adns_rrtype rrtype, adns_queryflags flags, callback const & f)
     {
       adns_query qid;
-      throw_rc_if_not_zero(adns_submit(_state, owner, rrtype, flags, static_cast<FILE*>(0), &qid), "adns_submit()");
+      throw_rc_if_not_zero(adns_submit(_state, owner, rrtype, flags, static_cast<void*>(0), &qid), "adns_submit()");
       _queries[qid] = f;
       check_consistency();
     }
