@@ -29,7 +29,6 @@ public:
   typedef typename io_core::event_set   event_set;
   typedef typename io_core::socket      socket;
   typedef boost::scoped_ptr<socket>     socket_ptr;
-  typedef typename socket::handler      handler;
   typedef typename socket::address      address;
   typedef typename socket::native_t     native_socket_t;
 
@@ -42,18 +41,24 @@ public:
   }
 
 private:
-  daytime(io_core & io, native_socket_t s) : _sock(new socket(io, s)), _timeout(io)
+  LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
+
+  daytime(io_core & io, native_socket_t s)
+  : _sock(new socket(io, s)), _timeout(io), _data_begin(0), _data_end(0)
   {
+    LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.daytime(" + ioxx::detail::show(s) + ')');
   }
 
   void shutdown()
   {
+    LOGXX_TRACE("shut down");
     _timeout.cancel();
     _sock.reset();
   }
 
   void run(event_set ev)
   {
+    LOGXX_TRACE("run with events " << ev);
     try
     {
       BOOST_ASSERT(ev == socket::writable);
@@ -84,7 +89,7 @@ private:
     }
     catch(std::exception const & e)
     {
-      std::cout << "*** daytime error: " << e.what() << std::endl;
+      LOGXX_ERROR(e.what());
       shutdown();
     }
   }
