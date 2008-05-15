@@ -135,7 +135,7 @@ namespace ioxx
         throw_errno_if_minus1("close(2)", boost::bind(boost::type<int>(), &::close, _sock));
     }
 
-    void close_on_destruction(bool enable = true)
+    void close_on_destruction(bool enable)
     {
       LOGXX_TRACE((enable ? "enable" : "disable") << " close-on-destruction semantics");
       _close_on_destruction = enable;
