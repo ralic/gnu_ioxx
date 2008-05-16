@@ -75,11 +75,9 @@ AC_SUBST([IOXX_INTERNAL_DOCS], [${enable_internal_docs}])
 dnl ----- write results -----
 
 AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/include/ioxx/detail/config.hpp.in $(top_srcdir)/doc/Doxyfile.in'])
-AC_CONFIG_HEADERS([build-aux/config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([include/Makefile])
 AC_CONFIG_FILES([include/ioxx/detail/config.hpp])
-AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([test/Makefile])
 AC_CONFIG_FILES([doc/Makefile])
 AC_CONFIG_FILES([doc/Doxyfile])

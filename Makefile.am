@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I build-aux
 
-SUBDIRS = include src test doc
+SUBDIRS = include test doc
 
 CLEANFILES = $(DIST_ARCHIVES)
 
