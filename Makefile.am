@@ -1,6 +1,7 @@
 # ~/Makefile.am -- build and install the ioxx library
 
 ACLOCAL_AMFLAGS = -I build-aux
+DISTCHECK_CONFIGURE_FLAGS = --without-doxygen
 
 SUBDIRS = include test doc
 
