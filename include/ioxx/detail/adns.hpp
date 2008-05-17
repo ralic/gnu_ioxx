@@ -130,6 +130,8 @@ namespace ioxx { namespace detail
       check_consistency();
     }
 
+    bool empty() const { return _queries.empty(); }
+
     void run()
     {
       LOGXX_TRACE(  "run() has " << _queries.size() << " open queries and "

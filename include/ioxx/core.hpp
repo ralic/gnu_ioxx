@@ -81,6 +81,11 @@ namespace ioxx
     {
     }
 
+    bool empty() const
+    {
+      return schedule::empty() && dispatch::empty() && dns::empty();
+    }
+
     seconds_t run()
     {
       dispatch::run();
