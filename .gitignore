@@ -27,7 +27,6 @@
 /missing
 /test/core
 /test/demux
-/test/dispatch
 /test/dns
 /test/iovec_is_valid_range
 /test/schedule
