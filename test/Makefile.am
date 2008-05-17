@@ -12,7 +12,7 @@ TESTS =                         \
   core
 
 check_PROGRAMS = ${TESTS}
-noinst_HEADERS = daytime.hpp
+noinst_HEADERS = daytime.hpp echo.hpp
 
 iovec_is_valid_range_SOURCES = iovec-is-valid-range.cpp
 schedule_SOURCES = schedule.cpp
