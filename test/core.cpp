@@ -13,6 +13,7 @@
 #include <ioxx/core.hpp>
 #include <ioxx/acceptor.hpp>
 #include "daytime.hpp"
+#include "echo.hpp"
 
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
@@ -47,6 +48,11 @@ BOOST_AUTO_TEST_CASE( example_inetd )
   acceptor daytime_tcp( io, endpoint("127.0.0.1", "8080", socket::stream_service)
                       , bind(&daytime<io_core>::accept, ref(io), _1, _2)
                       );
+
+  // Accept echo TCP service.
+  acceptor echo_tcp( io, endpoint("127.0.0.1", "8081", socket::stream_service)
+                   , bind(&echo<io_core>::accept, ref(io), _1, _2)
+                   );
 
   // Shut everything down after 5 seconds.
   io.in(5, bind(&stop_service_hook, 0));
