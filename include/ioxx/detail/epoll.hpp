@@ -29,6 +29,8 @@ namespace ioxx { namespace detail
    * \internal
    *
    * \brief I/O demultiplexer implementation based on \c epoll(7).
+   *
+   * \sa http://www.kernel.org/doc/man-pages/online/pages/man7/epoll.7.html
    */
   class epoll : private boost::noncopyable
   {

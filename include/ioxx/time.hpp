@@ -13,12 +13,6 @@
 #ifndef IOXX_TIME_HPP_INCLUDED_2008_04_20
 #define IOXX_TIME_HPP_INCLUDED_2008_04_20
 
-/**
- * \file ioxx/time.hpp
- *
- * Access to the current time of day.
- */
-
 #include <ioxx/error.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/compatibility/cpp_c_headers/ctime>

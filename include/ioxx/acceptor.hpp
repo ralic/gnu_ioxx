@@ -18,6 +18,9 @@
 
 namespace ioxx
 {
+  /**
+   * Accept incoming stream connections on a local network port.
+   */
   template < class Allocator = std::allocator<void>
            , class Dispatch  = dispatch<Allocator>
            , class Handler   = boost::function2< void

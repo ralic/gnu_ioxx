@@ -21,6 +21,9 @@
 
 namespace ioxx
 {
+  /**
+   * System errors are nondescript and sudden.
+   */
   struct system_error : public std::runtime_error
   {
     int error_code;
@@ -32,6 +35,9 @@ namespace ioxx
     }
   };
 
+  /**
+   * Safety-wrapper for calling POSIX system functions.
+   */
   template <class Result, class Predicate, class Action>
   inline Result throw_errno_if(Predicate is_failure, std::string const & error_msg, Action f)
   {

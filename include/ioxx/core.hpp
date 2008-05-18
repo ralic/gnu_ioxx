@@ -24,6 +24,9 @@
 
 namespace ioxx
 {
+  /**
+   * Asynchronous interface to socket I/O, time events, and DNS.
+   */
   template < class Allocator = std::allocator<void> >
   class core : public time
              , public dispatch<Allocator>

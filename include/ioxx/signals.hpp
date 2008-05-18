@@ -18,6 +18,9 @@
 
 namespace ioxx
 {
+  /**
+   * Block all POSIX signals for the current scope.
+   */
   class block_signals : private boost::noncopyable
   {
   public:
@@ -41,6 +44,9 @@ namespace ioxx
     LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
   };
 
+  /**
+   * Unblock all POSIX signals for the current scope.
+   */
   class unblock_signals : private boost::noncopyable
   {
   public:

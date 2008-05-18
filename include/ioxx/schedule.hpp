@@ -25,6 +25,9 @@ namespace ioxx
   using std::time_t;
   typedef unsigned int seconds_t;
 
+  /**
+   * Generic time-event dispatcher.
+   */
   template < class Allocator = std::allocator<void>
            , class Task      = boost::function0<void, typename Allocator::template rebind<boost::function_base>::other>
            , class TaskQueue = std::multimap< time_t

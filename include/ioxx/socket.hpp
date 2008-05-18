@@ -27,6 +27,9 @@
 
 namespace ioxx
 {
+  /**
+   * Primary interface to system sockets.
+   */
   class system_socket : private boost::noncopyable
   {
   public:
