@@ -24,8 +24,9 @@ namespace ioxx
   /**
    * System errors are nondescript and sudden.
    */
-  struct system_error : public std::runtime_error
+  class system_error : public std::runtime_error
   {
+  public:
     int error_code;
 
     explicit system_error(int ec, std::string const & context)
