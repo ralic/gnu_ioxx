@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
-#define IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_DISPATCH_HPP_INCLUDED_2008_05_19
+#define IOXX_DISPATCH_HPP_INCLUDED_2008_05_19
 
 #include <ioxx/detail/config.hpp>
 #if defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL
@@ -138,4 +138,4 @@ namespace ioxx
 
 } // namespace ioxx
 
-#endif // IOXX_DISPATCH_HPP_INCLUDED_2008_04_20
+#endif // IOXX_DISPATCH_HPP_INCLUDED_2008_05_19

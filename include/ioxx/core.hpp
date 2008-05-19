@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_CORE_HPP_INCLUDED_2008_04_20
-#define IOXX_CORE_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_CORE_HPP_INCLUDED_2008_05_19
+#define IOXX_CORE_HPP_INCLUDED_2008_05_19
 
 #include <ioxx/time.hpp>
 #include <ioxx/schedule.hpp>
@@ -112,4 +112,4 @@ namespace ioxx
 
 } // namespace ioxx
 
-#endif // IOXX_CORE_HPP_INCLUDED_2008_04_20
+#endif // IOXX_CORE_HPP_INCLUDED_2008_05_19

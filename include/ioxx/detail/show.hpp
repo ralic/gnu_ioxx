@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_DETAIL_SHOW_HPP_INCLUDED_2008_04_20
-#define IOXX_DETAIL_SHOW_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_DETAIL_SHOW_HPP_INCLUDED_2008_05_19
+#define IOXX_DETAIL_SHOW_HPP_INCLUDED_2008_05_19
 
 #include <sstream>
 
@@ -26,4 +26,4 @@ namespace ioxx { namespace detail
   }
 }}
 
-#endif // IOXX_DETAIL_SHOW_HPP_INCLUDED_2008_04_20
+#endif // IOXX_DETAIL_SHOW_HPP_INCLUDED_2008_05_19

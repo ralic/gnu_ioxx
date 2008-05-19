@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_ERROR_HPP_INCLUDED_2008_04_20
-#define IOXX_ERROR_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_ERROR_HPP_INCLUDED_2008_05_19
+#define IOXX_ERROR_HPP_INCLUDED_2008_05_19
 
 #include <stdexcept>
 #include <boost/compatibility/cpp_c_headers/cerrno>
@@ -82,4 +82,4 @@ namespace ioxx
 
 } // namespace ioxx
 
-#endif // IOXX_ERROR_HPP_INCLUDED_2008_04_20
+#endif // IOXX_ERROR_HPP_INCLUDED_2008_05_19

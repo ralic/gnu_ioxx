@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_SCHEDULE_HPP_INCLUDED_2008_04_20
-#define IOXX_SCHEDULE_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_SCHEDULE_HPP_INCLUDED_2008_05_19
+#define IOXX_SCHEDULE_HPP_INCLUDED_2008_05_19
 
 #include <boost/function/function0.hpp>
 #include <boost/noncopyable.hpp>
@@ -174,4 +174,4 @@ namespace ioxx
 
 } // namespace ioxx
 
-#endif // IOXX_SCHEDULE_HPP_INCLUDED_2008_04_20
+#endif // IOXX_SCHEDULE_HPP_INCLUDED_2008_05_19

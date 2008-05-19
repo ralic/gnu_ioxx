@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_ACCEPTOR_HPP_INCLUDED_2008_04_20
-#define IOXX_ACCEPTOR_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_ACCEPTOR_HPP_INCLUDED_2008_05_19
+#define IOXX_ACCEPTOR_HPP_INCLUDED_2008_05_19
 
 #include <ioxx/dispatch.hpp>
 #include <boost/function/function2.hpp>
@@ -76,4 +76,4 @@ namespace ioxx
 
 } // namespace ioxx
 
-#endif // IOXX_ACCEPTOR_HPP_INCLUDED_2008_04_20
+#endif // IOXX_ACCEPTOR_HPP_INCLUDED_2008_05_19

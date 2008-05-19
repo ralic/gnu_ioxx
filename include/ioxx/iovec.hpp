@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_IOVEC_HPP_INCLUDED_2008_04_20
-#define IOXX_IOVEC_HPP_INCLUDED_2008_04_20
+#ifndef IOXX_IOVEC_HPP_INCLUDED_2008_05_19
+#define IOXX_IOVEC_HPP_INCLUDED_2008_05_19
 
 #include <boost/range.hpp>
 #include <boost/assert.hpp>
@@ -101,4 +101,4 @@ namespace boost
   }
 }
 
-#endif // IOXX_IOVEC_HPP_INCLUDED_2008_04_20
+#endif // IOXX_IOVEC_HPP_INCLUDED_2008_05_19

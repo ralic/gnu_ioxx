@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_HPP_INCLUDED_2008_04_14
-#define IOXX_HPP_INCLUDED_2008_04_14
+#ifndef IOXX_HPP_INCLUDED_2008_05_19
+#define IOXX_HPP_INCLUDED_2008_05_19
 
 #include <ioxx/acceptor.hpp>
 #include <ioxx/core.hpp>
@@ -176,4 +176,4 @@
  *
  */
 
-#endif // IOXX_HPP_INCLUDED_2008_04_14
+#endif // IOXX_HPP_INCLUDED_2008_05_19

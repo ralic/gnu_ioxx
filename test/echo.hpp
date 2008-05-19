@@ -10,8 +10,8 @@
  * this notice are preserved.
  */
 
-#ifndef IOXX_TEST_ECHO_HPP_INCLUDED_2008_04_14
-#define IOXX_TEST_ECHO_HPP_INCLUDED_2008_04_14
+#ifndef IOXX_TEST_ECHO_HPP_INCLUDED_2008_05_19
+#define IOXX_TEST_ECHO_HPP_INCLUDED_2008_05_19
 
 #include <ioxx/core.hpp>
 #include <ioxx/iovec.hpp>
@@ -107,4 +107,4 @@ private:
   LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
 };
 
-#endif // IOXX_TEST_ECHO_HPP_INCLUDED_2008_04_14
+#endif // IOXX_TEST_ECHO_HPP_INCLUDED_2008_05_19
