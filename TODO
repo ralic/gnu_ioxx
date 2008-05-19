@@ -111,6 +111,16 @@
     The boost libraries fail to compile as much as our own iovec
     specializations do. Not sure how this can be remedied at all.
 
+    [2008-05-19 Mon]: The new class design is un-compilable with that old SUN
+    compiler, not just because it doesn't understand =std::reverse_iterator=.
+    Apparently SUN Studio 11 might improve matters, but right now there is no
+    way to verify that.
+
+    Curiously enough, the definitions of =reverse_iterator= for =iovec= are
+    redundant, because the Boost.Range library defaults to use its own version
+    based on the iterator library. Whether that's preferable to the one found
+    in the STL is hard to say.
+
 *** TODO Don't rely on the compiler to deduce return type of bind().
 
     When binding function pointers, older compilers cannot determine the return
@@ -162,6 +172,9 @@
     Autoconf can detect whether it's available and enable optional support.
 
 *** TODO Use strerror_r() if available.
+
+    This affects the definition of =[[file:include/ioxx/error.hpp::std%20runtime_error%20std%20string%20context%20std%20strerror%20ec][system_error]]=.
+
 *** TODO Clean up handling of =event_set= flags in =poll= and =epoll=.
 
     Currently, we map them to readable, writable, and pridata without exposing
