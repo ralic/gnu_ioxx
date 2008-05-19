@@ -19,7 +19,7 @@
 /config.status
 /configure
 /doc/Doxyfile
-/doc/html/*
+/doc/html
 /include/ioxx/detail/config.hpp
 /ioxx-0.*.tar.gz
 /libtool
