@@ -35,7 +35,7 @@ namespace ioxx
   typedef unsigned int seconds_t;
 
   /**
-   * The current time of day in microseconds since the epoch.
+   * The current time of day in microseconds since 1970-01-01 00:00:00 UTC.
    *
    * POSIX.1-2001 defines this type to contain (at least) the following
    * members:
