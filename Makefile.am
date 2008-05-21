@@ -7,6 +7,8 @@ SUBDIRS = include test doc
 
 CLEANFILES = $(DIST_ARCHIVES)
 
+DISTCLEANFILES = _configs.sed
+
 distclean-local:
 	-rm -rf autom4te.cache
 

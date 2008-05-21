@@ -1,8 +1,5 @@
 # ~/include/Makefile.am
 
-EXTRA_DIST = \
-  ioxx/detail/config.hpp.in
-
 nobase_nodist_include_HEADERS = \
   ioxx/detail/config.hpp
 
@@ -24,8 +21,8 @@ nobase_include_HEADERS = \
   ioxx/socket.hpp \
   ioxx/time.hpp
 
-CLEANFILES = \
-  ioxx/detail/config.hpp.in~
-
 MAINTAINERCLEANFILES = \
   Makefile.in
+
+DISTCLEANFILES = \
+  ioxx/detail/config.hpp

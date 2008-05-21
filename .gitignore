@@ -5,9 +5,12 @@
 */.deps/*
 */.libs/*
 /INSTALL
+/_configs.sed
 /aclocal.m4
 /autom4te.cache/*
 /build-aux/config.guess
+/build-aux/config.h
+/build-aux/config.h.in
 /build-aux/config.sub
 /build-aux/depcomp
 /build-aux/install-sh

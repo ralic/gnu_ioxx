@@ -28,6 +28,11 @@
 namespace ioxx
 {
   /**
+   * The system's native socket type.
+   */
+  typedef int native_socket_t;
+
+  /**
    * Primary interface to system sockets.
    */
   class system_socket : private boost::noncopyable

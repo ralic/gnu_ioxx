@@ -28,11 +28,7 @@ AC_LANG([C++])
 dnl ----- check for boost -----
 
 AC_ARG_VAR([BOOST_SUFFIX], [Suffix to append to Boost link library names on this platform.])
-AC_CHECK_HEADERS(
-  [boost/shared_ptr.hpp boost/assert.hpp boost/range.hpp boost/function.hpp],
-  [],
-  [AC_MSG_FAILURE([please install boost.org libraries])])
-
+AC_CHECK_HEADER([boost/version.hpp], [], [AC_MSG_FAILURE([please install boost.org libraries])])
 AX_HAVE_BOOST_UNIT_TEST_FRAMEWORK
 
 dnl ----- check for logxx -----
@@ -56,9 +52,6 @@ dnl ----- doxygen -----
 
 AX_WITH_PROG([DOXYGEN], [doxygen], [no])
 AS_IF([test "${DOXYGEN}" = "no"], [DOXYGEN=":"], [])
-AX_WITH_PROG([DOT], [dot], [no])
-AS_IF([test "${DOT}" != "no"], [AC_SUBST([HAVE_DOT], [yes])], [AC_SUBST([HAVE_DOT], [no])])
-AX_WITH_PERL([:])
 AC_ARG_ENABLE(
   [internal-docs],
   [AC_HELP_STRING([--enable-internal-docs], [Include internal classes in doxygen documentation.])],
@@ -74,13 +67,10 @@ AC_SUBST([IOXX_INTERNAL_DOCS], [${enable_internal_docs}])
 
 dnl ----- write results -----
 
-AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/include/ioxx/detail/config.hpp.in $(top_srcdir)/doc/Doxyfile.in'])
-AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([include/Makefile])
-AC_CONFIG_FILES([include/ioxx/detail/config.hpp])
-AC_CONFIG_FILES([test/Makefile])
-AC_CONFIG_FILES([doc/Makefile])
-AC_CONFIG_FILES([doc/Doxyfile])
+AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/build-aux/config.h.in $(top_srcdir)/doc/Doxyfile.in'])
+AC_CONFIG_HEADER([build-aux/config.h])
+AX_PREFIX_CONFIG_H([include/ioxx/detail/config.hpp])
+AC_CONFIG_FILES([Makefile include/Makefile test/Makefile doc/Makefile doc/Doxyfile])
 AC_OUTPUT
 
 dnl Responsibility shifts to the user after this point.
@@ -88,14 +78,14 @@ dnl Responsibility shifts to the user after this point.
 echo ""
 echo "Optional features are configured as follows:"
 echo ""
-echo "${ECHO_N}" "    epoll(7) support ........... "; if test "${IOXX_HAVE_EPOLL}" = 1; then echo "yes"; else echo "no"; fi
-echo "${ECHO_N}" "    epoll_pwait(2) support ..... "; if test "${IOXX_HAVE_EPOLL_PWAIT}" = 1; then echo "yes"; else echo "no"; fi
-echo "${ECHO_N}" "    poll(2) support ............ "; if test "${IOXX_HAVE_POLL}" = 1; then echo "yes"; else echo "no"; fi
-echo "${ECHO_N}" "    ppoll(2) support ........... "; if test "${IOXX_HAVE_PPOLL}" = 1; then echo "yes"; else echo "no"; fi
-echo "${ECHO_N}" "    select(2) support .......... "; if test "${IOXX_HAVE_SELECT}" = 1; then echo "yes"; else echo "no"; fi
-echo "${ECHO_N}" "    pselect(2) support ......... "; if test "${IOXX_HAVE_PSELECT}" = 1; then echo "yes"; else echo "no"; fi
-echo "${ECHO_N}" "    ADNS support ............... "; if test "${IOXX_HAVE_ADNS}" = 1; then echo "yes"; else echo "no"; fi
-echo "${ECHO_N}" "    logxx support .............. "; if test "${IOXX_HAVE_LOGGING}" = 1; then echo "yes"; else echo "no"; fi
+echo "    epoll(7) support ........... ${enable_epoll}"
+echo "    epoll_pwait(2) support ..... ${enable_epoll_pwait}"
+echo "    poll(2) support ............ ${enable_poll}"
+echo "    ppoll(2) support ........... ${enable_ppoll}"
+echo "    select(2) support .......... ${enable_select}"
+echo "    pselect(2) support ......... ${enable_pselect}"
+echo "    ADNS support ............... ${enable_adns}"
+echo "    logxx support .............. ${enable_logging}"
 echo "${ECHO_N}" "    doxygen support............. "; if test "${DOXYGEN}" != ":"; then echo "yes"; else echo "no"; fi
-echo "${ECHO_N}" "    generate internal docs ..... "; echo "${enable_internal_docs}"
+echo "    generate internal docs ..... ${enable_internal_docs}"
 echo ""
