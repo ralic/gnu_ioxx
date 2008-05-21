@@ -11,6 +11,7 @@
 /build-aux/config.guess
 /build-aux/config.h
 /build-aux/config.h.in
+/build-aux/config.h.in~
 /build-aux/config.sub
 /build-aux/depcomp
 /build-aux/install-sh
