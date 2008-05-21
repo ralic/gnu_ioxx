@@ -19,7 +19,7 @@
 #include <ioxx/error.hpp>
 #include <ioxx/iovec.hpp>
 #include <ioxx/schedule.hpp>
-#include <ioxx/signals.hpp>
+#include <ioxx/signal.hpp>
 #include <ioxx/socket.hpp>
 #include <ioxx/time.hpp>
 

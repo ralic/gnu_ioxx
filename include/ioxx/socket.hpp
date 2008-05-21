@@ -319,6 +319,20 @@ namespace ioxx
   private:
     native_t const      _sock;
     bool                _close_on_destruction;
+
+    /**
+     * Predicate for throw_errno_if() that throws all errors but \c EWOULDBLOCK.
+     * This predicate is particularly well-suited to be used when calling
+     * potentially blocking I/O functions like \c read(2), \c write(2), or \c
+     * accept(2).
+     */
+    struct not_ewould_block : public std::unary_function<ssize_t, bool>
+    {
+      bool operator() (ssize_t rc) const
+      {
+        return rc < 0 && errno != EWOULDBLOCK && errno != EAGAIN;
+      }
+    };
   };
 
 } // namespace ioxx

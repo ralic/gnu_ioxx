@@ -14,7 +14,7 @@
 #define IOXX_DETAIL_EPOLL_HPP_INCLUDED_2008_05_19
 
 #include <ioxx/socket.hpp>
-#include <ioxx/signals.hpp>
+#include <ioxx/signal.hpp>
 #include <boost/noncopyable.hpp>
 #include <algorithm>
 #include <limits>

@@ -17,7 +17,7 @@ nobase_include_HEADERS = \
   ioxx/error.hpp \
   ioxx/iovec.hpp \
   ioxx/schedule.hpp \
-  ioxx/signals.hpp \
+  ioxx/signal.hpp \
   ioxx/socket.hpp \
   ioxx/time.hpp
 

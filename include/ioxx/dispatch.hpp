@@ -28,9 +28,6 @@
 
 namespace ioxx
 {
-  /**
-   * Unsigned type for representing seconds.
-   */
   typedef unsigned int seconds_t;
 
   /**

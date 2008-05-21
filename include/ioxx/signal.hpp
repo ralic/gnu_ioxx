@@ -20,6 +20,8 @@ namespace ioxx
 {
   /**
    * Block all POSIX signals for the current scope.
+   *
+   * \sa unblock_signals
    */
   class block_signals : private boost::noncopyable
   {
@@ -46,6 +48,8 @@ namespace ioxx
 
   /**
    * Unblock all POSIX signals for the current scope.
+   *
+   * \sa block_signals
    */
   class unblock_signals : private boost::noncopyable
   {
