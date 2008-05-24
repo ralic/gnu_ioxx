@@ -14,7 +14,6 @@
 #define IOXX_TEST_ECHO_HPP_INCLUDED_2008_05_19
 
 #include <ioxx/core.hpp>
-#include <ioxx/iovec.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/array.hpp>
 #include <boost/scoped_ptr.hpp>

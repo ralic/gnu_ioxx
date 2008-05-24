@@ -250,6 +250,16 @@ namespace ioxx
       return rc;
     }
 
+    char * recv_from(char * begin, char const * end, address & from)
+    {
+      BOOST_ASSERT(begin < end);
+      iovec iov = { begin, end - begin };
+      ssize_t const rc( recv_from(&iov, &iov + 1, from) );
+      if (rc < 0)       return begin;
+      else if (rc == 0) return 0;
+      else              return begin + rc;
+    }
+
     ssize_t recv_from(iovec * begin, iovec const * end, address & from)
     {
       BOOST_ASSERT(begin < end);
@@ -269,6 +279,16 @@ namespace ioxx
       LOGXX_TRACE("recvmsg(2) received " << rc << " bytes");
       from.as_socklen_t() = msg.msg_namelen;
       return rc;
+    }
+
+    char const * send_to(char const * begin, char const * end, address const & to)
+    {
+      BOOST_ASSERT(begin < end);
+      iovec iov = { const_cast<char *>(begin), end - begin };
+      ssize_t const rc( send_to(&iov, &iov + 1, to) );
+      if (rc < 0)       return begin;
+      else if (rc == 0) return 0;
+      else              return begin + rc;
     }
 
     ssize_t send_to(iovec const * begin, iovec const * end, address const & to)

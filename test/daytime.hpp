@@ -14,7 +14,6 @@
 #define IOXX_TEST_DAYTIME_HPP_INCLUDED_2008_05_19
 
 #include <ioxx/core.hpp>
-#include <ioxx/iovec.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/array.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -69,10 +68,9 @@ private:
     {
       BOOST_ASSERT(ev == socket::writable);
       BOOST_ASSERT(_data_begin != _data_end);
-      ioxx::iovec iov( ioxx::make_iovec(_data_begin, _data_end) );
-      ssize_t const rc( _sock->send_to(&iov, &iov + 1, _peer) );
-      if (rc < 0) return shutdown(); // connection reset by peer
-      _data_begin += rc;
+      char const * const p( _sock->send_to(_data_begin, _data_end, _peer) );
+      if (!p || p == _data_begin) return shutdown(); // connection reset by peer
+      _data_begin = p;
       BOOST_ASSERT(_data_begin <= _data_end);
       if (_data_begin == _data_end) return shutdown();
       _timeout.in(10u, boost::bind(&daytime::shutdown, this->shared_from_this()));
