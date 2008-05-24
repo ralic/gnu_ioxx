@@ -114,6 +114,15 @@
  * these options is usually unnecessary. A status summary will be output at the
  * end of the configure run.
  *
+ * - <code>BOOST_SUFFIX</code>: Most systems allow linking the boost libraries
+ *   under their normal names, i.e. the unit test framework can be linked as \c
+ *   -lboost_unit_test_framework. Other systems, however, have those libraries
+ *   installed with special suffixes that denote the compiler version used to
+ *   build the library. etc. On such a system, it will be necessar to assign
+ *   the variable on the \c configure command line, for example: \c
+ *   BOOST_SUFFIX=-gcc34. The boost libraries required only when building the
+ *   unit tests.
+ *
  * - <code>--enable-logging</code>: Enable support the <a
  *   href="http://logxx.cryp.to/">logxx</a> library. This might require
  *   additional \c -I flags in \c CPPFLAGS to help the compiler finding the \c
