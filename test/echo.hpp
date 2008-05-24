@@ -17,7 +17,6 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/array.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <iostream>
 
 template <class IOCore>
 class echo : public boost::enable_shared_from_this< echo<IOCore> >

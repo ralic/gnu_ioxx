@@ -21,12 +21,12 @@ namespace ioxx
   /**
    * Block all POSIX signals for the current scope.
    *
-   * \sa unblock_signals
+   * \sa signal_unblock
    */
-  class block_signals : private boost::noncopyable
+  class signal_block : private boost::noncopyable
   {
   public:
-    block_signals()
+    signal_block()
     {
       LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.signal");
       sigset_t block_all;
@@ -35,7 +35,7 @@ namespace ioxx
       LOGXX_TRACE("block all");
     }
 
-    ~block_signals()
+    ~signal_block()
     {
       throw_errno_if_minus1("sigprocmask(2)", boost::bind(boost::type<int>(), &::sigprocmask, SIG_SETMASK, &_orig_mask, static_cast<sigset_t*>(0)));
       LOGXX_TRACE("cancel block all");
@@ -47,14 +47,16 @@ namespace ioxx
   };
 
   /**
-   * Unblock all POSIX signals for the current scope.
+   * \internal
    *
-   * \sa block_signals
+   * \brief Unblock all POSIX signals for the current scope.
+   *
+   * \sa signal_block
    */
-  class unblock_signals : private boost::noncopyable
+  class signal_unblock : private boost::noncopyable
   {
   public:
-    unblock_signals()
+    signal_unblock()
     {
       LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.signal");
       sigset_t unblock_all;
@@ -63,7 +65,7 @@ namespace ioxx
       LOGXX_TRACE("unblock all");
     }
 
-    ~unblock_signals()
+    ~signal_unblock()
     {
       throw_errno_if_minus1("sigprocmask(2)", boost::bind(boost::type<int>(), &::sigprocmask, SIG_SETMASK, &_orig_mask, static_cast<sigset_t*>(0)));
       LOGXX_TRACE("cancel unblock all");

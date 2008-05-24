@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE( example_inetd )
   using boost::ref;
 
   // Allow signal delivery only during io_core::wait().
-  ioxx::block_signals no_signal_scope;
+  ioxx::signal_block no_signal_scope;
 
   // Ignore all signals except SIGINT and SIGTERM.
   for (int i(0); i != 32; ++i) ::signal(i, SIG_IGN);

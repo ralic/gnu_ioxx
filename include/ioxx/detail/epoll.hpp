@@ -144,7 +144,7 @@ namespace ioxx { namespace detail
 #else
       int rc;
       {
-        unblock_signals signal_scope;
+        signal_unblock signal_scope;
         rc = epoll_wait( _epoll_fd
                        , _events, sizeof(_events) / sizeof(epoll_event)
                        , static_cast<int>(timeout) * 1000

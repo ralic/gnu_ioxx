@@ -9,7 +9,7 @@ TESTS =                         \
   socket			\
   demux				\
   dns				\
-  core
+  inetd
 
 check_PROGRAMS = ${TESTS}
 noinst_HEADERS = daytime.hpp echo.hpp
@@ -19,6 +19,6 @@ schedule_SOURCES = schedule.cpp
 socket_SOURCES = socket.cpp
 demux_SOURCES = demux.cpp
 dns_SOURCES = dns.cpp
-core_SOURCES = core.cpp
+inetd_SOURCES = inetd.cpp
 
 MAINTAINERCLEANFILES = Makefile.in

@@ -177,7 +177,7 @@ namespace ioxx { namespace detail
 #else
       int rc;
       {
-        unblock_signals signal_scope;
+        signal_unblock signal_scope;
         rc = ::poll(&_pfd[0], _pfd.size(), static_cast<int>(timeout) * 1000);
       }
 #endif

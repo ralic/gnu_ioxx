@@ -54,7 +54,9 @@ namespace ioxx
   typedef ::timeval timeval;
 
   /**
-   * Access to the current time of day.
+   * \internal
+   *
+   * \brief Access to the current time of day.
    */
   class time_of_day : private boost::noncopyable
   {

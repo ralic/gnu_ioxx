@@ -154,7 +154,7 @@ namespace ioxx { namespace detail
         ::pselect(0, NULL, NULL, NULL, &to, &unblock_all);
 #else
         timeval tv = { timeout, 0 };
-        unblock_signals signal_scope;
+        signal_unblock signal_scope;
         ::select(0, NULL, NULL, NULL, &tv);
 #endif
         return;
@@ -171,7 +171,7 @@ namespace ioxx { namespace detail
       int rc;
       {
         timeval tv = { timeout, 0 };
-        unblock_signals signal_scope;
+        signal_unblock signal_scope;
         rc = ::select(_max_fd + 1, &_recv_read_fds, &_recv_write_fds, &_recv_except_fds, &tv);
       }
 #endif

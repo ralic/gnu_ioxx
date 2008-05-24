@@ -26,6 +26,8 @@ namespace ioxx
 {
   /**
    * Asynchronous interface to socket I/O, time events, and DNS.
+   *
+   * \sa \ref inetd
    */
   template < class Allocator = std::allocator<void> >
   class core : public time_of_day
@@ -41,13 +43,25 @@ namespace ioxx
     typedef dispatch<allocator>                 dispatch;
     typedef detail::adns<allocator>             dns;
 
+    /**
+     * An event-driven socket.
+     *
+     */
     class socket : public dispatch::socket
     {
     public:
       typedef typename dispatch::socket::event_set event_set;
       typedef typename dispatch::socket::handler   handler;
 
-      socket(core & io, native_socket_t sock, handler const & f = handler(), event_set ev = dispatch::socket::no_events)
+      /**
+       * Register a socket in the i/o event dispatcher.
+       *
+       * \param disp The dispatch object to register this socket in.
+       * \param sock The native socket.
+       * \param ev   Event set to wait for.
+       * \param f    Callback function to invoke when an event occurs.
+       */
+      socket(core & io, native_socket_t sock, handler const & f = handler(), event_set ev = socket::no_events)
       : dispatch::socket(io, sock, f, ev)
       {
       }

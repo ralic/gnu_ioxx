@@ -237,3 +237,7 @@
 
       The specified fd value is invalid. This flag is only valid in the revents
       member; it shall ignored in the events member.
+
+*** TODO Provide a logxx logging callback to =adns_init()=.
+
+    A simple example is in [[file::test/adns-logging-test.cpp][adns-logging-test.cpp]].

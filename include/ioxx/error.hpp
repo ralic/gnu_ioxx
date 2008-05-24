@@ -78,7 +78,7 @@ namespace ioxx
    * \return            The return value returned by \c f.
    * \throw system_error Thrown if the \c is_failure predicate returns \c true.
    *
-   * \sa block_signals
+   * \sa signal_block
    */
   template <class Result, class Predicate, class Action>
   inline Result throw_errno_if(Predicate is_failure, std::string const & error_msg, Action f)

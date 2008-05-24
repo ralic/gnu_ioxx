@@ -19,7 +19,16 @@
 namespace ioxx
 {
   /**
-   * Accept incoming stream connections on a local network port.
+   * Accept incoming stream connections on a local network port. An acceptor is
+   * given a socket::endpoint and a handler function. Whenever a new connection
+   * is received on that particular endpoint, the acceptor calls the handler
+   * function with the newly received socket::native_t and the socket::address
+   * of the peer. It's the handler functions responsibility to do something
+   * with the socket, i.e. to register it in an event dispatcher. If the
+   * handler function throws an exception, however, the newly received socket
+   * is closed before the exception is propagated.
+   *
+   * \sa \ref inetd
    */
   template < class Allocator = std::allocator<void>
            , class Dispatch  = dispatch<Allocator>
@@ -36,10 +45,16 @@ namespace ioxx
     typedef typename dispatch::socket   socket;
     typedef typename socket::address    address;
     typedef typename socket::endpoint   endpoint;
-    typedef typename socket::event_set  event_set;
     typedef Handler                     handler;
 
-    acceptor(dispatch & disp, endpoint const & addr, handler const & f)
+    /**
+     * Create an acceptor object.
+     *
+     * \param disp The i/o event dispatcher (i.e. core) to register this acceptor in.
+     * \param addr Create a listening socket that's bound to this particular endpoint.
+     * \param f    Callback function to invoke every time new connection is received.
+     */
+    acceptor(dispatch & disp, endpoint const & addr, handler const & f = handler())
     : _ls(disp, addr.create(), boost::bind(&acceptor::run, this), socket::readable)
     , _f(f)
     {

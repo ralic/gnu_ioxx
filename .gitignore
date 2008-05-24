@@ -29,9 +29,9 @@
 /libtool
 /ltmain.sh
 /missing
-/test/core
 /test/demux
 /test/dns
+/test/inetd
 /test/iovec_is_valid_range
 /test/schedule
 /test/socket

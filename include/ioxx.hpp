@@ -182,7 +182,50 @@
  * Ioxx is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.
+ */
+
+/**
+ * \page inetd Example inet daemon
  *
+ * \brief Multiplex various stream services in a single thread.
+ *
+ * The standard tool \c inetd offers services like daytime and echo, which
+ * are re-implemented in this example program. Our mini-inetd binds those two
+ * services to TCP ports 8080 and 8081 respectively, and accepts incoming
+ * requests for about 5 seconds.
+ *
+ * \sa \ref daytime
+ * \sa \ref echo
+ *
+ * \dontinclude inetd.cpp
+ * \skip #include
+ * \until io.wait
+ * \line }
+ * \line }
+ */
+
+/**
+ * \page daytime Example daytime service
+ *
+ * \brief Serve the current time of day.
+ *
+ * \sa \ref inetd
+ *
+ * \dontinclude daytime.hpp
+ * \skip #include
+ * \until };
+ */
+
+/**
+ * \page echo Example echo service
+ *
+ * \brief Echo all received data back to the peer.
+ *
+ * \sa \ref inetd
+ *
+ * \dontinclude echo.hpp
+ * \skip #include
+ * \until };
  */
 
 #endif // IOXX_HPP_INCLUDED_2008_05_19

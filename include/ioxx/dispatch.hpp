@@ -31,7 +31,9 @@ namespace ioxx
   typedef unsigned int seconds_t;
 
   /**
-   * A simple time-event dispatcher.
+   * \internal
+   *
+   * \brief A simple time-event dispatcher.
    */
   template < class Allocator  = std::allocator<void>
            , class Demux      =
@@ -63,12 +65,25 @@ namespace ioxx
     typedef typename handler_map::iterator                                              iterator;
     typedef typename demux::socket::event_set                                           event_set;
 
+    /**
+     * \internal
+     *
+     * \brief An event-driven socket.
+     */
     class socket : public demux::socket
     {
     public:
       typedef typename demux::socket::event_set event_set;
       typedef typename dispatch::handler        handler;
 
+      /**
+       * Register a socket in the i/o event dispatcher.
+       *
+       * \param disp The dispatch object to register this socket in.
+       * \param sock The native socket.
+       * \param ev   Event set to wait for.
+       * \param f    Callback function to invoke when an event occurs.
+       */
       socket(dispatch & disp, native_socket_t sock, handler const & f = handler(), event_set ev = demux::socket::no_events)
       : demux::socket(disp, sock, ev)
       {
