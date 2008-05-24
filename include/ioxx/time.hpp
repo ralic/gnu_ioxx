@@ -67,12 +67,12 @@ namespace ioxx
     /**
      * Return the current time of day.
      */
-    time_t const &  as_time_t() const   { return _now.tv_sec; }
+    time_t const &  current_time_t() const   { return _now.tv_sec; }
 
     /**
      * Return the current time of day.
      */
-    timeval const & as_timeval() const  { return _now; }
+    timeval const & current_timeval() const  { return _now; }
 
     /**
      * Update the time of day.

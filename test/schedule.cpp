@@ -34,12 +34,12 @@ BOOST_AUTO_TEST_CASE( dummy_schedule_test )
   typedef ioxx::schedule<> scheduler;
 
   time_of_day now;
-  scheduler schedule(now.as_time_t());
+  scheduler schedule(now.current_time_t());
   size_t dummy_call_counter( 0u );
   BOOST_REQUIRE(schedule.empty());
   BOOST_REQUIRE_EQUAL(schedule.run(), 0u);
   BOOST_REQUIRE_EQUAL(dummy_call_counter, 0u);
-  schedule.at(now.as_time_t(), dummy(dummy_call_counter));
+  schedule.at(now.current_time_t(), dummy(dummy_call_counter));
   schedule.in(1u, dummy(dummy_call_counter));
   scheduler::task_id tid( schedule.in(5u, dummy(dummy_call_counter)) );
   seconds_t delay( schedule.run() );
@@ -60,12 +60,12 @@ BOOST_AUTO_TEST_CASE( test_schedule_timeout )
 {
   ioxx::time_of_day now;
   typedef ioxx::schedule<> scheduler;
-  scheduler schedule(now.as_time_t());
+  scheduler schedule(now.current_time_t());
   size_t dummy_call_counter( 0u );
   {
     scheduler::timeout timeout( schedule );
     BOOST_REQUIRE_EQUAL(dummy_call_counter, 0u);
-    timeout.at(now.as_time_t(), dummy(dummy_call_counter));
+    timeout.at(now.current_time_t(), dummy(dummy_call_counter));
     schedule.run();
     BOOST_REQUIRE_EQUAL(dummy_call_counter, 1u);
     timeout.in(1u, dummy(dummy_call_counter));
@@ -83,11 +83,11 @@ BOOST_AUTO_TEST_CASE( basic_schedule_test )
   using ioxx::seconds_t;
   typedef ioxx::schedule<> scheduler;
   time_of_day now;
-  scheduler schedule(now.as_time_t());
+  scheduler schedule(now.current_time_t());
   BOOST_REQUIRE(schedule.empty());
   BOOST_REQUIRE_EQUAL(schedule.run(), 0u);
   BOOST_REQUIRE_EQUAL(dummy_was_called, 0u);
-  schedule.at(now.as_time_t(), dummy_function);
+  schedule.at(now.current_time_t(), dummy_function);
   schedule.in(1u, dummy_function);
   scheduler::task_id tid( schedule.in(5u, dummy_function) );
   schedule.in(2u, boost::bind(&scheduler::cancel, &schedule, tid));

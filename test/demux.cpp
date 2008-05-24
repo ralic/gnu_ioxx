@@ -120,12 +120,12 @@ template <class Demux>
 void use_demuxer_for_sleeping()
 {
   ioxx::time_of_day now;
-  ioxx::time_t const pre_sleep( now.as_time_t() );
+  ioxx::time_t const pre_sleep( now.current_time_t() );
   Demux demux;
   BOOST_REQUIRE(demux.empty());
   demux.wait(1u);
   now.update();
-  ioxx::time_t const post_sleep( now.as_time_t() );
+  ioxx::time_t const post_sleep( now.current_time_t() );
   BOOST_REQUIRE_PREDICATE(std::greater_equal<ioxx::time_t>(), (post_sleep)(pre_sleep));
 }
 

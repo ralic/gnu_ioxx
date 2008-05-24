@@ -46,7 +46,7 @@ private:
     LOGXX_GET_TARGET(LOGXX_SCOPE_NAME, "ioxx.daytime(" + ioxx::detail::show(s) + ')');
     LOGXX_TRACE("received daytime request from " << addr);
     tm tstamp;
-    localtime_r(&io.as_time_t(), &tstamp);
+    localtime_r(&io.current_time_t(), &tstamp);
     size_t const len( strftime( &_buf[0], _buf.size()
                               , "%d %b %Y %H:%M:%S %Z\r\n"
                               , &tstamp

@@ -62,9 +62,9 @@ BOOST_AUTO_TEST_CASE( test_dns_resolver )
 {
 #if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
   ioxx::time_of_day    now;
-  ioxx::dns::schedule  schedule(now.as_time_t());
+  ioxx::dns::schedule  schedule(now.current_time_t());
   ioxx::dns::dispatch  dispatch;
-  ioxx::dns            dns(schedule, dispatch, now.as_timeval());
+  ioxx::dns            dns(schedule, dispatch, now.current_timeval());
 
   dns.query_mx("cryp.to", print());
   dns.query_ptr("1.0.0.127.in-addr.arpa", print());

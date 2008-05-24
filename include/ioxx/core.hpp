@@ -80,7 +80,7 @@ namespace ioxx
       core const &  get_core() const    { return static_cast<core const &>(schedule::timeout::get_schedule()); }
     };
 
-    core() : schedule(time_of_day::as_time_t()), dns(*this, *this, time_of_day::as_timeval())
+    core() : schedule(time_of_day::current_time_t()), dns(*this, *this, time_of_day::current_timeval())
     {
     }
 
