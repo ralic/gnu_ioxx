@@ -119,7 +119,7 @@ void use_standard_event_set_operators()
 template <class Demux>
 void use_demuxer_for_sleeping()
 {
-  ioxx::time now;
+  ioxx::time_of_day now;
   ioxx::time_t const pre_sleep( now.as_time_t() );
   Demux demux;
   BOOST_REQUIRE(demux.empty());

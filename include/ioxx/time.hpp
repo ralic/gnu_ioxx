@@ -56,13 +56,13 @@ namespace ioxx
   /**
    * Access to the current time of day.
    */
-  class time : private boost::noncopyable
+  class time_of_day : private boost::noncopyable
   {
   public:
     /**
      * A default-constructed object has the accurate time of day.
      */
-    time()                              { update(); }
+    time_of_day() { update(); }
 
     /**
      * Return the current time of day.

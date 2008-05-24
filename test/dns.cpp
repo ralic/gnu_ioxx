@@ -61,7 +61,7 @@ struct print
 BOOST_AUTO_TEST_CASE( test_dns_resolver )
 {
 #if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
-  ioxx::time           now;
+  ioxx::time_of_day    now;
   ioxx::dns::schedule  schedule(now.as_time_t());
   ioxx::dns::dispatch  dispatch;
   ioxx::dns            dns(schedule, dispatch, now.as_timeval());

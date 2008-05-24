@@ -28,7 +28,7 @@ namespace ioxx
    * Asynchronous interface to socket I/O, time events, and DNS.
    */
   template < class Allocator = std::allocator<void> >
-  class core : public time
+  class core : public time_of_day
              , public dispatch<Allocator>
              , public schedule<Allocator>
 #if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
@@ -80,7 +80,7 @@ namespace ioxx
       core const &  get_core() const    { return static_cast<core const &>(schedule::timeout::get_schedule()); }
     };
 
-    core() : schedule(time::as_time_t()), dns(*this, *this, time::as_timeval())
+    core() : schedule(time_of_day::as_time_t()), dns(*this, *this, time_of_day::as_timeval())
     {
     }
 
@@ -106,7 +106,7 @@ namespace ioxx
     void wait(seconds_t timeout)
     {
       dispatch::wait(timeout);
-      time::update();
+      time_of_day::update();
     }
   };
 
