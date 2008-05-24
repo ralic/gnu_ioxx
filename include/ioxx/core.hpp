@@ -56,7 +56,7 @@ namespace ioxx
       /**
        * Register a socket in the i/o event dispatcher.
        *
-       * \param disp The dispatch object to register this socket in.
+       * \param io   The core object to register this socket in.
        * \param sock The native socket.
        * \param ev   Event set to wait for.
        * \param f    Callback function to invoke when an event occurs.
