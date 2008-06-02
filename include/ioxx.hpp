@@ -73,15 +73,15 @@
  *   documentation can be re-built with <a
  *   href="http://www.doxygen.org/">doxygen</a>.
  *
- * - Development snapshot: <a href="http://git.cryp.to/?p=ioxx;a=snapshot;h=HEAD;sf=tgz">ioxx-HEAD.tar.gz</a>\n
+ * - Development snapshot: <a href="http://git.cryp.to/ioxx?a=snapshot;h=HEAD;sf=tgz">ioxx-HEAD.tar.gz</a>\n
  *   \n
  *   The most current development snapshot comes directly from the source code
  *   management repository, which can be <a
- *   href="http://git.cryp.to/?p=ioxx">browsed online</a> to see the change
+ *   href="http://git.cryp.to/ioxx">browsed online</a> to see the change
  *   history, etc. Users of the <a href="http://git.or.cz/">git</a> utility can
  *   also download that repository to their local machines:\n
  *   \n
- *   \verbatim git clone http://ioxx.cryp.to/.git \endverbatim
+ *   \verbatim git clone http://git.cryp.to/ioxx/ \endverbatim
  *   \n
  *   Note that unlike the stable releases, development snapshots do not contain
  *   the whole zoo of build scripts necessary to compile the code -- like \c
@@ -96,8 +96,8 @@
  * \section updates How to be notified of new releases
  *
  * If you would like to be notified whenever a new version becomes available,
- * subscribe to the %ioxx <a href="http://git.cryp.to/?p=ioxx;a=rss">RSS
- * feed</a> or <a href="http://git.cryp.to/?p=ioxx;a=atom">ATOM log</a>.
+ * subscribe to the %ioxx <a href="http://git.cryp.to/ioxx?a=rss">RSS
+ * feed</a> or <a href="http://git.cryp.to/ioxx?a=atom">ATOM log</a>.
  *
  * <hr>
  *
