@@ -18,6 +18,7 @@
 #include <boost/assert.hpp>
 #include <boost/bind.hpp>
 #include <functional>
+#include <cstring>
 
 namespace ioxx
 {
