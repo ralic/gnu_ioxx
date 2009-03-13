@@ -31,7 +31,7 @@ namespace ioxx
    * \brief Generic time-event dispatcher.
    */
   template < class Allocator = std::allocator<void>
-           , class Task      = boost::function0<void, typename Allocator::template rebind<boost::function_base>::other>
+           , class Task      = boost::function0<void>
            , class TaskQueue = std::multimap< time_t
                                             , Task
                                             , std::less<time_t>

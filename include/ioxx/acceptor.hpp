@@ -35,7 +35,6 @@ namespace ioxx
            , class Handler   = boost::function2< void
                                                , typename Dispatch::socket::native_t
                                                , typename Dispatch::socket::address const &
-                                               , typename Allocator::template rebind<boost::function_base>::other
                                                >
            >
   class acceptor : private boost::noncopyable

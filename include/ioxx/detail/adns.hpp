@@ -208,9 +208,9 @@ namespace ioxx { namespace detail
         else if (req->fd == (*reg)->as_native_socket_t())
         {
           LOGXX_TRACE("socket " << req->fd << " must be modified");
-          (*reg)->request( req->events & POLLIN  ? socket::readable : socket::no_events
-                         | req->events & POLLOUT ? socket::writable : socket::no_events
-                         | req->events & POLLPRI ? socket::pridata  : socket::no_events
+          (*reg)->request( (req->events & POLLIN  ? socket::readable : socket::no_events)
+                         | (req->events & POLLOUT ? socket::writable : socket::no_events)
+                         | (req->events & POLLPRI ? socket::pridata  : socket::no_events)
                          );
           ++req; ++reg;
         }
@@ -230,9 +230,7 @@ namespace ioxx { namespace detail
     timeout             _timeout;
 
     typedef boost::shared_ptr<adns_answer const> answer;
-
-    typedef typename Allocator::template rebind<boost::function_base>::other                    callback_allocator;
-    typedef boost::function1<void, answer, callback_allocator>                                  callback;
+    typedef boost::function1<void, answer>       callback;
 
     typedef typename Allocator::template rebind< std::pair<adns_query const, callback> >::other query_set_allocator;
     typedef std::map<adns_query,callback,std::less<adns_query>,query_set_allocator>             query_set;
@@ -311,9 +309,9 @@ namespace ioxx { namespace detail
       BOOST_ASSERT(pfd.fd >= 0);
       BOOST_ASSERT(pfd.events != 0);
       shared_socket s;
-      typename socket::event_set const ev( pfd.events & POLLIN  ? socket::readable : socket::no_events
-                                         | pfd.events & POLLOUT ? socket::writable : socket::no_events
-                                         | pfd.events & POLLPRI ? socket::pridata  : socket::no_events
+      typename socket::event_set const ev( (pfd.events & POLLIN  ? socket::readable : socket::no_events)
+                                         | (pfd.events & POLLOUT ? socket::writable : socket::no_events)
+                                         | (pfd.events & POLLPRI ? socket::pridata  : socket::no_events)
                                          );
       BOOST_ASSERT(ev != socket::no_events);
       s.reset(new socket(_dispatch, pfd.fd, boost::bind(&adns::process_fd, this, pfd.fd, _1), ev));

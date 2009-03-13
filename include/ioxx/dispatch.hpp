@@ -48,7 +48,6 @@ namespace ioxx
 #endif
            , class Handler    = boost::function1< void
                                                 , typename Demux::socket::event_set
-                                                , typename Allocator::template rebind<boost::function_base>::other
                                                 >
            , class HandlerMap = std::map< native_socket_t
                                         , Handler
