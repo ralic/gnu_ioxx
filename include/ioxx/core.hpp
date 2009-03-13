@@ -39,8 +39,8 @@ namespace ioxx
   {
   public:
     typedef Allocator                           allocator;
-    typedef schedule<allocator>                 schedule;
-    typedef dispatch<allocator>                 dispatch;
+    typedef ioxx::schedule<allocator>           schedule;
+    typedef ioxx::dispatch<allocator>           dispatch;
     typedef detail::adns<allocator>             dns;
 
     /**
