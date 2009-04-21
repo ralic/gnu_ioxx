@@ -272,7 +272,7 @@ namespace ioxx { namespace detail
         LOGXX_TRACE("deliver ADNS query " << qid);
         typename query_set::iterator const i( _queries.find(qid) );
         BOOST_ASSERT(i != _queries.end());
-        std::swap(f, i->second);
+        swap(f, i->second);
         _queries.erase(i);
         f(ans);
       }

@@ -70,7 +70,7 @@ namespace ioxx
       void swap(timeout & other)
       {
         BOOST_ASSERT(&other._sched == &_sched);
-        std::swap(other._id, _id);
+        swap(other._id, _id);
       }
 
       bool cancel()

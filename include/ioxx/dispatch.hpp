@@ -105,7 +105,7 @@ namespace ioxx
       void modify(handler f, event_set ev)
       {
         this->request(ev);
-        std::swap(_iter->second, f);
+        swap(_iter->second, f);
       }
 
     protected:
