@@ -1,5 +1,5 @@
 # ===========================================================================
-#              http://autoconf-archive.cryp.to/ax_have_poll.html
+#          http://www.nongnu.org/autoconf-archive/ax_have_poll.html
 # ===========================================================================
 #
 # SYNOPSIS
@@ -25,13 +25,9 @@
 #   AX_HAVE_POLL would succeed if AX_HAVE_PPOLL has, but not the other way
 #   round.
 #
-# LAST MODIFICATION
+# LICENSE
 #
-#   2008-05-01
-#
-# COPYLEFT
-#
-#   Copyright (c) 2008 Peter Simons <simons@cryp.to>
+#   Copyright (c) 2009 Peter Simons <simons@cryp.to>
 #
 #   Copying and distribution of this file, with or without modification, are
 #   permitted in any medium without royalty provided the copyright notice

@@ -1,5 +1,5 @@
 # ===========================================================================
-#              http://autoconf-archive.cryp.to/ax_have_adns.html
+#          http://www.nongnu.org/autoconf-archive/ax_have_adns.html
 # ===========================================================================
 #
 # SYNOPSIS
@@ -13,11 +13,7 @@
 #   system. The test is known to work with version 1.4 (or later). If the
 #   library is found, the flags necessary to link it are added to $LIBS.
 #
-# LAST MODIFICATION
-#
-#   2008-05-02
-#
-# COPYLEFT
+# LICENSE
 #
 #   Copyright (c) 2008 Peter Simons <simons@cryp.to>
 #
