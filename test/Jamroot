@@ -1,0 +1,21 @@
+# ~/test/Jamroot
+
+import os ;
+import testing ;
+
+project /ioxx/test
+  : requirements <include>../include <include>../../logxx/include
+  ;
+
+# path-constant IOXX_INCLUDES = ../include ;
+
+lib adns ;
+
+unit-test iovec-is-valid-range : iovec-is-valid-range.cpp /boost//unit_test_framework ;
+unit-test schedule : schedule.cpp /boost//unit_test_framework ;
+unit-test socket : socket.cpp /boost//unit_test_framework ;
+unit-test demux : demux.cpp /boost//unit_test_framework ;
+unit-test dns : dns.cpp adns /boost//unit_test_framework ;
+unit-test inetd : inetd.cpp adns /boost//unit_test_framework ;
+
+use-project /boost : [ os.environ BOOST_ROOT ] ;
