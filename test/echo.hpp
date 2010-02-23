@@ -1,17 +1,22 @@
 /*
- * Copyright (c) 2008 Peter Simons <simons@cryp.to>
+ * Copyright (c) 2010 Peter Simons <simons@cryp.to>
  *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from the
- * use of this software.
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
  *
- * Copying and distribution of this file, with or without modification, are
- * permitted in any medium without royalty provided the copyright notice and
- * this notice are preserved.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IOXX_TEST_ECHO_HPP_INCLUDED_2008_05_19
-#define IOXX_TEST_ECHO_HPP_INCLUDED_2008_05_19
+#ifndef IOXX_TEST_ECHO_HPP_INCLUDED_2010_02_23
+#define IOXX_TEST_ECHO_HPP_INCLUDED_2010_02_23
 
 #include <ioxx/core.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -105,4 +110,4 @@ private:
   LOGXX_DEFINE_TARGET(LOGXX_SCOPE_NAME);
 };
 
-#endif // IOXX_TEST_ECHO_HPP_INCLUDED_2008_05_19
+#endif // IOXX_TEST_ECHO_HPP_INCLUDED_2010_02_23

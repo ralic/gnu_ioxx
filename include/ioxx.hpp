@@ -1,17 +1,22 @@
 /*
- * Copyright (c) 2008 Peter Simons <simons@cryp.to>
+ * Copyright (c) 2010 Peter Simons <simons@cryp.to>
  *
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the authors be held liable for any damages arising from the
- * use of this software.
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
  *
- * Copying and distribution of this file, with or without modification, are
- * permitted in any medium without royalty provided the copyright notice and
- * this notice are preserved.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef IOXX_HPP_INCLUDED_2008_05_19
-#define IOXX_HPP_INCLUDED_2008_05_19
+#ifndef IOXX_HPP_INCLUDED_2010_02_23
+#define IOXX_HPP_INCLUDED_2010_02_23
 
 #include <ioxx/acceptor.hpp>
 #include <ioxx/core.hpp>
@@ -171,17 +176,9 @@
  *
  * The ioxx library is distributed under the terms of the <a
  * href="http://www.gnu.org/licenses/">GNU Lesser General Public License</a>
- * version 3 or, at your option, any later version. This choice is mostly a
- * consequence of ioxx's dependency on GNU ADNS, which dictates those terms.
- * However, only a fraction of the code distributed as part of ioxx actually
- * depends on ADNS, meaning that most files include the =adns.h= header neither
- * directly nor indirectly. When used on their own, these files are available
- * under an all-permissive license, which means that you can do with them,
- * basically, whatever you want.
- *
- * Ioxx is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.
+ * version 3 or, at your option, any later version. Ioxx is distributed in the
+ * hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+ * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
 /**
@@ -228,4 +225,4 @@
  * \until };
  */
 
-#endif // IOXX_HPP_INCLUDED_2008_05_19
+#endif // IOXX_HPP_INCLUDED_2010_02_23
