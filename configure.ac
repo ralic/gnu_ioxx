@@ -1,26 +1,20 @@
-dnl ~/configure.ac -- see http://ioxx.cryp.to/
+dnl Configure the ioxx library.
+dnl
+dnl This file is free software; as a special exception the author gives
+dnl unlimited permission to copy and/or distribute it, with or without
+dnl modifications, as long as this notice is preserved.
+dnl
+dnl This program is distributed in the hope that it will be useful, but
+dnl WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+dnl implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-AC_INIT([ioxx], [0.1], [simons@cryp.to])
+AC_INIT([ioxx], m4_esyscmd([build-aux/git-version-gen .tarball-version]),
+	[simons@cryp.to], [ioxx], [http://www.nongnu.org/ioxx/])
 AC_CONFIG_SRCDIR([include/ioxx.hpp])
 AC_CONFIG_AUX_DIR([build-aux])
-AM_INIT_AUTOMAKE([-Wall -Werror 1.10 foreign std-options filename-length-max=99 tar-v7])
+AM_INIT_AUTOMAKE([-Wall -Werror 1.11 gnu std-options filename-length-max=99])
 AC_CONFIG_MACRO_DIR([build-aux])
-
-AC_COPYRIGHT([dnl
-Copyright (C) 2008 Peter Simons <simons@cryp.to>
-
-Ioxx is free software: you can redistribute it and/or modify it under
-the terms of the GNU Lesser General Public License as published by the
-Free Software Foundation, either version 3 of the License, or (at your
-option) any later version.
-
-Ioxx is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
-License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with Ioxx. If not, see <http://www.gnu.org/licenses/>.])
+AC_MSG_NOTICE([$PACKAGE_STRING])
 
 AC_PROG_CXX
 AC_LANG([C++])
