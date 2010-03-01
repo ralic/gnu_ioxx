@@ -8,7 +8,7 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @BOOST_UNIT_TEST_FRAMEWORK_CPPFLAGS@
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include $(BOOST_UNIT_TEST_FRAMEWORK_CPPFLAGS)
 LDADD = -lboost_unit_test_framework$(BOOST_SUFFIX)
 
 TESTS =                         \
