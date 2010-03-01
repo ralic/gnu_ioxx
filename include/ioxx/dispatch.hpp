@@ -19,11 +19,11 @@
 #define IOXX_DISPATCH_HPP_INCLUDED_2010_02_23
 
 #include <ioxx/detail/config.hpp>
-#if defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL
+#if defined IOXX_HAVE_EPOLL && IOXX_HAVE_EPOLL
 #  include <ioxx/detail/epoll.hpp>
-#elif defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
+#elif defined IOXX_HAVE_POLL && IOXX_HAVE_POLL
 #  include <ioxx/detail/poll.hpp>
-#elif defined(IOXX_HAVE_SELECT) && IOXX_HAVE_SELECT
+#elif defined IOXX_HAVE_SELECT && IOXX_HAVE_SELECT
 #  include <ioxx/detail/select.hpp>
 #else
 #  error "No I/O de-multiplexer available for this platform."
@@ -42,9 +42,9 @@ namespace ioxx
    */
   template < class Allocator  = std::allocator<void>
            , class Demux      =
-#if defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL
+#if defined IOXX_HAVE_EPOLL && IOXX_HAVE_EPOLL
                                 detail::epoll
-#elif defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
+#elif defined IOXX_HAVE_POLL && IOXX_HAVE_POLL
                                 detail::poll< typename Allocator::template rebind<pollfd>::other
                                             , typename Allocator::template rebind< std::pair<native_socket_t const, size_t> >::other
                                             >

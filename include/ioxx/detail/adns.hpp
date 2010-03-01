@@ -29,7 +29,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#if defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
+#if defined IOXX_HAVE_POLL && IOXX_HAVE_POLL
 #  include <sys/poll.h>
 #else
 #  error "ADNS requires poll() support; select() isn't implemented yet."

@@ -138,7 +138,7 @@ namespace ioxx { namespace detail
     {
       BOOST_ASSERT(timeout <= max_timeout());
       BOOST_ASSERT(!_n_events);
-#if defined(IOXX_HAVE_EPOLL_PWAIT) && IOXX_HAVE_EPOLL_PWAIT
+#if defined IOXX_HAVE_EPOLL_PWAIT && IOXX_HAVE_EPOLL_PWAIT
       sigset_t unblock_all;
       throw_errno_if_minus1("sigemptyset(3)", boost::bind(boost::type<int>(), &::sigemptyset, &unblock_all));
       int const rc( epoll_pwait( _epoll_fd

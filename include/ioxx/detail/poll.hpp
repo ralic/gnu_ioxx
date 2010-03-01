@@ -174,7 +174,7 @@ namespace ioxx { namespace detail
       LOGXX_TRACE("wait on " << _pfd.size() << " sockets for at most " << timeout << " seconds");
       BOOST_ASSERT(timeout <= max_timeout());
       BOOST_ASSERT(!_n_events);
-#if defined(IOXX_HAVE_PPOLL) && IOXX_HAVE_PPOLL
+#if defined IOXX_HAVE_PPOLL && IOXX_HAVE_PPOLL
       timespec const to = { timeout, 0 };
       sigset_t unblock_all;
       throw_errno_if_minus1("sigemptyset(3)", boost::bind(boost::type<int>(), &::sigemptyset, &unblock_all));

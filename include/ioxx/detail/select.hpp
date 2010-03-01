@@ -152,7 +152,7 @@ namespace ioxx { namespace detail
       BOOST_ASSERT(!_n_events);
       if (_max_fd == -1)
       {
-#if defined(IOXX_HAVE_PSELECT) && IOXX_HAVE_PSELECT
+#if defined IOXX_HAVE_PSELECT && IOXX_HAVE_PSELECT
         timespec const to = { timeout, 0 };
         sigset_t unblock_all;
         throw_errno_if_minus1("sigemptyset(3)", boost::bind(boost::type<int>(), &::sigemptyset, &unblock_all));
@@ -167,7 +167,7 @@ namespace ioxx { namespace detail
       _recv_read_fds   = _req_read_fds;
       _recv_write_fds  = _req_write_fds;
       _recv_except_fds = _req_except_fds;
-#if defined(IOXX_HAVE_PSELECT) && IOXX_HAVE_PSELECT
+#if defined IOXX_HAVE_PSELECT && IOXX_HAVE_PSELECT
       timespec const to = { timeout, 0 };
       sigset_t unblock_all;
       throw_errno_if_minus1("sigemptyset(3)", boost::bind(boost::type<int>(), &::sigemptyset, &unblock_all));

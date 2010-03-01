@@ -21,7 +21,7 @@
 #include <ioxx/time.hpp>
 #include <ioxx/schedule.hpp>
 #include <ioxx/dispatch.hpp>
-#if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
+#if defined IOXX_HAVE_ADNS && IOXX_HAVE_ADNS
 #  include <ioxx/detail/adns.hpp>
 #else
 #  error "No asynchronous DNS resolver available on this platform."
@@ -38,7 +38,7 @@ namespace ioxx
   class core : public time_of_day
              , public dispatch<Allocator>
              , public schedule<Allocator>
-#if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
+#if defined IOXX_HAVE_ADNS && IOXX_HAVE_ADNS
              , public detail::adns<Allocator>
 #endif
   {

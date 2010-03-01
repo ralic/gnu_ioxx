@@ -16,7 +16,7 @@
  */
 
 #include <ioxx/detail/config.hpp>
-#if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
+#if defined IOXX_HAVE_ADNS && IOXX_HAVE_ADNS
 #include <ioxx/time.hpp>
 #include <ioxx/detail/adns.hpp>
 #include <iterator>
@@ -65,7 +65,7 @@ struct print
 
 BOOST_AUTO_TEST_CASE( test_dns_resolver )
 {
-#if defined(IOXX_HAVE_ADNS) && IOXX_HAVE_ADNS
+#if defined IOXX_HAVE_ADNS && IOXX_HAVE_ADNS
   ioxx::time_of_day    now;
   ioxx::dns::schedule  schedule(now.current_time_t());
   ioxx::dns::dispatch  dispatch;

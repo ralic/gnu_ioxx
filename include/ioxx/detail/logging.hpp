@@ -21,7 +21,7 @@
 #include <ioxx/detail/config.hpp>
 #include <ostream>
 
-#if defined(IOXX_HAVE_LOGGING) && IOXX_HAVE_LOGGING
+#if defined IOXX_HAVE_LOGGING && IOXX_HAVE_LOGGING
 #  include <logxx.hpp>
 #else
 #  define LOGXX_DEFINE_TARGET(id)

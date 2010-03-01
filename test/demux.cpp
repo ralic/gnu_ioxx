@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE( test_demux_archetype )
   BOOST_REQUIRE_THROW(test_demux<demux_archetype>(), std::logic_error);
 }
 
-#if defined(IOXX_HAVE_EPOLL) && IOXX_HAVE_EPOLL
+#if defined IOXX_HAVE_EPOLL && IOXX_HAVE_EPOLL
 #  include <ioxx/detail/epoll.hpp>
 
 BOOST_AUTO_TEST_CASE( test_epoll_demux )
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE( test_epoll_demux )
 }
 #endif
 
-#if defined(IOXX_HAVE_POLL) && IOXX_HAVE_POLL
+#if defined IOXX_HAVE_POLL && IOXX_HAVE_POLL
 #  include <ioxx/detail/poll.hpp>
 
 BOOST_AUTO_TEST_CASE( test_poll_demux )
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE( test_poll_demux )
 }
 #endif
 
-#if defined(IOXX_HAVE_SELECT) && IOXX_HAVE_SELECT
+#if defined IOXX_HAVE_SELECT && IOXX_HAVE_SELECT
 #  include <ioxx/detail/select.hpp>
 
 BOOST_AUTO_TEST_CASE( test_select_demux )
