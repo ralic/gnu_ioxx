@@ -1,15 +1,15 @@
 /*
  * Copyright (c) 2010 Peter Simons <simons@cryp.to>
  *
- * This program is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by the
- * Free Software Foundation, either version 3 of the License, or (at your
- * option) any later version.
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option) any
+ * later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
- * for more details.
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
@@ -51,7 +51,7 @@
  *
  * \section intro_sec What is ioxx?
  *
- * The ioxx library provides primitives for asynchronous i/o in C++. That kind
+ * The ioxx library provides primitives for asynchronous I/O in C++. That kind
  * of thing is typically useful for people who would like to implement a highly
  * concurrent network service, i.e. an application that performs input/output
  * simultaneously on a great number of sockets. The library's main components
@@ -63,30 +63,28 @@
  * re-entrant. The code runs on any POSIX-compliant operating system, most
  * notably Linux, NetBSD, Solaris, AIX, HP/UX, and Windows.
  *
+ * Ioxx depends mandatorily on the excellent <a href="http://boost.org/">Boost
+ * libraries</a>. The optional asynchronous DNS resolver depends on <a
+ * href="http://www.chiark.greenend.org.uk/~ian/adns/">GNU ADNS</a> version 1.4
+ * (or later). The reference documentation can be re-built with <a
+ * href="http://www.doxygen.org/">doxygen</a>.
+ *
  * <hr>
  *
  * \section download How to download the latest version
  *
- * - Stable release: <a href="http://ioxx.cryp.to/ioxx-0.1.tar.gz">ioxx-0.1.tar.gz</a>\n
- *   \n
- *   Ioxx depends mandatorily on the excellent <a
- *   href="http://boost.org/">Boost libraries</a>. The optional asynchronous
- *   DNS resolver depends on <a
- *   href="http://www.chiark.greenend.org.uk/~ian/adns/">GNU ADNS</a> version
- *   1.4 (or later). Optional logging support is enabled if the <a
- *   href="http://logxx.cryp.to/">logxx</a> library is available. The reference
- *   documentation can be re-built with <a
- *   href="http://www.doxygen.org/">doxygen</a>.
+ * - Stable release: <a href="http://download.savannah.nongnu.org/releases/ioxx/ioxx-1.0.tar.gz">ioxx-1.0.tar.gz</a>\n
  *
- * - Development snapshot: <a href="http://git.cryp.to/ioxx?a=snapshot;h=HEAD;sf=tgz">ioxx-HEAD.tar.gz</a>\n
+ * - Development snapshot: <a href="http://git.savannah.gnu.org/gitweb/?p=ioxx.git;a=snapshot;h=HEAD;sf=tgz">ioxx-HEAD.tar.gz</a>\n
  *   \n
  *   The most current development snapshot comes directly from the source code
  *   management repository, which can be <a
- *   href="http://git.cryp.to/ioxx">browsed online</a> to see the change
- *   history, etc. Users of the <a href="http://git.or.cz/">git</a> utility can
- *   also download that repository to their local machines:\n
+ *   href="http://git.savannah.gnu.org/gitweb/?p=ioxx.git">browsed online</a> to
+ *   see the change history, etc. Users of the <a
+ *   href="http://git.or.cz/">git</a> utility can also download that repository
+ *   to their local machines:\n
  *   \n
- *   \verbatim git clone http://git.cryp.to/ioxx/ \endverbatim
+ *   \verbatim git clone git://git.sv.gnu.org/ioxx.git \endverbatim
  *   \n
  *   Note that unlike the stable releases, development snapshots do not contain
  *   the whole zoo of build scripts necessary to compile the code -- like \c
@@ -101,8 +99,11 @@
  * \section updates How to be notified of new releases
  *
  * If you would like to be notified whenever a new version becomes available,
- * subscribe to the %ioxx <a href="http://git.cryp.to/ioxx?a=rss">RSS
- * feed</a> or <a href="http://git.cryp.to/ioxx?a=atom">ATOM log</a>.
+ * subscribe to the %ioxx <a
+ * href="http://git.savannah.gnu.org/gitweb/?p=ioxx.git;a=rss">RSS
+ * feed</a> or <a
+ * href="http://git.savannah.gnu.org/gitweb/?p=ioxx.git;a=atom">ATOM
+ * log</a>.
  *
  * <hr>
  *
@@ -127,12 +128,6 @@
  *   the variable on the \c configure command line, for example: \c
  *   BOOST_SUFFIX=-gcc34. The boost libraries required only when building the
  *   unit tests.
- *
- * - <code>--enable-logging</code>: Enable support the <a
- *   href="http://logxx.cryp.to/">logxx</a> library. This might require
- *   additional \c -I flags in \c CPPFLAGS to help the compiler finding the \c
- *   logxx.hpp header. If this feature is disabled, ioxx won't produce any log
- *   file.
  *
  * - <code>--enable-epoll</code>, <code>--enable-epoll-pwait</code>: Enable
  *   support for the Linux-specific \c epoll family of system calls.
@@ -164,11 +159,11 @@
  *
  * \section contact How to get help, submit patches, or report bugs
  *
- * Please direct any correspondence to me <a href="mailto:simons@cryp.to">via
- * e-mail</a>. The library is still fairly new and I'm particularly interested
+ * Please submit bug reports or feature requests to the <a
+ * href="http://savannah.nongnu.org/bugs/?func=additem&group=ioxx">ioxx bug
+ * tracker</a>. The library is still fairly new and I'm particularly interested
  * in hearing about portability problems, i.e. platforms on which ioxx doesn't
- * compile or fails the test suite. Patches and suggestions for improvement are
- * always welcome, of course.
+ * compile or fails the test suite.
  *
  * <hr>
  *
