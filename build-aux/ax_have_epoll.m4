@@ -23,7 +23,7 @@
 #   the macro verifies that a kernel newer than this is installed. This
 #   check is somewhat unreliable if <linux/version.h> doesn't match the
 #   running kernel, but it is necessary regardless, because glibc comes with
-#   stubs for the epoll_create(), epolL_wait(), etc. that allow programs to
+#   stubs for the epoll_create(), epoll_wait(), etc. that allow programs to
 #   compile and link even if the kernel is too old; the problem would then
 #   be detected only at runtime.
 #
@@ -39,7 +39,10 @@
 #
 #   Copying and distribution of this file, with or without modification, are
 #   permitted in any medium without royalty provided the copyright notice
-#   and this notice are preserved.
+#   and this notice are preserved. This file is offered as-is, without any
+#   warranty.
+
+#serial 9
 
 AC_DEFUN([AX_HAVE_EPOLL], [dnl
   ax_have_epoll_cppflags="${CPPFLAGS}"

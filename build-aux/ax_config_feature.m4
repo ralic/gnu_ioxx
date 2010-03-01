@@ -18,22 +18,22 @@
 #
 #   A simple example:
 #
-#       AX_CONFIG_FEATURE_DEFAULT_ENABLED
-#       AX_CONFIG_FEATURE(feature_xxxxx, [turns on/off XXXXX support],
-#       		  HAVE_XXXXX, [Define if you want XXXXX support])
+#     AX_CONFIG_FEATURE_DEFAULT_ENABLED
+#     AX_CONFIG_FEATURE(feature_xxxxx, [turns on/off XXXXX support],
+#                       HAVE_XXXXX, [Define if you want XXXXX support])
 #
-#       ...
+#     ...
 #
-#       AX_CONFIG_FEATURE_DEFAULT_DISABLED
-#       AX_CONFIG_FEATURE(feature_yyyyy, [turns on/off YYYYY support],
-#                         HAVE_YYYYY, [Define if you want YYYYY support],
-#       		  [enable_yyyyy="yes"], [enable_yyyyy="no"])
-#       AM_CONDITIONAL(YYYYY, [test "$enable_yyyyy" = "yes"])
+#     AX_CONFIG_FEATURE_DEFAULT_DISABLED
+#     AX_CONFIG_FEATURE(feature_yyyyy, [turns on/off YYYYY support],
+#                       HAVE_YYYYY, [Define if you want YYYYY support],
+#                       [enable_yyyyy="yes"], [enable_yyyyy="no"])
+#     AM_CONDITIONAL(YYYYY, [test "$enable_yyyyy" = "yes"])
 #
-#       AX_CONFIG_FEATURE_DEFAULT_ENABLED
-#       AX_CONFIG_FEATURE(...)
+#     AX_CONFIG_FEATURE_DEFAULT_ENABLED
+#     AX_CONFIG_FEATURE(...)
 #
-#       ...
+#     ...
 #
 #   If you have lot of features and you want a verbose dumping of each user
 #   selection use AX_CONFIG_FEATURE_VERBOSE. Use AX_CONFIG_FEATURE_SILENT in
@@ -45,15 +45,15 @@
 #
 #   Another simple example:
 #
-#       AS_IF([some_test_here],[AX_CONFIG_FEATURE_ENABLE(feature_xxxxx)],[])
+#     AS_IF([some_test_here],[AX_CONFIG_FEATURE_ENABLE(feature_xxxxx)],[])
 #
-#       AX_CONFIG_FEATURE(feature_xxxxx, [turns on/off XXXXX support],
-#       		  HAVE_XXXXX, [Define if you want XXXXX support])
-#       AX_CONFIG_FEATURE(feature_yyyyy, [turns on/off YYYYY support],
-#                         HAVE_YYYYY, [Define if you want YYYYY support],
-#       		  [enable_yyyyy="yes"], [enable_yyyyy="no"])
+#     AX_CONFIG_FEATURE(feature_xxxxx, [turns on/off XXXXX support],
+#                       HAVE_XXXXX, [Define if you want XXXXX support])
+#     AX_CONFIG_FEATURE(feature_yyyyy, [turns on/off YYYYY support],
+#                       HAVE_YYYYY, [Define if you want YYYYY support],
+#                       [enable_yyyyy="yes"], [enable_yyyyy="no"])
 #
-#       ...
+#     ...
 #
 #   NOTE: AX_CONFIG_FEATURE_ENABLE() must be placed first of the relative
 #   AX_CONFIG_FEATURE() macro ...
@@ -88,10 +88,12 @@
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
 
+#serial 9
+
 AC_DEFUN([AX_CONFIG_FEATURE],[ dnl
 m4_pushdef([FEATURE], patsubst([$1], -, _))dnl
 
-AC_ARG_ENABLE([$1],AC_HELP_STRING([--enable-$1],[$2]),[
+AC_ARG_ENABLE([$1],AS_HELP_STRING([--enable-$1],[$2]),[
 case "${enableval}" in
    yes)
      ax_config_feature_[]FEATURE[]="yes"

@@ -17,7 +17,7 @@
 #
 #   A typical example could be the following one:
 #
-#         AX_WITH_PROG(PERL,perl)
+#     AX_WITH_PROG(PERL,perl)
 #
 #   NOTE: This macro is based upon the original AX_WITH_PYTHON macro from
 #   Dustin J. Mitchell <dustin@cs.uchicago.edu>.
@@ -29,7 +29,10 @@
 #
 #   Copying and distribution of this file, with or without modification, are
 #   permitted in any medium without royalty provided the copyright notice
-#   and this notice are preserved.
+#   and this notice are preserved. This file is offered as-is, without any
+#   warranty.
+
+#serial 12
 
 AC_DEFUN([AX_WITH_PROG],[
     AC_PREREQ([2.61])
@@ -42,21 +45,21 @@ AC_DEFUN([AX_WITH_PROG],[
     AC_ARG_VAR(VARIABLE,Absolute path to EXECUTABLE executable)
 
     AS_IF(test -z "$VARIABLE",[
-    	AC_MSG_CHECKING(whether EXECUTABLE executable path has been provided)
-        AC_ARG_WITH(EXECUTABLE,AS_HELP_STRING([--with-EXECUTABLE=[[[[PATH]]]]],absolute path to EXECUTABLE executable), [
-	    AS_IF([test "$withval" != "yes"],[
-	        VARIABLE="$withval"
-		AC_MSG_RESULT($VARIABLE)
-	    ],[
-		VARIABLE=""
-	        AC_MSG_RESULT([no])
-	    ])
-	],[
-	    AC_MSG_RESULT([no])
-	])
-
-        AS_IF(test -z "$VARIABLE",[
-	    AC_PATH_PROG([]VARIABLE[],[]EXECUTABLE[],[]VALUE_IF_NOT_FOUND[],[]PATH_PROG[])
+        AC_MSG_CHECKING(whether EXECUTABLE executable path has been provided)
+        AC_ARG_WITH(EXECUTABLE,AS_HELP_STRING([--with-EXECUTABLE=[[[PATH]]]],absolute path to EXECUTABLE executable), [
+            AS_IF([test "$withval" != yes -a "$withval" != no],[
+                VARIABLE="$withval"
+                AC_MSG_RESULT($VARIABLE)
+            ],[
+                VARIABLE=""
+                AC_MSG_RESULT([no])
+                AS_IF([test "$withval" != no], [
+                  AC_PATH_PROG([]VARIABLE[],[]EXECUTABLE[],[]VALUE_IF_NOT_FOUND[],[]PATH_PROG[])
+                ])
+            ])
+        ],[
+            AC_MSG_RESULT([no])
+            AC_PATH_PROG([]VARIABLE[],[]EXECUTABLE[],[]VALUE_IF_NOT_FOUND[],[]PATH_PROG[])
         ])
     ])
 

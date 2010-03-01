@@ -68,10 +68,10 @@
 #   it by itself". You might want to clean up about these - consider an
 #   extra mylib/conf.h that reads something like:
 #
-#      #include <mylib/_config.h>
-#      #ifndef _testpkg_const
-#      #define _testpkg_const const
-#      #endif
+#     #include <mylib/_config.h>
+#     #ifndef _testpkg_const
+#     #define _testpkg_const const
+#     #endif
 #
 #   and then start using _testpkg_const in the header files. That is also a
 #   good thing to differentiate whether some library-user has starting to
@@ -119,6 +119,8 @@
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
 
+#serial 7
+
 AC_DEFUN([AX_PREFIX_CONFIG_H],[dnl
 AC_BEFORE([AC_CONFIG_HEADERS],[$0])dnl
 AC_CONFIG_COMMANDS([ifelse($1,,$PACKAGE-config.h,$1)],[dnl
@@ -131,7 +133,7 @@ AS_VAR_PUSHDEF([_INP],[ac_prefix_conf_INP])dnl
 m4_pushdef([_script],[conftest.prefix])dnl
 m4_pushdef([_symbol],[m4_cr_Letters[]m4_cr_digits[]_])dnl
 _OUT=`echo ifelse($1, , $PACKAGE-config.h, $1)`
-_DEF=`echo $_OUT | sed -e "y:m4_cr_letters:m4_cr_LETTERS[]:" -e "s/@<:@^m4_cr_Letters@:>@/_/g"`
+_DEF=`echo _$_OUT | sed -e "y:m4_cr_letters:m4_cr_LETTERS[]:" -e "s/@<:@^m4_cr_Letters@:>@/_/g"`
 _PKG=`echo ifelse($2, , $PACKAGE, $2)`
 _LOW=`echo _$_PKG | sed -e "y:m4_cr_LETTERS-:m4_cr_letters[]_:"`
 _UPP=`echo $_PKG | sed -e "y:m4_cr_letters-:m4_cr_LETTERS[]_:"  -e "/^@<:@m4_cr_digits@:>@/s/^/_/"`
